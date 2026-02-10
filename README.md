@@ -20,200 +20,99 @@
 # Team Information
 
 #### *efinda* - Project Manager & Frontend Developer
-- **Project Management:**
-  - Organize team meetings and planning sessions.
-  - Track progress and deadlines.
-  - Ensure team communication.
-  - Manage risks and blockers.
-- **Frontend Development:**
-  - Implement React UI/UX.
-  - Ensure responsiveness in the design.
-  - Develop components.
+  - **Project Management:**
+    - Facilitate sprint planning and retrospective sessions.
+    - Monitor project timeline and milestone completion.
+    - Coordinate team communication and remove obstacles.
+    - Identify and mitigate potential project risks.
+  - **Frontend Development:**
+    - Build user interfaces with React.
+    - Create responsive, mobile-friendly layouts.
+    - Develop reusable UI components.
 
 #### *dnzita* - Product Owner & Developer
   - **Product Ownership:**
-    - Maintain the product backlog.
-    - Make decisions on features and priorities.
-    - Validate completed work.
-    - Communicate with stakeholders (evaluators, peers).
+    - Manage and prioritize the feature backlog.
+    - Define what gets built and in what order.
+    - Review and approve completed deliverables.
+    - Serve as primary contact during evaluations.
   - **Development:**
-    - Integrate frontend-backend.
-    - Implement gamification features.
+    - Connect frontend and backend systems.
+    - Build gamification features and UI.
 
 #### *cgama* - Technical Lead & Developer
   - **Technical Leadership:**
-    - Define technical architecture.
-    - Make technology stack decisions.
-    - Ensure code quality and best practices.
-    - Review critical code changes.
+    - Design the overall system architecture.
+    - Select frameworks, libraries, and tools.
+    - Establish coding standards and practices.
+    - Conduct critical code quality reviews.
   - **Development:**
-    - Implement complex features.
-    - Integrate critical systems.
-    - Configure DevOps.
+    - Build technically challenging features.
+    - Handle complex system integrations.
+    - Set up deployment infrastructure.
 
 #### *jbofengo* - Pure Backend Developer
   - **Backend Development:**
-    - Write code for assigned features.
-    - Participate in code reviews.
-    - Test implementations.
-    - Document work.
+    - Develop server-side features and APIs.
+    - Review teammates' code for quality.
+    - Test backend implementations thoroughly.
+    - Maintain clear technical documentation.
 
 
 
 
 # Project Management
 
-### Team Organization
+### How We Organize Our Work
 
-Our team follows an **Agile-inspired methodology** with clearly defined roles and responsibilities to ensure efficient collaboration and accountability.
+We follow the **Agile Kanban methodology** to manage our workflow efficiently. Our process works like this:
 
-#### **Role-Based Decision Making**
+At the project's start, we break down all required work into small, manageable tasks — what we call "**salami slicing**" the work. These slices are distributed across team members based on their specific roles (PM, PO, Tech Lead, Dev).
 
-We've established clear boundaries to prevent conflicts and ensure smooth workflow:
+**Our bi-weekly meeting rhythm:**
 
-- **WHAT (Features & Priorities)** → Decided by **Product Owner** (Dário)
-  - Which features to build
-  - Feature prioritization
-  - Scope adjustments if behind schedule
+- **Monday @ 12:00 PM - Sprint Planning:** We select task slices from the backlog and distribute them among team members to work on throughout the week. Each member knows exactly what they need to "eat" (complete) before Friday.
 
-- **HOW (Technical Implementation)** → Decided by **Technical Lead** (Gama)
-  - Technology choices (frameworks, libraries, tools)
-  - Architecture and design patterns
-  - Code quality standards
+- **Friday @ 6:00 PM - Sprint Review:** We check if all the salami slices distributed on Monday were successfully "eaten" (completed). Members demonstrate their completed work, the Product Owner validates functionality, and the Technical Lead reviews code quality.
 
-- **WHEN (Timeline & Planning)** → Decided by **Project Manager** ([Your Name])
-  - Sprint duration and deadlines
-  - Task scheduling
-  - Timeline adjustments
+This cadence keeps everyone accountable and ensures continuous progress without overwhelming any single team member.
 
-#### **Work Distribution Strategy**
+### Project Management Tools
 
-- Tasks are distributed based on **individual strengths** and **role responsibilities**
-- Each team member works in their **area of expertise** to maximize productivity
-- **Cross-functional collaboration** for features requiring frontend-backend integration
-- **Pair programming** encouraged for complex implementations and knowledge sharing
+We use **Trello** as our Kanban board platform. The board is shared among all team members, providing complete visibility into the project's state.
 
-### Meeting Structure
+Our Trello board structure:
+- **Backlog** - All upcoming tasks waiting to be picked up
+- **To Do** - Tasks assigned for the current sprint
+- **In Progress** - Work currently being developed
+- **Review** - Completed work awaiting validation
+- **Done** - Validated and merged work
 
-#### **Regular Meetings**
+Team members move their assigned cards across columns as they progress, giving everyone real-time visibility into what's being worked on, what's blocked, and what's completed.
 
-| Meeting | Schedule | Duration | Purpose |
-|---------|----------|----------|---------|
-| **Sprint Planning** | Monday @ 10:00 | 30-45 min | Review previous sprint, set objectives, distribute tasks, identify dependencies |
-| **Sprint Review** | Friday @ 18:30 | 45-60 min | Demo completed work, validation by PO and Tech Lead, retrospective, preview next week |
-| **Daily Sync** (Optional) | As needed | 15 min | Quick blockers check, urgent coordination |
+### Communication Channels
 
-#### **Meeting Agenda Template**
+We use a **two-channel communication strategy** to balance urgency and organization:
 
-**Sprint Planning (Monday):**
-1. Previous sprint recap (5 min)
-2. Week objectives presentation (10 min)
-3. Task distribution with clear ownership (15 min)
-4. Dependency identification (10 min)
-5. Q&A (5-10 min)
+#### **WhatsApp Group - Quick Communication**
+Used for time-sensitive messages and urgent coordination. Since most team members check WhatsApp frequently throughout the day, it's our go-to for:
+- Urgent blockers or issues
+- Last-minute meeting changes
+- Quick yes/no questions
+- General team coordination
 
-**Sprint Review (Friday):**
-1. Individual demonstrations with working code (8-10 min each)
-2. PO validation (functional correctness)
-3. Tech Lead validation (code quality)
-4. Retrospective - what worked/what didn't (10 min)
-5. Next week preview (5 min)
-
-### Tools & Platforms
-
-#### **Version Control & Code Management**
-- **GitHub** - Source code repository, version control
-- **GitHub Projects** - Task tracking, sprint boards, progress visualization
-- **Git** - Following [strict commit message guidelines](docs/COMMIT_GUIDELINES.md)
-
-#### **Communication Channels**
-
-| Channel | Platform | Purpose | Response Time |
-|---------|----------|---------|---------------|
-| **Urgent/Quick** | WhatsApp | Time-sensitive issues, quick questions | Minutes |
-| **Work Discussion** | Slack | Structured technical discussions, async communication | Hours |
-| **Code Review** | GitHub (PR comments) | Code feedback, technical discussions | 1-2 days |
-| **Documentation** | GitHub (Wiki/Docs) | Technical specs, API docs, decisions log | As needed |
-
-#### **Slack Workspace Organization**
-
-We use Slack as our primary structured communication tool with dedicated channels:
+#### **Slack Workspace - Structured Work Discussion**
+Our primary platform for organized, topic-specific communication. The workspace is divided into focused channels:
 
 - **#avisos** - Team-wide announcements and important updates
-- **#standup-check-in** - Weekly progress check-ins (Wednesday mandatory)
-- **#frontend** - React, UI/UX, component discussions
-- **#backend** - API, database, server-side discussions
-- **#devops** - Docker, deployment, infrastructure
-- **#code-review** - Pull request reviews and discussions
-- **#docs-and-resources** - Documentation, tutorials, learning materials
+- **#standup-check-in** - Weekly progress updates (mandatory Wednesday check-in)
+- **#frontend** - React, UI/UX, and component discussions
+- **#backend** - API, database, and server-side topics
+- **#devops** - Docker, deployment, and infrastructure
+- **#review** - Features reviews and technical feedback
+- **#docs-and-resources** - Documentation, tutorials, and learning materials
 
-**Communication Guidelines:**
-- Use **threads** for organized discussions
-- Use **correct channels** for specific topics
-- **@mention** for direct questions
-- Avoid `@channel` unless urgent and relevant to everyone
-
-### Accountability & Progress Tracking
-
-#### **Check-in System**
-
-**Mandatory Check-in:**
-- Every **Wednesday** - all team members post progress update in `#standup-check-in`
-
-**Optional Check-ins (encouraged):**
-- When **blocked** on a task
-- To **signal problems** early
-- To **update** on completed work
-
-**Check-in Format:**
-```
-🗓️ Week [X] Check-in
-
-✅ Completed:
-- [What you finished since last check-in]
-
-🔨 Working on:
-- [Current tasks]
-
-🚧 Blockers:
-- [Any issues blocking progress, or "None"]
-
-⏱️ Availability: [Your working hours this week]
-```
-
-#### **Progress Validation**
-
-- **Product Owner (Dário)** validates functional correctness
-- **Technical Lead (Gama)** validates code quality and architecture
-- **Project Manager ([Your Name])** tracks timeline adherence
-
-#### **Documentation Standards**
-
-- **Git commits** follow [our commit message guidelines](docs/COMMIT_GUIDELINES.md)
-- **Code** must include meaningful comments for complex logic
-- **APIs** are documented as they're built (not after)
-- **Decisions** are logged with rationale in `#decisions` Slack channel
-
-### Risk Management
-
-We proactively identify and address risks:
-
-- **Weekly risk assessment** during Sprint Planning
-- **Early communication** of blockers (don't wait until deadline)
-- **Buffer time** built into timeline (target May 31, deadline later)
-- **Regular code reviews** to catch issues early
-
-### Why This Approach Works
-
-Our project management strategy is based on **lessons learned from previous group projects** (especially Webserv):
-
-✅ **Clear roles** prevent confusion and overlap
-✅ **Everyone works in their strength zone** maximizes output
-✅ **Regular meetings** enable early risk detection
-✅ **Structured communication** prevents important messages from being lost
-✅ **Defined decision boundaries** prevent conflicts
-
-This system ensures **accountability**, **transparency**, and **efficient collaboration** throughout the 4-month project timeline.
+This dual-channel approach ensures we never miss urgent issues (WhatsApp) while keeping technical discussions organized and searchable (Slack).
 
 
 
