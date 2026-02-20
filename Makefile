@@ -8,8 +8,12 @@ help: ## Mostra esta mensagem de ajuda
 	@echo "║         ft_transcendence - Comandos Disponíveis        ║"
 	@echo "╚════════════════════════════════════════════════════════╝"
 	@echo ""
-	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2}'
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-20s\033[0m %s\n", $$1, $$2}'
 	@echo ""
+
+# ===========================
+# SETUP E INICIALIZAÇÃO
+# ===========================
 
 setup: ## Setup inicial completo do projeto
 	@./scripts/setup.sh
@@ -45,18 +49,12 @@ migrate: ## Executar migrations do banco de dados
 dev: ## Modo desenvolvimento (com logs visíveis)
 	@./scripts/dev.sh
 
-# Comandos específicos por serviço
-logs-auth: ## Ver logs do auth-service
-	@docker-compose logs -f auth-service
+# ===========================
+# LOGS POR SERVIÇO
+# ===========================
 
-logs-core: ## Ver logs do core-service
-	@docker-compose logs -f core-service
-
-logs-social: ## Ver logs do social-service
-	@docker-compose logs -f social-service
-
-logs-gamification: ## Ver logs do gamification-service
-	@docker-compose logs -f gamification-service
+logs-backend: ## Ver logs do backend
+	@docker-compose logs -f backend
 
 logs-frontend: ## Ver logs do frontend
 	@docker-compose logs -f frontend
@@ -67,69 +65,116 @@ logs-db: ## Ver logs do PostgreSQL
 logs-redis: ## Ver logs do Redis
 	@docker-compose logs -f redis
 
-# Comandos de teste
-test-auth: ## Executar testes do auth-service
-	@docker-compose exec auth-service npm test
+# ===========================
+# SHELL/ACESSO AOS CONTAINERS
+# ===========================
 
-test-core: ## Executar testes do core-service
-	@docker-compose exec core-service npm test
+shell-backend: ## Abrir shell no container backend
+	@docker-compose exec backend sh
 
-test-social: ## Executar testes do social-service
-	@docker-compose exec social-service npm test
+shell-frontend: ## Abrir shell no container frontend
+	@docker-compose exec frontend sh
 
-test-gamification: ## Executar testes do gamification-service
-	@docker-compose exec gamification-service npm test
-
-test-all: ## Executar testes de todos os serviços
-	@echo "🧪 Executando testes..."
-	@make test-auth
-	@make test-core
-	@make test-social
-	@make test-gamification
-
-# Comandos de banco de dados
 db-shell: ## Acessar shell do PostgreSQL
 	@docker-compose exec postgres psql -U transcendence -d transcendence_db
 
 redis-cli: ## Acessar Redis CLI
 	@docker-compose exec redis redis-cli -a redis_password
 
-# Comandos úteis de desenvolvimento
-shell-auth: ## Acessar shell do auth-service
-	@docker-compose exec auth-service sh
+# ===========================
+# TESTES
+# ===========================
 
-shell-core: ## Acessar shell do core-service
-	@docker-compose exec core-service sh
+test-backend: ## Executar testes do backend
+	@docker-compose exec backend npm test
 
-shell-social: ## Acessar shell do social-service
-	@docker-compose exec social-service sh
+test-frontend: ## Executar testes do frontend
+	@docker-compose exec frontend npm test
 
-shell-gamification: ## Acessar shell do gamification-service
-	@docker-compose exec gamification-service sh
+test-coverage: ## Executar testes com coverage (backend)
+	@docker-compose exec backend npm run test:coverage
 
-shell-frontend: ## Acessar shell do frontend
-	@docker-compose exec frontend sh
+test-all: ## Executar todos os testes
+	@echo "🧪 Executando testes..."
+	@make test-backend
+	@make test-frontend
 
-# Instalação de dependências
-install-auth: ## Instalar dependências do auth-service
-	@docker-compose exec auth-service npm install
+# ===========================
+# PRISMA (ORM)
+# ===========================
 
-install-core: ## Instalar dependências do core-service
-	@docker-compose exec core-service npm install
+prisma-generate: ## Gerar Prisma Client
+	@docker-compose exec backend npm run prisma:generate
 
-install-social: ## Instalar dependências do social-service
-	@docker-compose exec social-service npm install
+prisma-migrate: ## Executar migrations do Prisma
+	@docker-compose exec backend npm run prisma:migrate
 
-install-gamification: ## Instalar dependências do gamification-service
-	@docker-compose exec gamification-service npm install
+prisma-studio: ## Abrir Prisma Studio (GUI para DB)
+	@docker-compose exec backend npm run prisma:studio
+
+# ===========================
+# INSTALAÇÃO DE DEPENDÊNCIAS
+# ===========================
+
+install-backend: ## Instalar dependências do backend
+	@docker-compose exec backend npm install
 
 install-frontend: ## Instalar dependências do frontend
 	@docker-compose exec frontend npm install
 
 install-all: ## Instalar dependências de todos os serviços
 	@echo "📦 Instalando dependências..."
-	@make install-auth
-	@make install-core
-	@make install-social
-	@make install-gamification
+	@make install-backend
 	@make install-frontend
+
+# ===========================
+# LINTING E FORMATAÇÃO
+# ===========================
+
+lint-backend: ## Executar linter no backend
+	@docker-compose exec backend npm run lint
+
+lint-frontend: ## Executar linter no frontend
+	@docker-compose exec frontend npm run lint
+
+format-backend: ## Formatar código do backend
+	@docker-compose exec backend npm run format
+
+format-frontend: ## Formatar código do frontend
+	@docker-compose exec frontend npm run format
+
+# ===========================
+# COMANDOS DE RESET
+# ===========================
+
+reset-db: ## Reset completo do banco de dados (PERDE DADOS)
+	@echo "⚠️  ATENÇÃO: Isso irá deletar todos os dados!"
+	@read -p "Tem certeza? [y/N]: " confirm && [ "$$confirm" = "y" ] || exit 1
+	@docker-compose down -v
+	@docker-compose up -d postgres redis
+	@sleep 5
+	@make prisma-migrate
+
+reset-all: ## Reset completo do projeto (PERDE TUDO)
+	@echo "⚠️  ATENÇÃO: Isso irá deletar containers, volumes e dados!"
+	@read -p "Tem certeza? [y/N]: " confirm && [ "$$confirm" = "y" ] || exit 1
+	@make clean
+	@make setup
+
+# ===========================
+# INFORMAÇÕES
+# ===========================
+
+info: ## Mostrar informações do projeto
+	@echo "╔════════════════════════════════════════════════════════╗"
+	@echo "║              ft_transcendence - Informações            ║"
+	@echo "╚════════════════════════════════════════════════════════╝"
+	@echo ""
+	@echo "Frontend:    http://localhost:3000"
+	@echo "Backend:     http://localhost:3001"
+	@echo "Health:      http://localhost:3001/health"
+	@echo "PostgreSQL:  localhost:5432"
+	@echo "Redis:       localhost:6379"
+	@echo ""
+	@echo "Para ver todos os comandos disponíveis, execute: make help"
+	@echo ""

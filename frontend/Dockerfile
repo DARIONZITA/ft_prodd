@@ -6,12 +6,12 @@ RUN apk add --no-cache curl
 # Stage 2: Dependencies
 FROM base AS deps
 COPY package*.json ./
-RUN npm ci --only=production && npm cache clean --force
+RUN npm install --only=production --legacy-peer-deps && npm cache clean --force
 
 # Stage 3: Development Dependencies
 FROM base AS dev-deps
 COPY package*.json ./
-RUN npm ci
+RUN npm install --legacy-peer-deps
 
 # Stage 4: Development
 FROM base AS development

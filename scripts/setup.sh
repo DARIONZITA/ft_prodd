@@ -85,7 +85,7 @@ sleep 10
 # Check service health
 echo -e "${BLUE}🏥 Verificando saúde dos serviços...${NC}"
 
-services=("postgres" "redis" "auth-service" "core-service" "social-service" "gamification-service")
+services=("postgres" "redis" "backend" "frontend")
 
 for service in "${services[@]}"; do
     status=$(docker-compose ps "$service" | grep -i "up\|healthy" || echo "down")
@@ -105,17 +105,16 @@ echo -e "${GREEN}╚════════════════════
 echo ""
 echo -e "${BLUE}📍 Serviços disponíveis:${NC}"
 echo -e "   Frontend:              ${GREEN}http://localhost:3000${NC}"
-echo -e "   Auth Service:          ${GREEN}http://localhost:3001${NC}"
-echo -e "   Core Service:          ${GREEN}http://localhost:3002${NC}"
-echo -e "   Social Service:        ${GREEN}http://localhost:3003${NC}"
-echo -e "   Gamification Service:  ${GREEN}http://localhost:3004${NC}"
+echo -e "   Backend API:           ${GREEN}http://localhost:3001${NC}"
+echo -e "   Health Check:          ${GREEN}http://localhost:3001/health${NC}"
 echo -e "   PostgreSQL:            ${GREEN}localhost:5432${NC}"
 echo -e "   Redis:                 ${GREEN}localhost:6379${NC}"
 echo ""
 echo -e "${BLUE}📋 Comandos úteis:${NC}"
-echo -e "   Ver logs:              ${YELLOW}docker-compose logs -f [service]${NC}"
-echo -e "   Parar tudo:            ${YELLOW}docker-compose down${NC}"
-echo -e "   Reiniciar:             ${YELLOW}docker-compose restart${NC}"
-echo -e "   Ver status:            ${YELLOW}docker-compose ps${NC}"
-echo -e "   Executar migrations:   ${YELLOW}./scripts/migrate.sh${NC}"
+echo -e "   Ver logs:              ${YELLOW}make logs${NC}"
+echo -e "   Parar tudo:            ${YELLOW}make down${NC}"
+echo -e "   Reiniciar:             ${YELLOW}make restart${NC}"
+echo -e "   Ver status:            ${YELLOW}make ps${NC}"
+echo -e "   Health check:          ${YELLOW}make health${NC}"
+echo -e "   Ver todos comandos:    ${YELLOW}make help${NC}"
 echo ""

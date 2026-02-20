@@ -44,7 +44,7 @@ check_container() {
 echo -e "${BLUE}🐳 Verificando Containers Docker...${NC}"
 echo ""
 
-containers=("ft_transcendence_postgres" "ft_transcendence_redis" "ft_transcendence_auth" "ft_transcendence_core" "ft_transcendence_social" "ft_transcendence_gamification" "ft_transcendence_frontend")
+containers=("ft_transcendence_postgres" "ft_transcendence_redis" "ft_transcendence_backend" "ft_transcendence_frontend")
 
 container_ok=0
 for container in "${containers[@]}"; do
@@ -66,10 +66,7 @@ total_endpoints=0
 # Check each service endpoint
 services=(
     "Frontend:http://localhost:3000"
-    "Auth Service:http://localhost:3001/health"
-    "Core Service:http://localhost:3002/health"
-    "Social Service:http://localhost:3003/health"
-    "Gamification Service:http://localhost:3004/health"
+    "Backend API:http://localhost:3001/health"
 )
 
 for service_url in "${services[@]}"; do

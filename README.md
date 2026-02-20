@@ -31,7 +31,7 @@ Antes de executar o projeto pela primeira vez, você precisa configurar as crede
 
 1. Acesse: https://profile.intra.42.fr/oauth/applications
 2. Crie uma nova aplicação OAuth
-3. Configure a URL de callback: `http://localhost:3001/auth/42/callback`
+3. Configure a URL de callback: `http://localhost:3001/api/auth/42/callback`
 4. Copie o `Client ID` e `Client Secret`
 5. Edite o arquivo `.env` e adicione suas credenciais:
    ```
@@ -41,15 +41,20 @@ Antes de executar o projeto pela primeira vez, você precisa configurar as crede
 
 ## 🏗️ Arquitetura do Projeto
 
-O projeto utiliza uma arquitetura de **microserviços** com os seguintes componentes:
+O projeto utiliza uma **arquitetura monolítica** simples e eficiente:
 
 ```
 ft_transcendence/
-├── services/
-│   ├── auth-service/          # Autenticação (OAuth 42, JWT)
-│   ├── core-service/          # Kanban, Tasks, Organizations
-│   ├── social-service/        # Chat, WebSocket, Friends
-│   └── gamification-service/  # XP, Badges, Leaderboards
+├── backend/                   # Backend unificado (Express + Socket.IO)
+│   ├── src/
+│   │   ├── routes/           # Rotas da API
+│   │   ├── controllers/      # Lógica de controle
+│   │   ├── services/         # Regras de negócio
+│   │   ├── models/           # Modelos de dados
+│   │   ├── middlewares/      # Middlewares (auth, validation)
+│   │   ├── config/           # Configurações
+│   │   └── utils/            # Utilitários
+│   └── prisma/               # Schema do banco de dados
 ├── frontend/                  # React Application
 ├── config/                    # Nginx, Database configs
 ├── scripts/                   # Scripts de automação
@@ -61,10 +66,7 @@ ft_transcendence/
 | Serviço | Porta | Descrição |
 |---------|-------|-----------|
 | Frontend | 3000 | Interface React |
-| Auth Service | 3001 | Autenticação e autorização |
-| Core Service | 3002 | Lógica principal (Kanban) |
-| Social Service | 3003 | Chat e WebSocket |
-| Gamification Service | 3004 | Sistema de pontos e badges |
+| Backend | 3001 | API REST + WebSocket (Socket.IO) |
 | PostgreSQL | 5432 | Banco de dados principal |
 | Redis | 6379 | Cache e sessões |
 | Nginx | 80 | Reverse proxy (opcional) |
@@ -91,35 +93,45 @@ ft_transcendence/
 
 ```bash
 # Iniciar todos os serviços em background
+make up
+# ou
 docker-compose up -d
 
 # Parar todos os serviços
+make down
+# ou
 docker-compose down
 
 # Ver logs de um serviço específico
+make logs-backend    # Logs do backend
+make logs-frontend   # Logs do frontend
+# ou
 docker-compose logs -f [nome-do-serviço]
 
-# Exemplos:
-docker-compose logs -f auth-service
-docker-compose logs -f frontend
-
 # Ver status de todos os containers
+make ps
+# ou
 docker-compose ps
 
-# Reiniciar um serviço específico
-docker-compose restart [nome-do-serviço]
-
-# Rebuild de um serviço específico
-docker-compose build [nome-do-serviço]
-```
-
+# Reiniciar todos os serviços
+make restart
 ### Limpeza e Reset
 
 ```bash
 # Limpar tudo (containers, volumes, images)
+make clean
+# ou
 ./scripts/clean.sh
 
 # Apenas parar e remover containers
+make down
+
+# Reset completo do banco de dados (PERDE DADOS)
+make reset-db
+
+# Reset completo do projeto (PERDE TUDO)
+make reset-all
+```penas parar e remover containers
 docker-compose down
 
 # Parar e remover volumes (PERDE DADOS)
@@ -147,38 +159,36 @@ Principais variáveis que você deve configurar:
 ### Hot Reload
 
 Todos os serviços estão configurados com **hot reload** em modo desenvolvimento:
-- Frontend: alterações nos arquivos React recarregam automaticamente
-- Backend: alterações em código Node.js reiniciam o serviço automaticamente
-
-Os volumes montados garantem que suas alterações locais sejam refletidas imediatamente nos containers.
+- Backend: Nodemon detecta mudanças em `.ts` e reinicia automaticamente
+- Frontend: Vite HMR (Hot Module Replacement)
 
 ## 🧪 Testes
 
 ```bash
-# Executar testes de um serviço específico
-docker-compose exec [nome-do-serviço] npm test
+# Executar testes do backend
+make test-backend
 
-# Exemplos:
-docker-compose exec auth-service npm test
-docker-compose exec core-service npm test
+# Executar testes do frontend
+make test-frontend
+
+# Executar todos os testes
+make test-all
 
 # Executar testes com coverage
-docker-compose exec [nome-do-serviço] npm run test:coverage
+make test-coverage
 ```
-
-## 📊 Monitoramento
 
 ### Health Checks
 
-Todos os serviços possuem endpoints de health check:
+O backend possui endpoint de health check:
 
-- Auth: http://localhost:3001/health
-- Core: http://localhost:3002/health
-- Social: http://localhost:3003/health
-- Gamification: http://localhost:3004/health
+- Backend: http://localhost:3001/health
+- Frontend: http://localhost:3000
 
 Use o script de verificação:
 ```bash
+make health
+# ou
 ./scripts/health-check.sh
 ```
 
@@ -186,17 +196,25 @@ Use o script de verificação:
 
 ```bash
 # Ver logs de todos os serviços
-docker-compose logs -f
+make logs
 
 # Ver logs dos últimos 100 linhas
+docker-compose logs --tail=100
+
+# Ver logs de serviços específicos
+make logs-backend    # Backend
+make logs-frontend   # Frontend
+make logs-db         # PostgreSQL
+make logs-redis      # Redis
+```
 docker-compose logs --tail=100
 
 # Ver logs de serviços específicos
 docker-compose logs -f auth-service core-service
 ```
 
-## 🐛 Troubleshooting
-
+# Ver logs de serviços específicos
+docker-compose logs -f backend frontend
 ### Container não inicia
 
 ```bash
@@ -214,16 +232,23 @@ docker-compose up -d [nome-do-serviço]
 # Verificar o que está usando a porta
 lsof -i :3000  # ou a porta com problema
 
-# Matar o processo
-kill -9 [PID]
-
-# Ou altere a porta no docker-compose.yml
-```
-
 ### Banco de dados com problemas
 
 ```bash
 # Reset completo do banco (PERDE DADOS)
+make reset-db
+
+# Apenas executar migrations novamente
+make migrate
+# ou
+./scripts/migrate.sh
+
+# Abrir Prisma Studio para visualizar dados
+make prisma-studio
+
+# Acessar shell do PostgreSQL
+make db-shell
+```eset completo do banco (PERDE DADOS)
 docker-compose down -v
 ./scripts/setup.sh
 
@@ -231,14 +256,50 @@ docker-compose down -v
 ./scripts/migrate.sh
 ```
 
-### Problemas com permissões
+## 🔒 Segurança
+
+- Nunca commitar o arquivo `.env` (já está no `.gitignore`)
+- Trocar todas as senhas padrão em produção
+- Usar HTTPS em produção (configuração nginx incluída)
+- Revisar e atualizar dependências regularmente
+- Redis e PostgreSQL com senhas fortes
+- Rate limiting configurado para proteger contra abuso
+
+## 📚 Comandos Úteis (Resumo)
 
 ```bash
-# Dar permissão de execução aos scripts
-chmod +x scripts/*.sh
+# Iniciar projeto
+make setup          # Primeira vez (setup completo)
+make up             # Iniciar serviços
+make dev            # Modo desenvolvimento com logs
 
-# Problemas com volumes Docker no Linux
-sudo chown -R $USER:$USER .
+# Desenvolvimento
+make logs-backend   # Ver logs do backend
+make shell-backend  # Acessar shell do backend
+make test-backend   # Executar testes
+make prisma-studio  # GUI para visualizar banco
+
+# Manutenção
+make health         # Verificar saúde dos serviços
+make restart        # Reiniciar tudo
+make clean          # Limpar tudo
+
+# Informações
+make help           # Ver todos os comandos
+make info           # Ver URLs dos serviços
+```
+
+## 🔗 URLs Importantes
+
+| Serviço | URL | Descrição |
+|---------|-----|-----------|
+| **Frontend** | http://localhost:3000 | Interface do usuário |
+| **Backend API** | http://localhost:3001 | API REST |
+| **Health Check** | http://localhost:3001/health | Status do backend |
+| **PostgreSQL** | localhost:5432 | Banco de dados |
+| **Redis** | localhost:6379 | Cache e sessões |
+
+---o chown -R $USER:$USER .
 ```
 
 ## 🔒 Segurança
@@ -413,11 +474,12 @@ A stack tecnológica foi cuidadosamente selecionada para maximizar a produtivida
 
 ## 🎯 Decisões Arquiteturais
 
-### Por que Microserviços?
-- **Escalabilidade:** Cada serviço pode escalar independentemente
-- **Manutenibilidade:** Código organizado por domínio de negócio
-- **Desenvolvimento Paralelo:** Equipe de 4 pode trabalhar em serviços diferentes simultaneamente
-- **Deployment Isolado:** Bugs em um serviço não derrubam o sistema inteiro
+### Por que Monolito (ao invés de Microserviços)?
+- **Simplicidade:** Mais fácil de desenvolver e debugar para time de 4 pessoas
+- **Performance:** Menos overhead de comunicação entre serviços
+- **Desenvolvimento Rápido:** Deploy e iteração mais ágeis
+- **Menos Complexidade:** Apenas 1 codebase backend para gerenciar
+- **Facilita Colaboração:** Time pode trabalhar no mesmo repositório sem conflitos de integração
 
 ### Por que TypeScript (Opcional)?
 - **Type Safety:** Reduz bugs em produção
@@ -444,6 +506,7 @@ A stack tecnológica foi cuidadosamente selecionada para maximizar a produtivida
 | Docker Deployment | Docker Compose | ✅ |
 | HTTPS | Nginx Reverse Proxy | ✅ |
 | Multi-user Support | PostgreSQL + Redis Sessions | ✅ |
+| Monolithic Architecture | Express unificado | ✅ |
 
 # Database Schema
 

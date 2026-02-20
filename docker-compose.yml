@@ -44,14 +44,14 @@ services:
       retries: 5
 
   # ===========================
-  # MICROSERVICES - BACKEND
+  # BACKEND - UNIFIED APPLICATION
   # ===========================
 
-  auth-service:
+  backend:
     build:
-      context: ./services/auth-service
+      context: ./backend
       dockerfile: Dockerfile
-    container_name: ft_transcendence_auth
+    container_name: ft_transcendence_backend
     restart: unless-stopped
     environment:
       - NODE_ENV=${NODE_ENV:-development}
@@ -60,17 +60,21 @@ services:
       - REDIS_URL=redis://:${REDIS_PASSWORD:-redis_password}@redis:6379
       - JWT_SECRET=${JWT_SECRET:-your_jwt_secret_key_change_in_production}
       - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET:-your_refresh_secret_key}
+      - JWT_EXPIRES_IN=${JWT_EXPIRES_IN:-15m}
+      - JWT_REFRESH_EXPIRES_IN=${JWT_REFRESH_EXPIRES_IN:-7d}
       - INTRA_42_CLIENT_ID=${INTRA_42_CLIENT_ID}
       - INTRA_42_CLIENT_SECRET=${INTRA_42_CLIENT_SECRET}
-      - INTRA_42_CALLBACK_URL=${INTRA_42_CALLBACK_URL:-http://localhost:3001/auth/42/callback}
+      - INTRA_42_CALLBACK_URL=${INTRA_42_CALLBACK_URL:-http://localhost:3001/api/auth/42/callback}
       - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
       - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
       - GITHUB_CLIENT_ID=${GITHUB_CLIENT_ID}
       - GITHUB_CLIENT_SECRET=${GITHUB_CLIENT_SECRET}
+      - CORS_ORIGIN=${CORS_ORIGIN:-http://localhost:3000}
+      - LOG_LEVEL=${LOG_LEVEL:-debug}
     ports:
       - "3001:3001"
     volumes:
-      - ./services/auth-service:/app
+      - ./backend:/app
       - /app/node_modules
     depends_on:
       postgres:
@@ -81,102 +85,6 @@ services:
       - transcendence_network
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-
-  core-service:
-    build:
-      context: ./services/core-service
-      dockerfile: Dockerfile
-    container_name: ft_transcendence_core
-    restart: unless-stopped
-    environment:
-      - NODE_ENV=${NODE_ENV:-development}
-      - PORT=3002
-      - DATABASE_URL=postgresql://${POSTGRES_USER:-transcendence}:${POSTGRES_PASSWORD:-transcendence_password}@postgres:5432/${POSTGRES_DB:-transcendence_db}
-      - REDIS_URL=redis://:${REDIS_PASSWORD:-redis_password}@redis:6379
-      - AUTH_SERVICE_URL=http://auth-service:3001
-    ports:
-      - "3002:3002"
-    volumes:
-      - ./services/core-service:/app
-      - /app/node_modules
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      auth-service:
-        condition: service_healthy
-    networks:
-      - transcendence_network
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3002/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-
-  social-service:
-    build:
-      context: ./services/social-service
-      dockerfile: Dockerfile
-    container_name: ft_transcendence_social
-    restart: unless-stopped
-    environment:
-      - NODE_ENV=${NODE_ENV:-development}
-      - PORT=3003
-      - DATABASE_URL=postgresql://${POSTGRES_USER:-transcendence}:${POSTGRES_PASSWORD:-transcendence_password}@postgres:5432/${POSTGRES_DB:-transcendence_db}
-      - REDIS_URL=redis://:${REDIS_PASSWORD:-redis_password}@redis:6379
-      - AUTH_SERVICE_URL=http://auth-service:3001
-    ports:
-      - "3003:3003"
-    volumes:
-      - ./services/social-service:/app
-      - /app/node_modules
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      auth-service:
-        condition: service_healthy
-    networks:
-      - transcendence_network
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3003/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-
-  gamification-service:
-    build:
-      context: ./services/gamification-service
-      dockerfile: Dockerfile
-    container_name: ft_transcendence_gamification
-    restart: unless-stopped
-    environment:
-      - NODE_ENV=${NODE_ENV:-development}
-      - PORT=3004
-      - DATABASE_URL=postgresql://${POSTGRES_USER:-transcendence}:${POSTGRES_PASSWORD:-transcendence_password}@postgres:5432/${POSTGRES_DB:-transcendence_db}
-      - REDIS_URL=redis://:${REDIS_PASSWORD:-redis_password}@redis:6379
-      - AUTH_SERVICE_URL=http://auth-service:3001
-    ports:
-      - "3004:3004"
-    volumes:
-      - ./services/gamification-service:/app
-      - /app/node_modules
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      auth-service:
-        condition: service_healthy
-    networks:
-      - transcendence_network
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3004/health"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -193,21 +101,15 @@ services:
     restart: unless-stopped
     environment:
       - NODE_ENV=${NODE_ENV:-development}
-      - REACT_APP_AUTH_SERVICE_URL=${REACT_APP_AUTH_SERVICE_URL:-http://localhost:3001}
-      - REACT_APP_CORE_SERVICE_URL=${REACT_APP_CORE_SERVICE_URL:-http://localhost:3002}
-      - REACT_APP_SOCIAL_SERVICE_URL=${REACT_APP_SOCIAL_SERVICE_URL:-http://localhost:3003}
-      - REACT_APP_GAMIFICATION_SERVICE_URL=${REACT_APP_GAMIFICATION_SERVICE_URL:-http://localhost:3004}
-      - REACT_APP_WS_URL=${REACT_APP_WS_URL:-ws://localhost:3003}
+      - REACT_APP_API_URL=${REACT_APP_API_URL:-http://localhost:3001}
+      - REACT_APP_WS_URL=${REACT_APP_WS_URL:-ws://localhost:3001}
     ports:
       - "3000:3000"
     volumes:
       - ./frontend:/app
       - /app/node_modules
     depends_on:
-      - auth-service
-      - core-service
-      - social-service
-      - gamification-service
+      - backend
     networks:
       - transcendence_network
     stdin_open: true
@@ -217,24 +119,21 @@ services:
   # OPTIONAL: NGINX (Reverse Proxy)
   # ===========================
   
-  nginx:
-    image: nginx:alpine
-    container_name: ft_transcendence_nginx
-    restart: unless-stopped
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./config/nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./config/ssl:/etc/nginx/ssl:ro
-    depends_on:
-      - frontend
-      - auth-service
-      - core-service
-      - social-service
-      - gamification-service
-    networks:
-      - transcendence_network
+  # nginx:
+  #   image: nginx:alpine
+  #   container_name: ft_transcendence_nginx
+  #   restart: unless-stopped
+  #   ports:
+  #     - "80:80"
+  #     - "443:443"
+  #   volumes:
+  #     - ./config/nginx.conf:/etc/nginx/nginx.conf:ro
+  #     - ./config/ssl:/etc/nginx/ssl:ro
+  #   depends_on:
+  #     - frontend
+  #     - backend
+  #   networks:
+  #     - transcendence_network
 
 # ===========================
 # NETWORKS
