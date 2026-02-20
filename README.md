@@ -1,21 +1,254 @@
 *This project has been created as part of the 42 curriculum by efinda, dnzita, cgama, jbofengo.*
 
+# ft_transcendence - Task Manager Kanban
 
+Sistema de gestão de tarefas que combina a experiência visual do Notion com a estrutura organizacional do Kanban, especificamente desenvolvido para atender às necessidades dos estudantes da Escola 42.
 
-# Description
+## 🚀 Quick Start
 
+Para iniciar todo o projeto com um único comando:
 
+```bash
+./scripts/setup.sh
+```
 
+Este comando irá:
+- ✅ Verificar se o Docker está rodando
+- ✅ Criar arquivo `.env` a partir do `.env.example`
+- ✅ Construir todas as imagens Docker
+- ✅ Iniciar todos os serviços (frontend, backend, databases)
+- ✅ Verificar a saúde de todos os serviços
 
-# Instructions
+## 📋 Pré-requisitos
 
+- **Docker** (versão 20.10+)
+- **Docker Compose** (versão 2.0+)
+- **Git**
 
+### Configuração das Credenciais OAuth
 
+Antes de executar o projeto pela primeira vez, você precisa configurar as credenciais OAuth da 42 Intra:
 
-# Resources
+1. Acesse: https://profile.intra.42.fr/oauth/applications
+2. Crie uma nova aplicação OAuth
+3. Configure a URL de callback: `http://localhost:3001/auth/42/callback`
+4. Copie o `Client ID` e `Client Secret`
+5. Edite o arquivo `.env` e adicione suas credenciais:
+   ```
+   INTRA_42_CLIENT_ID=seu_client_id
+   INTRA_42_CLIENT_SECRET=seu_client_secret
+   ```
 
+## 🏗️ Arquitetura do Projeto
 
+O projeto utiliza uma arquitetura de **microserviços** com os seguintes componentes:
 
+```
+ft_transcendence/
+├── services/
+│   ├── auth-service/          # Autenticação (OAuth 42, JWT)
+│   ├── core-service/          # Kanban, Tasks, Organizations
+│   ├── social-service/        # Chat, WebSocket, Friends
+│   └── gamification-service/  # XP, Badges, Leaderboards
+├── frontend/                  # React Application
+├── config/                    # Nginx, Database configs
+├── scripts/                   # Scripts de automação
+└── docker-compose.yml         # Orquestração dos containers
+```
+
+### Serviços e Portas
+
+| Serviço | Porta | Descrição |
+|---------|-------|-----------|
+| Frontend | 3000 | Interface React |
+| Auth Service | 3001 | Autenticação e autorização |
+| Core Service | 3002 | Lógica principal (Kanban) |
+| Social Service | 3003 | Chat e WebSocket |
+| Gamification Service | 3004 | Sistema de pontos e badges |
+| PostgreSQL | 5432 | Banco de dados principal |
+| Redis | 6379 | Cache e sessões |
+| Nginx | 80 | Reverse proxy (opcional) |
+
+## 🛠️ Comandos Disponíveis
+
+### Inicialização e Setup
+
+```bash
+# Setup inicial completo
+./scripts/setup.sh
+
+# Modo desenvolvimento (com logs visíveis)
+./scripts/dev.sh
+
+# Executar migrations do banco de dados
+./scripts/migrate.sh
+
+# Verificar saúde dos serviços
+./scripts/health-check.sh
+```
+
+### Gerenciamento de Containers
+
+```bash
+# Iniciar todos os serviços em background
+docker-compose up -d
+
+# Parar todos os serviços
+docker-compose down
+
+# Ver logs de um serviço específico
+docker-compose logs -f [nome-do-serviço]
+
+# Exemplos:
+docker-compose logs -f auth-service
+docker-compose logs -f frontend
+
+# Ver status de todos os containers
+docker-compose ps
+
+# Reiniciar um serviço específico
+docker-compose restart [nome-do-serviço]
+
+# Rebuild de um serviço específico
+docker-compose build [nome-do-serviço]
+```
+
+### Limpeza e Reset
+
+```bash
+# Limpar tudo (containers, volumes, images)
+./scripts/clean.sh
+
+# Apenas parar e remover containers
+docker-compose down
+
+# Parar e remover volumes (PERDE DADOS)
+docker-compose down -v
+```
+
+## 🗄️ Estrutura de Desenvolvimento
+
+### Variáveis de Ambiente
+
+O arquivo `.env.example` contém todas as variáveis necessárias. Copie-o para `.env` e configure:
+
+```bash
+cp .env.example .env
+```
+
+Principais variáveis que você deve configurar:
+- `INTRA_42_CLIENT_ID` - Client ID da 42 OAuth
+- `INTRA_42_CLIENT_SECRET` - Client Secret da 42 OAuth  
+- `JWT_SECRET` - Chave secreta para JWT (mínimo 32 caracteres)
+- `JWT_REFRESH_SECRET` - Chave para refresh tokens
+- `POSTGRES_PASSWORD` - Senha do PostgreSQL
+- `REDIS_PASSWORD` - Senha do Redis
+
+### Hot Reload
+
+Todos os serviços estão configurados com **hot reload** em modo desenvolvimento:
+- Frontend: alterações nos arquivos React recarregam automaticamente
+- Backend: alterações em código Node.js reiniciam o serviço automaticamente
+
+Os volumes montados garantem que suas alterações locais sejam refletidas imediatamente nos containers.
+
+## 🧪 Testes
+
+```bash
+# Executar testes de um serviço específico
+docker-compose exec [nome-do-serviço] npm test
+
+# Exemplos:
+docker-compose exec auth-service npm test
+docker-compose exec core-service npm test
+
+# Executar testes com coverage
+docker-compose exec [nome-do-serviço] npm run test:coverage
+```
+
+## 📊 Monitoramento
+
+### Health Checks
+
+Todos os serviços possuem endpoints de health check:
+
+- Auth: http://localhost:3001/health
+- Core: http://localhost:3002/health
+- Social: http://localhost:3003/health
+- Gamification: http://localhost:3004/health
+
+Use o script de verificação:
+```bash
+./scripts/health-check.sh
+```
+
+### Logs
+
+```bash
+# Ver logs de todos os serviços
+docker-compose logs -f
+
+# Ver logs dos últimos 100 linhas
+docker-compose logs --tail=100
+
+# Ver logs de serviços específicos
+docker-compose logs -f auth-service core-service
+```
+
+## 🐛 Troubleshooting
+
+### Container não inicia
+
+```bash
+# Ver logs do container com problema
+docker-compose logs [nome-do-serviço]
+
+# Rebuild forçado
+docker-compose build --no-cache [nome-do-serviço]
+docker-compose up -d [nome-do-serviço]
+```
+
+### Porta já em uso
+
+```bash
+# Verificar o que está usando a porta
+lsof -i :3000  # ou a porta com problema
+
+# Matar o processo
+kill -9 [PID]
+
+# Ou altere a porta no docker-compose.yml
+```
+
+### Banco de dados com problemas
+
+```bash
+# Reset completo do banco (PERDE DADOS)
+docker-compose down -v
+./scripts/setup.sh
+
+# Apenas executar migrations novamente
+./scripts/migrate.sh
+```
+
+### Problemas com permissões
+
+```bash
+# Dar permissão de execução aos scripts
+chmod +x scripts/*.sh
+
+# Problemas com volumes Docker no Linux
+sudo chown -R $USER:$USER .
+```
+
+## 🔒 Segurança
+
+- Nunca commitar o arquivo `.env` (já está no `.gitignore`)
+- Trocar todas as senhas padrão em produção
+- Usar HTTPS em produção (configuração nginx incluída)
+- Revisar e atualizar dependências regularmente
+
+---
 
 # Team Information
 
@@ -116,11 +349,101 @@ This dual-channel approach ensures we never miss urgent issues (WhatsApp) while 
 
 
 
-
 # Technical Stack
 
+A stack tecnológica foi cuidadosamente selecionada para maximizar a produtividade da equipe de 4 pessoas, minimizar a curva de aprendizado e garantir um desenvolvimento ágil dentro do prazo de 4 meses.
 
+## 📚 Tecnologias Core
 
+| Componente | Tecnologia Escolhida | Justificativa Técnica para o Nosso Caso | Tempo Estimado para Aprender o Básico (para Beginners) |
+|------------|---------------------|------------------------------------------|--------------------------------------------------------|
+| **Linguagem Principal** | JavaScript (com TypeScript opcional) | Tudo na mesma linguagem evita aprender múltiplas sintaxes, facilitando colaboração em equipa de 4. Integra frontend/backend sem esforço, suporta multi-user e real-time nativamente. Alinha com o subject (ex.: React/Express como frameworks válidos). Simples para deployment Docker. | 1-2 semanas (se zero JS; se básico, 2-3 dias). Foco em variáveis, funções e async para Node. |
+| **Frontend Framework** | React com Vite | React é listado como framework no document (ecossistema arquitetural), Vite é starter rápido (build em segundos vs. horas em outros). Integra fácil com Socket.IO para real-time (chat/jogos) e Tailwind para responsive. Ganha pontos em "frontend framework" (1-2 pts). Para 4 meses, evita overhead de Angular/Vue. | 2-4 semanas (fundamentos: components, state, hooks). Cursos de 1-2 horas aceleram, mas prática leva tempo. |
+| **Styling/CSS Solution** | Tailwind CSS | Solução de styling recomendada no subject (rápida para responsive/acessível em dispositivos). Integra direto no React (classes inline), sem CSS separado, economizando tempo em equipa pequena. Suporta custom design system (módulo minor, 1 pt). | 1-2 dias (utility classes básicas). Shift mental de CSS tradicional leva 24 horas, mas tutoriais de 90 min bastam. |
+| **Backend Framework** | Node.js com Express | Express é framework backend listado, leve e minimalista para APIs seguras (rate limiting, endpoints GET/POST/etc. para public API, 2 pts). Integra com Socket.IO para real-time e Prisma para DB. Para multi-user, lida concurrency sem crashes. Simples para 4 meses vs. NestJS (mais complexo). | Node: 1-3 semanas (runtime basics). Express: 3-5 dias (rotas, middleware). Se souberem JS, 1 dia. |
+| **Real-Time/Comunicação** | Socket.IO | Tecnologia similar a WebSockets listada para real-time features (2 pts) e user interaction (chat, 2 pts). Integra em 1 linha no Express e React, lidando disconnections/broadcasts para jogos multiplayer. Essencial para multi-user sem polling. | 1-2 horas (eventos básicos: emit/on). Cursos de 30-80 min cobrem tudo. |
+| **Base de Dados** | PostgreSQL | BD relacional com schema claro/relations (obrigatório). Suporta multi-user sem race conditions, integra com Prisma para validações. Robusta para stats jogos/user data. Gratuita e escalável para 4 meses. | 2-4 semanas (queries básicas: SELECT, JOIN). Se souberem SQL, 1 semana. |
+| **ORM (Object-Relational Mapping)** | Prisma | ORM minor (1 pt) simples, com migrações auto e type-safety. Integra com Node/Express em minutos, valida inputs backend (obrigatório). Evita SQL raw para equipa beginner, facilitando user management. | 1-2 horas (schema, queries). Cursos de 60 min para basics. |
+| **Autenticação** | JWT com bcrypt | JWT para sessions seguras (standard user management, 2 pts; OAuth minor se adicionar). Bcrypt para hashing passwords (salted, obrigatório). Integra com Express em middleware simples, suporta 2FA futuro. Seguro para multi-user. | JWT: 15-30 min (gerar/validar tokens). Bcrypt: 30 min-1 hora (hash/compare). Tutoriais de 4-15 min. |
+| **Containerização/Deployment** | Docker com Docker Compose | Solução obrigatória para run single-command. Compose gerencia multi-containers (frontend/backend/DB) fácil, integra Nginx para HTTPS. Para 4 meses, evita setups manuais em máquinas diferentes. | Docker: 1-2 dias (imagens, containers). Compose: 1 dia (YAML básico). Tutoriais de 15-45 min + prática. |
+| **Reverse Proxy/HTTPS** | Nginx | Para HTTPS everywhere (obrigatório). Integra como container no Compose, proxy para Express. Simples config para multi-user/performance. Evita certs complexos. | 1-2 dias (config básica: server blocks). Cursos de 1 hora para beginners. |
+
+## 🔧 Ferramentas de Desenvolvimento
+
+- **Controle de Versão:** Git + GitHub
+- **Gestão de Projeto:** Trello (Kanban Board)
+- **Comunicação:** Slack + WhatsApp
+- **IDE:** VS Code (recomendado)
+- **Testes:** Jest (backend), React Testing Library (frontend)
+- **Linting:** ESLint + Prettier
+- **CI/CD:** GitHub Actions (opcional)
+
+## 📦 Dependências Principais
+
+### Backend Services
+```json
+{
+  "express": "^4.18.2",
+  "socket.io": "^4.6.1",
+  "prisma": "^5.7.0",
+  "@prisma/client": "^5.7.0",
+  "jsonwebtoken": "^9.0.2",
+  "bcrypt": "^5.1.1",
+  "passport": "^0.6.0",
+  "passport-oauth2": "^1.7.0",
+  "redis": "^4.6.10",
+  "cors": "^2.8.5",
+  "helmet": "^7.1.0",
+  "express-rate-limit": "^7.1.5"
+}
+```
+
+### Frontend
+```json
+{
+  "react": "^18.2.0",
+  "react-dom": "^18.2.0",
+  "vite": "^5.0.0",
+  "tailwindcss": "^3.3.0",
+  "socket.io-client": "^4.6.1",
+  "react-router-dom": "^6.20.0",
+  "axios": "^1.6.2"
+}
+```
+
+## 🎯 Decisões Arquiteturais
+
+### Por que Microserviços?
+- **Escalabilidade:** Cada serviço pode escalar independentemente
+- **Manutenibilidade:** Código organizado por domínio de negócio
+- **Desenvolvimento Paralelo:** Equipe de 4 pode trabalhar em serviços diferentes simultaneamente
+- **Deployment Isolado:** Bugs em um serviço não derrubam o sistema inteiro
+
+### Por que TypeScript (Opcional)?
+- **Type Safety:** Reduz bugs em produção
+- **IntelliSense:** Melhor experiência de desenvolvimento
+- **Documentação Viva:** Tipos servem como documentação
+- **Refatoração Segura:** Mudanças grandes com confiança
+
+### Por que Prisma ORM?
+- **Type-Safe Queries:** TypeScript nativo
+- **Migrations Automáticas:** Versionamento de schema
+- **Schema Declarativo:** Fácil de entender e manter
+- **Validação Built-in:** Reduz código boilerplate
+
+## 📊 Matriz de Compatibilidade
+
+| Requisito do Subject | Tecnologia Utilizada | Status |
+|----------------------|---------------------|--------|
+| Frontend Framework | React + Vite | ✅ |
+| Backend Framework | Express (Node.js) | ✅ |
+| Database | PostgreSQL | ✅ |
+| Real-time Features | Socket.IO | ✅ |
+| User Management | JWT + bcrypt + Passport | ✅ |
+| Standard Security | Helmet + CORS + Rate Limiting | ✅ |
+| Docker Deployment | Docker Compose | ✅ |
+| HTTPS | Nginx Reverse Proxy | ✅ |
+| Multi-user Support | PostgreSQL + Redis Sessions | ✅ |
 
 # Database Schema
 
