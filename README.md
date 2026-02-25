@@ -2,312 +2,305 @@
 
 # ft_transcendence - Task Manager Kanban
 
-Sistema de gestão de tarefas que combina a experiência visual do Notion com a estrutura organizacional do Kanban, especificamente desenvolvido para atender às necessidades dos estudantes da Escola 42.
+Task management system that combines the visual experience of Notion with the organizational structure of Kanban, specifically developed to meet the needs of 42 School students.
 
-## 🚀 Quick Start
+## Quick Start
 
-Para iniciar todo o projeto com um único comando:
+To start the entire project with a single command:
 
 ```bash
 ./scripts/setup.sh
 ```
 
-Este comando irá:
-- ✅ Verificar se o Docker está rodando
-- ✅ Criar arquivo `.env` a partir do `.env.example`
-- ✅ Construir todas as imagens Docker
-- ✅ Iniciar todos os serviços (frontend, backend, databases)
-- ✅ Verificar a saúde de todos os serviços
+This command will:
+- Check if Docker is running
+- Create `.env` file from `.env.example`
+- Build all Docker images
+- Start all services (frontend, backend, databases)
+- Verify the health of all services
 
-## 📋 Pré-requisitos
+## Prerequisites
 
-- **Docker** (versão 20.10+)
-- **Docker Compose** (versão 2.0+)
+- **Docker** (version 20.10+)
+- **Docker Compose** (version 2.0+)
 - **Git**
 
-### Configuração das Credenciais OAuth
+### OAuth Credentials Configuration
 
-Antes de executar o projeto pela primeira vez, você precisa configurar as credenciais OAuth da 42 Intra:
+Before running the project for the first time, you need to configure the 42 Intra OAuth credentials:
 
-1. Acesse: https://profile.intra.42.fr/oauth/applications
-2. Crie uma nova aplicação OAuth
-3. Configure a URL de callback: `http://localhost:3001/api/auth/42/callback`
-4. Copie o `Client ID` e `Client Secret`
-5. Edite o arquivo `.env` e adicione suas credenciais:
+1. Access: https://profile.intra.42.fr/oauth/applications
+2. Create a new OAuth application
+3. Configure the callback URL: `http://localhost:3001/api/auth/42/callback`
+4. Copy the `Client ID` and `Client Secret`
+5. Edit the `.env` file and add your credentials:
    ```
-   INTRA_42_CLIENT_ID=seu_client_id
-   INTRA_42_CLIENT_SECRET=seu_client_secret
+   INTRA_42_CLIENT_ID=your_client_id
+   INTRA_42_CLIENT_SECRET=your_client_secret
    ```
 
-## 🏗️ Arquitetura do Projeto
+## Project Architecture
 
-O projeto utiliza uma **arquitetura monolítica** simples e eficiente:
+The project uses a simple and efficient **monolithic architecture**:
 
 ```
 ft_transcendence/
-├── backend/                   # Backend unificado (Express + Socket.IO)
+├── backend/                   # Unified backend (Express + Socket.IO)
 │   ├── src/
-│   │   ├── routes/           # Rotas da API
-│   │   ├── controllers/      # Lógica de controle
-│   │   ├── services/         # Regras de negócio
-│   │   ├── models/           # Modelos de dados
+│   │   ├── routes/           # API routes
+│   │   ├── controllers/      # Control logic
+│   │   ├── services/         # Business rules
+│   │   ├── models/           # Data models
 │   │   ├── middlewares/      # Middlewares (auth, validation)
-│   │   ├── config/           # Configurações
-│   │   └── utils/            # Utilitários
-│   └── prisma/               # Schema do banco de dados
+│   │   ├── config/           # Configurations
+│   │   └── utils/            # Utilities
+│   └── prisma/               # Database schema
 ├── frontend/                  # React Application
 ├── config/                    # Nginx, Database configs
-├── scripts/                   # Scripts de automação
-└── docker-compose.yml         # Orquestração dos containers
+├── scripts/                   # Automation scripts
+└── docker-compose.yml         # Container orchestration
 ```
 
-### Serviços e Portas
+### Services and Ports
 
-| Serviço | Porta | Descrição |
+| Service | Port | Description |
 |---------|-------|-----------|
-| Frontend | 3000 | Interface React |
-| Backend | 3001 | API REST + WebSocket (Socket.IO) |
-| PostgreSQL | 5432 | Banco de dados principal |
-| Redis | 6379 | Cache e sessões |
-| Nginx | 80 | Reverse proxy (opcional) |
+| Frontend | 3000 | React Interface |
+| Backend | 3001 | REST API + WebSocket (Socket.IO) |
+| PostgreSQL | 5432 | Main database |
+| Redis | 6379 | Cache and sessions |
+| Nginx | 80 | Reverse proxy (optional) |
 
-## 🛠️ Comandos Disponíveis
+## Available Commands
 
-### Inicialização e Setup
+### Initialization and Setup
 
 ```bash
-# Setup inicial completo
+# Complete initial setup
 ./scripts/setup.sh
 
-# Modo desenvolvimento (com logs visíveis)
+# Development mode (with visible logs)
 ./scripts/dev.sh
 
-# Executar migrations do banco de dados
+# Run database migrations
 ./scripts/migrate.sh
 
-# Verificar saúde dos serviços
+# Check service health
 ./scripts/health-check.sh
 ```
 
-### Gerenciamento de Containers
+### Container Management
 
 ```bash
-# Iniciar todos os serviços em background
+# Start all services in background
 make up
-# ou
+# or
 docker-compose up -d
 
-# Parar todos os serviços
+# Stop all services
 make down
-# ou
+# or
 docker-compose down
 
-# Ver logs de um serviço específico
-make logs-backend    # Logs do backend
-make logs-frontend   # Logs do frontend
-# ou
-docker-compose logs -f [nome-do-serviço]
+# View logs of a specific service
+make logs-backend    # Backend logs
+make logs-frontend   # Frontend logs
+# or
+docker-compose logs -f [service-name]
 
-# Ver status de todos os containers
+# View status of all containers
 make ps
-# ou
+# or
 docker-compose ps
 
-# Reiniciar todos os serviços
+# Restart all services
 make restart
-### Limpeza e Reset
+```
+
+### Cleanup and Reset
 
 ```bash
-# Limpar tudo (containers, volumes, images)
+# Clean everything (containers, volumes, images)
 make clean
-# ou
+# or
 ./scripts/clean.sh
 
-# Apenas parar e remover containers
+# Only stop and remove containers
 make down
 
-# Reset completo do banco de dados (PERDE DADOS)
+# Complete database reset (LOSES DATA)
 make reset-db
 
-# Reset completo do projeto (PERDE TUDO)
+# Complete project reset (LOSES EVERYTHING)
 make reset-all
-```penas parar e remover containers
+
+# Only stop and remove containers
 docker-compose down
 
-# Parar e remover volumes (PERDE DADOS)
+# Stop and remove volumes (LOSES DATA)
 docker-compose down -v
 ```
 
-## 🗄️ Estrutura de Desenvolvimento
+## Development Structure
 
-### Variáveis de Ambiente
+### Environment Variables
 
-O arquivo `.env.example` contém todas as variáveis necessárias. Copie-o para `.env` e configure:
+The `.env.example` file contains all necessary variables. Copy it to `.env` and configure:
 
 ```bash
 cp .env.example .env
 ```
 
-Principais variáveis que você deve configurar:
-- `INTRA_42_CLIENT_ID` - Client ID da 42 OAuth
-- `INTRA_42_CLIENT_SECRET` - Client Secret da 42 OAuth  
-- `JWT_SECRET` - Chave secreta para JWT (mínimo 32 caracteres)
-- `JWT_REFRESH_SECRET` - Chave para refresh tokens
-- `POSTGRES_PASSWORD` - Senha do PostgreSQL
-- `REDIS_PASSWORD` - Senha do Redis
+Main variables you should configure:
+- `INTRA_42_CLIENT_ID` - 42 OAuth Client ID
+- `INTRA_42_CLIENT_SECRET` - 42 OAuth Client Secret  
+- `JWT_SECRET` - Secret key for JWT (minimum 32 characters)
+- `JWT_REFRESH_SECRET` - Key for refresh tokens
+- `POSTGRES_PASSWORD` - PostgreSQL password
+- `REDIS_PASSWORD` - Redis password
 
 ### Hot Reload
 
-Todos os serviços estão configurados com **hot reload** em modo desenvolvimento:
-- Backend: Nodemon detecta mudanças em `.ts` e reinicia automaticamente
+All services are configured with **hot reload** in development mode:
+- Backend: Nodemon detects changes in `.ts` and restarts automatically
 - Frontend: Vite HMR (Hot Module Replacement)
 
-## 🧪 Testes
+## Tests
 
 ```bash
-# Executar testes do backend
+# Run backend tests
 make test-backend
 
-# Executar testes do frontend
+# Run frontend tests
 make test-frontend
 
-# Executar todos os testes
+# Run all tests
 make test-all
 
-# Executar testes com coverage
+# Run tests with coverage
 make test-coverage
 ```
 
 ### Health Checks
 
-O backend possui endpoint de health check:
+The backend has a health check endpoint:
 
 - Backend: http://localhost:3001/health
 - Frontend: http://localhost:3000
 
-Use o script de verificação:
+Use the verification script:
 ```bash
 make health
-# ou
+# or
 ./scripts/health-check.sh
 ```
 
 ### Logs
 
 ```bash
-# Ver logs de todos os serviços
+# View logs of all services
 make logs
 
-# Ver logs dos últimos 100 linhas
+# View last 100 lines of logs
 docker-compose logs --tail=100
 
-# Ver logs de serviços específicos
+# View logs of specific services
 make logs-backend    # Backend
 make logs-frontend   # Frontend
 make logs-db         # PostgreSQL
 make logs-redis      # Redis
-```
-docker-compose logs --tail=100
 
-# Ver logs de serviços específicos
-docker-compose logs -f auth-service core-service
-```
-
-# Ver logs de serviços específicos
+# View logs of specific services
 docker-compose logs -f backend frontend
-### Container não inicia
-
-```bash
-# Ver logs do container com problema
-docker-compose logs [nome-do-serviço]
-
-# Rebuild forçado
-docker-compose build --no-cache [nome-do-serviço]
-docker-compose up -d [nome-do-serviço]
 ```
 
-### Porta já em uso
+## Troubleshooting
+
+### Container won't start
 
 ```bash
-# Verificar o que está usando a porta
-lsof -i :3000  # ou a porta com problema
+# View logs of problematic container
+docker-compose logs [service-name]
 
-### Banco de dados com problemas
+# Forced rebuild
+docker-compose build --no-cache [service-name]
+docker-compose up -d [service-name]
+```
+
+### Port already in use
 
 ```bash
-# Reset completo do banco (PERDE DADOS)
+# Check what is using the port
+lsof -i :3000  # or the problematic port
+```
+
+### Database problems
+
+```bash
+# Complete database reset (LOSES DATA)
 make reset-db
 
-# Apenas executar migrations novamente
+# Only run migrations again
 make migrate
-# ou
+# or
 ./scripts/migrate.sh
 
-# Abrir Prisma Studio para visualizar dados
+# Open Prisma Studio to visualize data
 make prisma-studio
 
-# Acessar shell do PostgreSQL
+# Access PostgreSQL shell
 make db-shell
-```eset completo do banco (PERDE DADOS)
+
+# Complete database reset (LOSES DATA)
 docker-compose down -v
 ./scripts/setup.sh
 
-# Apenas executar migrations novamente
+# Only run migrations again
 ./scripts/migrate.sh
 ```
 
-## 🔒 Segurança
+## Security
 
-- Nunca commitar o arquivo `.env` (já está no `.gitignore`)
-- Trocar todas as senhas padrão em produção
-- Usar HTTPS em produção (configuração nginx incluída)
-- Revisar e atualizar dependências regularmente
-- Redis e PostgreSQL com senhas fortes
-- Rate limiting configurado para proteger contra abuso
+- Never commit the `.env` file (already in `.gitignore`)
+- Change all default passwords in production
+- Use HTTPS in production (nginx configuration included)
+- Review and update dependencies regularly
+- Redis and PostgreSQL with strong passwords
+- Rate limiting configured to protect against abuse
 
-## 📚 Comandos Úteis (Resumo)
+## Useful Commands (Summary)
 
 ```bash
-# Iniciar projeto
-make setup          # Primeira vez (setup completo)
-make up             # Iniciar serviços
-make dev            # Modo desenvolvimento com logs
+# Start project
+make setup          # First time (complete setup)
+make up             # Start services
+make dev            # Development mode with logs
 
-# Desenvolvimento
-make logs-backend   # Ver logs do backend
-make shell-backend  # Acessar shell do backend
-make test-backend   # Executar testes
-make prisma-studio  # GUI para visualizar banco
+# Development
+make logs-backend   # View backend logs
+make shell-backend  # Access backend shell
+make test-backend   # Run tests
+make prisma-studio  # GUI to visualize database
 
-# Manutenção
-make health         # Verificar saúde dos serviços
-make restart        # Reiniciar tudo
-make clean          # Limpar tudo
+# Maintenance
+make health         # Check service health
+make restart        # Restart everything
+make clean          # Clean everything
 
-# Informações
-make help           # Ver todos os comandos
-make info           # Ver URLs dos serviços
+# Information
+make help           # View all commands
+make info           # View service URLs
 ```
 
-## 🔗 URLs Importantes
+## Important URLs
 
-| Serviço | URL | Descrição |
+| Service | URL | Description |
 |---------|-----|-----------|
-| **Frontend** | http://localhost:3000 | Interface do usuário |
-| **Backend API** | http://localhost:3001 | API REST |
-| **Health Check** | http://localhost:3001/health | Status do backend |
-| **PostgreSQL** | localhost:5432 | Banco de dados |
-| **Redis** | localhost:6379 | Cache e sessões |
-
----o chown -R $USER:$USER .
-```
-
-## 🔒 Segurança
-
-- Nunca commitar o arquivo `.env` (já está no `.gitignore`)
-- Trocar todas as senhas padrão em produção
-- Usar HTTPS em produção (configuração nginx incluída)
-- Revisar e atualizar dependências regularmente
+| **Frontend** | http://localhost:3000 | User interface |
+| **Backend API** | http://localhost:3001 | REST API |
+| **Health Check** | http://localhost:3001/health | Backend status |
+| **PostgreSQL** | localhost:5432 | Database |
+| **Redis** | localhost:6379 | Cache and sessions |
 
 ---
 
@@ -412,34 +405,34 @@ This dual-channel approach ensures we never miss urgent issues (WhatsApp) while 
 
 # Technical Stack
 
-A stack tecnológica foi cuidadosamente selecionada para maximizar a produtividade da equipe de 4 pessoas, minimizar a curva de aprendizado e garantir um desenvolvimento ágil dentro do prazo de 4 meses.
+The technology stack was carefully selected to maximize the productivity of the 4-person team, minimize the learning curve, and ensure agile development within the 4-month deadline.
 
-## 📚 Tecnologias Core
+## Core Technologies
 
-| Componente | Tecnologia Escolhida | Justificativa Técnica para o Nosso Caso | Tempo Estimado para Aprender o Básico (para Beginners) |
+| Component | Chosen Technology | Technical Justification for Our Case | Estimated Time to Learn Basics (for Beginners) |
 |------------|---------------------|------------------------------------------|--------------------------------------------------------|
-| **Linguagem Principal** | JavaScript (com TypeScript opcional) | Tudo na mesma linguagem evita aprender múltiplas sintaxes, facilitando colaboração em equipa de 4. Integra frontend/backend sem esforço, suporta multi-user e real-time nativamente. Alinha com o subject (ex.: React/Express como frameworks válidos). Simples para deployment Docker. | 1-2 semanas (se zero JS; se básico, 2-3 dias). Foco em variáveis, funções e async para Node. |
-| **Frontend Framework** | React com Vite | React é listado como framework no document (ecossistema arquitetural), Vite é starter rápido (build em segundos vs. horas em outros). Integra fácil com Socket.IO para real-time (chat/jogos) e Tailwind para responsive. Ganha pontos em "frontend framework" (1-2 pts). Para 4 meses, evita overhead de Angular/Vue. | 2-4 semanas (fundamentos: components, state, hooks). Cursos de 1-2 horas aceleram, mas prática leva tempo. |
-| **Styling/CSS Solution** | Tailwind CSS | Solução de styling recomendada no subject (rápida para responsive/acessível em dispositivos). Integra direto no React (classes inline), sem CSS separado, economizando tempo em equipa pequena. Suporta custom design system (módulo minor, 1 pt). | 1-2 dias (utility classes básicas). Shift mental de CSS tradicional leva 24 horas, mas tutoriais de 90 min bastam. |
-| **Backend Framework** | Node.js com Express | Express é framework backend listado, leve e minimalista para APIs seguras (rate limiting, endpoints GET/POST/etc. para public API, 2 pts). Integra com Socket.IO para real-time e Prisma para DB. Para multi-user, lida concurrency sem crashes. Simples para 4 meses vs. NestJS (mais complexo). | Node: 1-3 semanas (runtime basics). Express: 3-5 dias (rotas, middleware). Se souberem JS, 1 dia. |
-| **Real-Time/Comunicação** | Socket.IO | Tecnologia similar a WebSockets listada para real-time features (2 pts) e user interaction (chat, 2 pts). Integra em 1 linha no Express e React, lidando disconnections/broadcasts para jogos multiplayer. Essencial para multi-user sem polling. | 1-2 horas (eventos básicos: emit/on). Cursos de 30-80 min cobrem tudo. |
-| **Base de Dados** | PostgreSQL | BD relacional com schema claro/relations (obrigatório). Suporta multi-user sem race conditions, integra com Prisma para validações. Robusta para stats jogos/user data. Gratuita e escalável para 4 meses. | 2-4 semanas (queries básicas: SELECT, JOIN). Se souberem SQL, 1 semana. |
-| **ORM (Object-Relational Mapping)** | Prisma | ORM minor (1 pt) simples, com migrações auto e type-safety. Integra com Node/Express em minutos, valida inputs backend (obrigatório). Evita SQL raw para equipa beginner, facilitando user management. | 1-2 horas (schema, queries). Cursos de 60 min para basics. |
-| **Autenticação** | JWT com bcrypt | JWT para sessions seguras (standard user management, 2 pts; OAuth minor se adicionar). Bcrypt para hashing passwords (salted, obrigatório). Integra com Express em middleware simples, suporta 2FA futuro. Seguro para multi-user. | JWT: 15-30 min (gerar/validar tokens). Bcrypt: 30 min-1 hora (hash/compare). Tutoriais de 4-15 min. |
-| **Containerização/Deployment** | Docker com Docker Compose | Solução obrigatória para run single-command. Compose gerencia multi-containers (frontend/backend/DB) fácil, integra Nginx para HTTPS. Para 4 meses, evita setups manuais em máquinas diferentes. | Docker: 1-2 dias (imagens, containers). Compose: 1 dia (YAML básico). Tutoriais de 15-45 min + prática. |
-| **Reverse Proxy/HTTPS** | Nginx | Para HTTPS everywhere (obrigatório). Integra como container no Compose, proxy para Express. Simples config para multi-user/performance. Evita certs complexos. | 1-2 dias (config básica: server blocks). Cursos de 1 hora para beginners. |
+| **Main Language** | JavaScript (with optional TypeScript) | Everything in the same language avoids learning multiple syntaxes, facilitating collaboration in a team of 4. Integrates frontend/backend effortlessly, supports multi-user and real-time natively. Aligns with the subject (e.g.: React/Express as valid frameworks). Simple for Docker deployment. | 1-2 weeks (if zero JS; if basic, 2-3 days). Focus on variables, functions and async for Node. |
+| **Frontend Framework** | React with Vite | React is listed as framework in document (architectural ecosystem), Vite is fast starter (build in seconds vs. hours in others). Easy integration with Socket.IO for real-time (chat/games) and Tailwind for responsive. Earns points in "frontend framework" (1-2 pts). For 4 months, avoids Angular/Vue overhead. | 2-4 weeks (fundamentals: components, state, hooks). 1-2 hour courses accelerate, but practice takes time. |
+| **Styling/CSS Solution** | Tailwind CSS | Styling solution recommended in subject (fast for responsive/accessible on devices). Integrates directly into React (inline classes), no separate CSS, saving time in small team. Supports custom design system (minor module, 1 pt). | 1-2 days (basic utility classes). Mental shift from traditional CSS takes 24 hours, but 90 min tutorials suffice. |
+| **Backend Framework** | Node.js with Express | Express is listed backend framework, lightweight and minimalist for secure APIs (rate limiting, GET/POST endpoints etc. for public API, 2 pts). Integrates with Socket.IO for real-time and Prisma for DB. For multi-user, handles concurrency without crashes. Simple for 4 months vs. NestJS (more complex). | Node: 1-3 weeks (runtime basics). Express: 3-5 days (routes, middleware). If they know JS, 1 day. |
+| **Real-Time/Communication** | Socket.IO | Technology similar to WebSockets listed for real-time features (2 pts) and user interaction (chat, 2 pts). Integrates in 1 line in Express and React, handling disconnections/broadcasts for multiplayer games. Essential for multi-user without polling. | 1-2 hours (basic events: emit/on). 30-80 min courses cover everything. |
+| **Database** | PostgreSQL | Relational DB with clear schema/relations (mandatory). Supports multi-user without race conditions, integrates with Prisma for validations. Robust for game stats/user data. Free and scalable for 4 months. | 2-4 weeks (basic queries: SELECT, JOIN). If they know SQL, 1 week. |
+| **ORM (Object-Relational Mapping)** | Prisma | Simple ORM minor (1 pt), with auto migrations and type-safety. Integrates with Node/Express in minutes, validates backend inputs (mandatory). Avoids raw SQL for beginner team, facilitating user management. | 1-2 hours (schema, queries). 60 min courses for basics. |
+| **Authentication** | JWT with bcrypt | JWT for secure sessions (standard user management, 2 pts; OAuth minor if added). Bcrypt for hashing passwords (salted, mandatory). Integrates with Express in simple middleware, supports future 2FA. Secure for multi-user. | JWT: 15-30 min (generate/validate tokens). Bcrypt: 30 min-1 hour (hash/compare). 4-15 min tutorials. |
+| **Containerization/Deployment** | Docker with Docker Compose | Mandatory solution to run single-command. Compose manages multi-containers (frontend/backend/DB) easily, integrates Nginx for HTTPS. For 4 months, avoids manual setups on different machines. | Docker: 1-2 days (images, containers). Compose: 1 day (basic YAML). 15-45 min tutorials + practice. |
+| **Reverse Proxy/HTTPS** | Nginx | For HTTPS everywhere (mandatory). Integrates as container in Compose, proxy to Express. Simple config for multi-user/performance. Avoids complex certs. | 1-2 days (basic config: server blocks). 1 hour courses for beginners. |
 
-## 🔧 Ferramentas de Desenvolvimento
+## Development Tools
 
-- **Controle de Versão:** Git + GitHub
-- **Gestão de Projeto:** Trello (Kanban Board)
-- **Comunicação:** Slack + WhatsApp
-- **IDE:** VS Code (recomendado)
-- **Testes:** Jest (backend), React Testing Library (frontend)
+- **Version Control:** Git + GitHub
+- **Project Management:** Trello (Kanban Board)
+- **Communication:** Slack + WhatsApp
+- **IDE:** VS Code (recommended)
+- **Testing:** Jest (backend), React Testing Library (frontend)
 - **Linting:** ESLint + Prettier
-- **CI/CD:** GitHub Actions (opcional)
+- **CI/CD:** GitHub Actions (optional)
 
-## 📦 Dependências Principais
+## Main Dependencies
 
 ### Backend Services
 ```json
@@ -472,41 +465,41 @@ A stack tecnológica foi cuidadosamente selecionada para maximizar a produtivida
 }
 ```
 
-## 🎯 Decisões Arquiteturais
+## Architectural Decisions
 
-### Por que Monolito (ao invés de Microserviços)?
-- **Simplicidade:** Mais fácil de desenvolver e debugar para time de 4 pessoas
-- **Performance:** Menos overhead de comunicação entre serviços
-- **Desenvolvimento Rápido:** Deploy e iteração mais ágeis
-- **Menos Complexidade:** Apenas 1 codebase backend para gerenciar
-- **Facilita Colaboração:** Time pode trabalhar no mesmo repositório sem conflitos de integração
+### Why Monolith (instead of Microservices)?
+- **Simplicity:** Easier to develop and debug for a team of 4 people
+- **Performance:** Less communication overhead between services
+- **Rapid Development:** Faster deploy and iteration
+- **Less Complexity:** Only 1 backend codebase to manage
+- **Facilitates Collaboration:** Team can work on the same repository without integration conflicts
 
-### Por que TypeScript (Opcional)?
-- **Type Safety:** Reduz bugs em produção
-- **IntelliSense:** Melhor experiência de desenvolvimento
-- **Documentação Viva:** Tipos servem como documentação
-- **Refatoração Segura:** Mudanças grandes com confiança
+### Why TypeScript (Optional)?
+- **Type Safety:** Reduces bugs in production
+- **IntelliSense:** Better development experience
+- **Living Documentation:** Types serve as documentation
+- **Safe Refactoring:** Large changes with confidence
 
-### Por que Prisma ORM?
-- **Type-Safe Queries:** TypeScript nativo
-- **Migrations Automáticas:** Versionamento de schema
-- **Schema Declarativo:** Fácil de entender e manter
-- **Validação Built-in:** Reduz código boilerplate
+### Why Prisma ORM?
+- **Type-Safe Queries:** Native TypeScript
+- **Automatic Migrations:** Schema versioning
+- **Declarative Schema:** Easy to understand and maintain
+- **Built-in Validation:** Reduces boilerplate code
 
-## 📊 Matriz de Compatibilidade
+## Compatibility Matrix
 
-| Requisito do Subject | Tecnologia Utilizada | Status |
+| Subject Requirement | Technology Used | Status |
 |----------------------|---------------------|--------|
-| Frontend Framework | React + Vite | ✅ |
-| Backend Framework | Express (Node.js) | ✅ |
-| Database | PostgreSQL | ✅ |
-| Real-time Features | Socket.IO | ✅ |
-| User Management | JWT + bcrypt + Passport | ✅ |
-| Standard Security | Helmet + CORS + Rate Limiting | ✅ |
-| Docker Deployment | Docker Compose | ✅ |
-| HTTPS | Nginx Reverse Proxy | ✅ |
-| Multi-user Support | PostgreSQL + Redis Sessions | ✅ |
-| Monolithic Architecture | Express unificado | ✅ |
+| Frontend Framework | React + Vite | Yes |
+| Backend Framework | Express (Node.js) | Yes |
+| Database | PostgreSQL | Yes |
+| Real-time Features | Socket.IO | Yes |
+| User Management | JWT + bcrypt + Passport | Yes |
+| Standard Security | Helmet + CORS + Rate Limiting | Yes |
+| Docker Deployment | Docker Compose | Yes |
+| HTTPS | Nginx Reverse Proxy | Yes |
+| Multi-user Support | PostgreSQL + Redis Sessions | Yes |
+| Monolithic Architecture | Unified Express | Yes |
 
 # Database Schema
 
