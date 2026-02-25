@@ -13,32 +13,35 @@ echo -e "${BLUE}╚════════════════════�
 echo ""
 
 # Check if containers are running
-if ! docker-compose ps | grep -q "Up"; then
-    echo -e "${RED}✗ Containers não estão rodando. Execute ./scripts/setup.sh primeiro.${NC}"
+if ! docker compose ps | grep -q "Up"; then
+    echo -e "${RED}✗ Containers não estão rodando. Execute ./scripts/dev.sh primeiro.${NC}"
     exit 1
 fi
 
 echo -e "${BLUE}📊 Executando migrations...${NC}"
 
-# Run migrations for each service
-services=("auth-service" "core-service" "social-service" "gamification-service")
+# Define the correct service name based on your docker-compose
+service="backend"
 
-for service in "${services[@]}"; do
-    echo -e "${YELLOW}⏳ Migrando $service...${NC}"
+echo -e "${YELLOW}⏳ Migrando $service...${NC}"
+
+# Tenta rodar a migração do Prisma
+# Usa 'prisma migrate deploy' para produção/CI ou 'dev' para desenvolvimento
+# Aqui vamos usar 'deploy' para garantir que o schema seja aplicado sem pedir confirmação
+docker compose exec $service npx prisma migrate dev --name init --skip-generate || \
+docker compose exec $service npx prisma migrate deploy
+
+if [ $? -eq 0 ]; then
+    echo -e "${GREEN}✓ Banco de dados migrado e atualizado com sucesso!${NC}"
     
-    # Try to run migrations (adjust command based on your ORM)
-    docker-compose exec $service npm run migrate || \
-    docker-compose exec $service npx prisma migrate deploy || \
-    docker-compose exec $service npm run typeorm migration:run || \
-    echo -e "${YELLOW}⚠ Nenhum comando de migration encontrado para $service${NC}"
-    
-    if [ $? -eq 0 ]; then
-        echo -e "${GREEN}✓ $service migrado com sucesso${NC}"
-    else
-        echo -e "${YELLOW}⚠ Verifique o $service manualmente${NC}"
-    fi
-done
+    # Opcional: Gerar o cliente novamente para garantir
+    echo -e "${YELLOW}🔄 Regenerando Prisma Client...${NC}"
+    docker compose exec $service npx prisma generate
+else
+    echo -e "${RED}⚠ Falha na migração do $service. Verifique os logs acima.${NC}"
+    exit 1
+fi
 
 echo ""
-echo -e "${GREEN}✓ Migrations concluídas${NC}"
+echo -e "${GREEN}✓ Processo concluído${NC}"
 echo ""
