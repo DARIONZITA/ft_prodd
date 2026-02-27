@@ -1,6 +1,6 @@
 *This project has been created as part of the 42 curriculum by efinda, dnzita, cgama, jbofengo.*
 
-# ft_transcendence - Task Manager Kanban
+# ft_prodd - Task Manager Kanban
 
 Task management system that combines the visual experience of Notion with the organizational structure of Kanban, specifically developed to meet the needs of 42 School students.
 
@@ -14,7 +14,7 @@ To start the entire project with a single command:
 
 This command will:
 - Check if Docker is running
-- Create `.env` file from `.env.example`
+- Create `config/.env` file from `config/.env.example`
 - Build all Docker images
 - Start all services (frontend, backend, databases)
 - Verify the health of all services
@@ -33,7 +33,7 @@ Before running the project for the first time, you need to configure the 42 Intr
 2. Create a new OAuth application
 3. Configure the callback URL: `http://localhost:3001/api/auth/42/callback`
 4. Copy the `Client ID` and `Client Secret`
-5. Edit the `.env` file and add your credentials:
+5. Edit the `config/.env` file and add your credentials:
    ```
    INTRA_42_CLIENT_ID=your_client_id
    INTRA_42_CLIENT_SECRET=your_client_secret
@@ -44,7 +44,7 @@ Before running the project for the first time, you need to configure the 42 Intr
 The project uses a simple and efficient **monolithic architecture**:
 
 ```
-ft_transcendence/
+ft_prodd/
 ├── backend/                   # Unified backend (Express + Socket.IO)
 │   ├── src/
 │   │   ├── routes/           # API routes
@@ -58,7 +58,7 @@ ft_transcendence/
 ├── frontend/                  # React Application
 ├── config/                    # Nginx, Database configs
 ├── scripts/                   # Automation scripts
-└── docker-compose.yml         # Container orchestration
+└── config/docker-compose.yaml # Container orchestration
 ```
 
 ### Services and Ports
@@ -95,23 +95,23 @@ ft_transcendence/
 # Start all services in background
 make up
 # or
-docker-compose up -d
+docker compose -f config/docker-compose.yaml --env-file config/.env up -d
 
 # Stop all services
 make down
 # or
-docker-compose down
+docker compose -f config/docker-compose.yaml --env-file config/.env down
 
 # View logs of a specific service
 make logs-backend    # Backend logs
 make logs-frontend   # Frontend logs
 # or
-docker-compose logs -f [service-name]
+docker compose -f config/docker-compose.yaml --env-file config/.env logs -f [service-name]
 
 # View status of all containers
 make ps
 # or
-docker-compose ps
+docker compose -f config/docker-compose.yaml --env-file config/.env ps
 
 # Restart all services
 make restart
@@ -135,20 +135,20 @@ make reset-db
 make reset-all
 
 # Only stop and remove containers
-docker-compose down
+docker compose -f config/docker-compose.yaml --env-file config/.env down
 
 # Stop and remove volumes (LOSES DATA)
-docker-compose down -v
+docker compose -f config/docker-compose.yaml --env-file config/.env down -v
 ```
 
 ## Development Structure
 
 ### Environment Variables
 
-The `.env.example` file contains all necessary variables. Copy it to `.env` and configure:
+The `config/.env.example` file contains all necessary variables. Copy it to `config/.env` and configure:
 
 ```bash
-cp .env.example .env
+cp config/.env.example config/.env
 ```
 
 Main variables you should configure:
@@ -202,7 +202,7 @@ make health
 make logs
 
 # View last 100 lines of logs
-docker-compose logs --tail=100
+docker compose -f config/docker-compose.yaml --env-file config/.env logs --tail=100
 
 # View logs of specific services
 make logs-backend    # Backend
@@ -211,7 +211,7 @@ make logs-db         # PostgreSQL
 make logs-redis      # Redis
 
 # View logs of specific services
-docker-compose logs -f backend frontend
+docker compose -f config/docker-compose.yaml --env-file config/.env logs -f backend frontend
 ```
 
 ## Troubleshooting
@@ -220,11 +220,11 @@ docker-compose logs -f backend frontend
 
 ```bash
 # View logs of problematic container
-docker-compose logs [service-name]
+docker compose -f config/docker-compose.yaml --env-file config/.env logs [service-name]
 
 # Forced rebuild
-docker-compose build --no-cache [service-name]
-docker-compose up -d [service-name]
+docker compose -f config/docker-compose.yaml --env-file config/.env build --no-cache [service-name]
+docker compose -f config/docker-compose.yaml --env-file config/.env up -d [service-name]
 ```
 
 ### Port already in use
@@ -252,7 +252,7 @@ make prisma-studio
 make db-shell
 
 # Complete database reset (LOSES DATA)
-docker-compose down -v
+docker compose -f config/docker-compose.yaml --env-file config/.env down -v
 ./scripts/setup.sh
 
 # Only run migrations again
@@ -261,7 +261,7 @@ docker-compose down -v
 
 ## Security
 
-- Never commit the `.env` file (already in `.gitignore`)
+- Never commit the `config/.env` file (already in `.gitignore`)
 - Change all default passwords in production
 - Use HTTPS in production (nginx configuration included)
 - Review and update dependencies regularly

@@ -22,5 +22,5 @@ GRANT ALL PRIVILEGES ON SCHEMA gamification TO transcendence;
 -- Log initialization
 DO $$
 BEGIN
-    RAISE NOTICE 'Database initialized successfully for ft_transcendence';
+    RAISE NOTICE 'Database initialized successfully for ft_prodd';
 END $$;

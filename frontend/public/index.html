@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#000000" />
+    <meta name="description" content="Task Manager Kanban para 42 School" />
+    <title>ft_prodd - Task Manager</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #ffffff;
+      }
+      .container {
+        text-align: center;
+        padding: 3rem;
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border-radius: 20px;
+        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        max-width: 600px;
+      }
+      h1 {
+        font-size: 2.5rem;
+        margin-bottom: 1rem;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+      }
+      p {
+        font-size: 1.2rem;
+        margin-bottom: 2rem;
+        color: #f0f0f0;
+      }
+      .status {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        flex-wrap: wrap;
+      }
+      .status-badge {
+        background: rgba(52, 211, 153, 0.2);
+        color: #34d399;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        border: 1px solid #34d399;
+        font-weight: 600;
+        font-size: 0.9rem;
+      }
+      .info {
+        margin-top: 2rem;
+        padding: 1rem;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 10px;
+        font-size: 0.9rem;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>🚀 ft_prodd</h1>
+      <p>Task Manager Kanban for 42 School</p>
+      <div class="status">
+        <span class="status-badge">✓ Frontend Running</span>
+        <span class="status-badge">✓ Backend API</span>
+        <span class="status-badge">✓ Database</span>
+      </div>
+      <div class="info">
+        <p><strong>Project:</strong> ft_prodd</p>
+        <p><strong>Frontend:</strong> http://localhost:3000</p>
+        <p><strong>Backend:</strong> http://localhost:3001</p>
+      </div>
+    </div>
+  </body>
+</html>

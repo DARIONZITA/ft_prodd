@@ -1,11 +1,18 @@
-# Makefile para ft_transcendence
+# Makefile para ft_prodd
 # Facilita o uso dos scripts com comandos mais curtos
+
+NAME := ft_prodd
+DOCKER-COMPOSE := ./config/docker-compose.yaml
+ENV_FILE := ./config/.env
+VOLUMES_DIR := /home/$USER/data
+
+DOCKER := docker compose -f $(DOCKER-COMPOSE) --env-file $(ENV_FILE)
 
 .PHONY: help setup up down restart logs ps clean rebuild health migrate dev test
 
 help: ## Mostra esta mensagem de ajuda
 	@echo "╔════════════════════════════════════════════════════════╗"
-	@echo "║         ft_transcendence - Comandos Disponíveis        ║"
+	@echo "║             $(NAME) - Comandos Disponíveis            ║"
 	@echo "╚════════════════════════════════════════════════════════╝"
 	@echo ""
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-20s\033[0m %s\n", $$1, $$2}'
@@ -19,26 +26,26 @@ setup: ## Setup inicial completo do projeto
 	@./scripts/setup.sh
 
 up: ## Iniciar todos os serviços em background
-	@docker-compose up -d
+	@$(DOCKER) up -d
 
 down: ## Parar todos os serviços
-	@docker-compose down
+	@$(DOCKER) down
 
 restart: ## Reiniciar todos os serviços
-	@docker-compose restart
+	@$(DOCKER) restart
 
 logs: ## Ver logs de todos os serviços
-	@docker-compose logs -f
+	@$(DOCKER) logs -f
 
 ps: ## Ver status de todos os containers
-	@docker-compose ps
+	@$(DOCKER) ps
 
 clean: ## Limpar tudo (containers, volumes, images)
 	@./scripts/clean.sh
 
 rebuild: ## Rebuild completo de todos os serviços
-	@docker-compose build --no-cache
-	@docker-compose up -d
+	@$(DOCKER) build --no-cache
+	@$(DOCKER) up -d
 
 health: ## Verificar saúde dos serviços
 	@./scripts/health-check.sh
@@ -54,45 +61,45 @@ dev: ## Modo desenvolvimento (com logs visíveis)
 # ===========================
 
 logs-backend: ## Ver logs do backend
-	@docker-compose logs -f backend
+	@$(DOCKER) logs -f backend
 
 logs-frontend: ## Ver logs do frontend
-	@docker-compose logs -f frontend
+	@$(DOCKER) logs -f frontend
 
 logs-db: ## Ver logs do PostgreSQL
-	@docker-compose logs -f postgres
+	@$(DOCKER) logs -f postgres
 
 logs-redis: ## Ver logs do Redis
-	@docker-compose logs -f redis
+	@$(DOCKER) logs -f redis
 
 # ===========================
 # SHELL/ACESSO AOS CONTAINERS
 # ===========================
 
 shell-backend: ## Abrir shell no container backend
-	@docker-compose exec backend sh
+	@$(DOCKER) exec backend sh
 
 shell-frontend: ## Abrir shell no container frontend
-	@docker-compose exec frontend sh
+	@$(DOCKER) exec frontend sh
 
 db-shell: ## Acessar shell do PostgreSQL
-	@docker-compose exec postgres psql -U transcendence -d transcendence_db
+	@$(DOCKER) exec postgres psql -U transcendence -d transcendence_db
 
 redis-cli: ## Acessar Redis CLI
-	@docker-compose exec redis redis-cli -a redis_password
+	@$(DOCKER) exec redis redis-cli -a redis_password
 
 # ===========================
 # TESTES
 # ===========================
 
 test-backend: ## Executar testes do backend
-	@docker-compose exec backend npm test
+	@$(DOCKER) exec backend npm test
 
 test-frontend: ## Executar testes do frontend
-	@docker-compose exec frontend npm test
+	@$(DOCKER) exec frontend npm test
 
 test-coverage: ## Executar testes com coverage (backend)
-	@docker-compose exec backend npm run test:coverage
+	@$(DOCKER) exec backend npm run test:coverage
 
 test-all: ## Executar todos os testes
 	@echo "🧪 Executando testes..."
@@ -104,23 +111,23 @@ test-all: ## Executar todos os testes
 # ===========================
 
 prisma-generate: ## Gerar Prisma Client
-	@docker-compose exec backend npm run prisma:generate
+	@$(DOCKER) exec backend npm run prisma:generate
 
 prisma-migrate: ## Executar migrations do Prisma
-	@docker-compose exec backend npm run prisma:migrate
+	@$(DOCKER) exec backend npm run prisma:migrate
 
 prisma-studio: ## Abrir Prisma Studio (GUI para DB)
-	@docker-compose exec backend npm run prisma:studio
+	@$(DOCKER) exec backend npm run prisma:studio
 
 # ===========================
 # INSTALAÇÃO DE DEPENDÊNCIAS
 # ===========================
 
 install-backend: ## Instalar dependências do backend
-	@docker-compose exec backend npm install
+	@$(DOCKER) exec backend npm install
 
 install-frontend: ## Instalar dependências do frontend
-	@docker-compose exec frontend npm install
+	@$(DOCKER) exec frontend npm install
 
 install-all: ## Instalar dependências de todos os serviços
 	@echo "📦 Instalando dependências..."
@@ -132,16 +139,16 @@ install-all: ## Instalar dependências de todos os serviços
 # ===========================
 
 lint-backend: ## Executar linter no backend
-	@docker-compose exec backend npm run lint
+	@$(DOCKER) exec backend npm run lint
 
 lint-frontend: ## Executar linter no frontend
-	@docker-compose exec frontend npm run lint
+	@$(DOCKER) exec frontend npm run lint
 
 format-backend: ## Formatar código do backend
-	@docker-compose exec backend npm run format
+	@$(DOCKER) exec backend npm run format
 
 format-frontend: ## Formatar código do frontend
-	@docker-compose exec frontend npm run format
+	@$(DOCKER) exec frontend npm run format
 
 # ===========================
 # COMANDOS DE RESET
@@ -150,8 +157,8 @@ format-frontend: ## Formatar código do frontend
 reset-db: ## Reset completo do banco de dados (PERDE DADOS)
 	@echo "⚠️  ATENÇÃO: Isso irá deletar todos os dados!"
 	@read -p "Tem certeza? [y/N]: " confirm && [ "$$confirm" = "y" ] || exit 1
-	@docker-compose down -v
-	@docker-compose up -d postgres redis
+	@$(DOCKER) down -v
+	@$(DOCKER) up -d postgres redis
 	@sleep 5
 	@make prisma-migrate
 
@@ -167,7 +174,7 @@ reset-all: ## Reset completo do projeto (PERDE TUDO)
 
 info: ## Mostrar informações do projeto
 	@echo "╔════════════════════════════════════════════════════════╗"
-	@echo "║              ft_transcendence - Informações            ║"
+	@echo "║                  $(NAME) - Informações                ║"
 	@echo "╚════════════════════════════════════════════════════════╝"
 	@echo ""
 	@echo "Frontend:    http://localhost:3000"

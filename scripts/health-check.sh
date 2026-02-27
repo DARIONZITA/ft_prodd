@@ -7,8 +7,13 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
+PROJECT_NAME="ft_prodd"
+COMPOSE_FILE="./config/docker-compose.yaml"
+ENV_FILE="./config/.env"
+DOCKER="docker compose -f $COMPOSE_FILE --env-file $ENV_FILE"
+
 echo -e "${BLUE}╔════════════════════════════════════════════════════════╗${NC}"
-echo -e "${BLUE}║     Health Check - ft_transcendence                    ║${NC}"
+echo -e "${BLUE}║         Health Check - ${PROJECT_NAME}                ║${NC}"
 echo -e "${BLUE}╚════════════════════════════════════════════════════════╝${NC}"
 echo ""
 
@@ -29,14 +34,14 @@ check_http() {
 
 # Function to check container status
 check_container() {
-    local container=$1
-    local status=$(docker-compose ps "$container" 2>/dev/null | grep -i "up" || echo "down")
+    local service=$1
+    local status=$($DOCKER ps "$service" 2>/dev/null | grep -i "up" || echo "down")
     
     if [[ $status == *"up"* ]]; then
-        echo -e "${GREEN}✓ Container $container - Rodando${NC}"
+        echo -e "${GREEN}✓ Container $service - Rodando${NC}"
         return 0
     else
-        echo -e "${RED}✗ Container $container - Parado${NC}"
+        echo -e "${RED}✗ Container $service - Parado${NC}"
         return 1
     fi
 }
@@ -44,7 +49,7 @@ check_container() {
 echo -e "${BLUE}🐳 Verificando Containers Docker...${NC}"
 echo ""
 
-containers=("ft_transcendence_postgres" "ft_transcendence_redis" "ft_transcendence_backend" "ft_transcendence_frontend")
+containers=("postgres" "redis" "backend" "frontend")
 
 container_ok=0
 for container in "${containers[@]}"; do

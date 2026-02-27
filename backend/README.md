@@ -1,6 +1,6 @@
-# ft_transcendence Backend
+# ft_prodd Backend
 
-Backend unificado do Task Manager Kanban para ft_transcendence.
+Backend unificado do Task Manager Kanban para ft_prodd.
 
 ## Estrutura do Projeto
 
@@ -102,7 +102,7 @@ npm run format
 
 ## Variáveis de Ambiente
 
-Veja `.env.example` na raiz do projeto.
+Veja `config/.env.example` na raiz do projeto.
 
 ## API Documentation
 

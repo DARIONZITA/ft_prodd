@@ -18,7 +18,7 @@ FROM base AS development
 COPY --from=dev-deps /app/node_modules ./node_modules
 COPY . .
 EXPOSE 3000
-CMD ["npm", "start"]
+CMD ["npm", "run", "start-simple"]
 
 # Stage 5: Builder
 FROM base AS builder

@@ -1,7 +1,7 @@
 {
   "name": "ft-transcendence-frontend",
   "version": "1.0.0",
-  "description": "Frontend for ft_transcendence task manager",
+  "description": "Frontend for ft_prodd task manager",
   "private": true,
   "dependencies": {
     "react": "^18.2.0",
@@ -15,7 +15,8 @@
     "emoji-picker-react": "^4.5.16"
   },
   "scripts": {
-    "start": "react-scripts start",
+    "start": "PORT=3000 DISABLE_ESLINT_PLUGIN=true WDS_SOCKET_PORT=0 react-scripts start",
+    "start-simple": "node server.js",
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
@@ -46,5 +47,11 @@
     "react-scripts": "5.0.1",
     "typescript": "^5.3.3",
     "prettier": "^3.1.0"
+  },
+  "resolutions": {
+    "ajv": "^8.12.0"
+  },
+  "overrides": {
+    "ajv": "^8.12.0"
   }
 }

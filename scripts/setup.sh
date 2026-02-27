@@ -7,9 +7,15 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
+PROJECT_NAME="ft_prodd"
+COMPOSE_FILE="./config/docker-compose.yaml"
+ENV_FILE="./config/.env"
+ENV_EXAMPLE="./config/.env.example"
+DOCKER="docker compose -f $COMPOSE_FILE --env-file $ENV_FILE"
+
 echo -e "${BLUE}╔════════════════════════════════════════════════════════╗${NC}"
 echo -e "${BLUE}║                                                        ║${NC}"
-echo -e "${BLUE}║        ft_transcendence - Setup Inicial                ║${NC}"
+echo -e "${BLUE}║          ${PROJECT_NAME} - Setup Inicial               ║${NC}"
 echo -e "${BLUE}║                                                        ║${NC}"
 echo -e "${BLUE}╚════════════════════════════════════════════════════════╝${NC}"
 echo ""
@@ -23,11 +29,11 @@ fi
 echo -e "${GREEN}✓ Docker está rodando${NC}"
 
 # Check if .env exists, if not create from .env.example
-if [ ! -f .env ]; then
+if [ ! -f "$ENV_FILE" ]; then
     echo -e "${YELLOW}⚠ Arquivo .env não encontrado. Criando a partir de .env.example...${NC}"
-    
-    if [ -f .env.example ]; then
-        cp .env.example .env
+
+    if [ -f "$ENV_EXAMPLE" ]; then
+        cp "$ENV_EXAMPLE" "$ENV_FILE"
         echo -e "${GREEN}✓ Arquivo .env criado${NC}"
         echo -e "${YELLOW}⚠ IMPORTANTE: Edite o arquivo .env com suas credenciais antes de continuar!${NC}"
         echo -e "${YELLOW}  Especialmente os seguintes campos:${NC}"
@@ -47,20 +53,20 @@ fi
 
 # Stop any running containers
 echo -e "${YELLOW}⏸  Parando containers existentes...${NC}"
-docker-compose down
+$DOCKER down
 
 # Remove old volumes (optional - ask user)
 read -p "Deseja remover volumes antigos? (dados serão perdidos) [y/N]: " -n 1 -r
 echo
 if [[ $REPLY =~ ^[Yy]$ ]]; then
     echo -e "${YELLOW}⏸  Removendo volumes...${NC}"
-    docker-compose down -v
+    $DOCKER down -v
     echo -e "${GREEN}✓ Volumes removidos${NC}"
 fi
 
 # Build all images
 echo -e "${BLUE}🔨 Construindo imagens Docker...${NC}"
-docker-compose build
+$DOCKER build
 
 if [ $? -ne 0 ]; then
     echo -e "${RED}✗ Erro ao construir imagens Docker${NC}"
@@ -71,7 +77,7 @@ echo -e "${GREEN}✓ Imagens construídas com sucesso${NC}"
 
 # Start containers
 echo -e "${BLUE}🚀 Iniciando containers...${NC}"
-docker-compose up -d
+$DOCKER up -d
 
 if [ $? -ne 0 ]; then
     echo -e "${RED}✗ Erro ao iniciar containers${NC}"
@@ -88,7 +94,7 @@ echo -e "${BLUE}🏥 Verificando saúde dos serviços...${NC}"
 services=("postgres" "redis" "backend" "frontend")
 
 for service in "${services[@]}"; do
-    status=$(docker-compose ps "$service" | grep -i "up\|healthy" || echo "down")
+    status=$($DOCKER ps "$service" | grep -i "up\|healthy" || echo "down")
     if [[ $status == *"down"* ]]; then
         echo -e "${RED}✗ $service - não está rodando${NC}"
     else
