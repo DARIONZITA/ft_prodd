@@ -10,6 +10,9 @@ DOCKER := docker compose -f $(DOCKER-COMPOSE) --env-file $(ENV_FILE)
 
 .PHONY: help setup up down restart logs ps clean rebuild health migrate dev test
 
+all: 
+	@$(DOCKER) up -d
+
 help: ## Mostra esta mensagem de ajuda
 	@echo "╔════════════════════════════════════════════════════════╗"
 	@echo "║             $(NAME) - Comandos Disponíveis            ║"
