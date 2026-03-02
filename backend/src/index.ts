@@ -9,6 +9,11 @@ import dotenv from 'dotenv';
 // Load environment variables
 dotenv.config();
 
+// add helper to avoid logging during tests
+const log = (...args: any[]) => {
+  if (process.env.NODE_ENV !== 'test') console.log(...args);
+}
+
 const app: Application = express();
 const server = http.createServer(app);
 const io = new SocketIOServer(server, {
@@ -80,16 +85,16 @@ app.use((err: Error, req: Request, res: Response, next: any) => {
 // ===========================
 
 io.on('connection', (socket) => {
-  console.log(`Client connected: ${socket.id}`);
+  log(`Client connected: ${socket.id}`);
 
   socket.on('disconnect', () => {
-    console.log(`Client disconnected: ${socket.id}`);
+    log(`Client disconnected: ${socket.id}`);
   });
 
   // Socket events to be implemented
   socket.on('join-workspace', (workspaceId: string) => {
     socket.join(`workspace:${workspaceId}`);
-    console.log(`Socket ${socket.id} joined workspace ${workspaceId}`);
+    log(`Socket ${socket.id} joined workspace ${workspaceId}`);
   });
 
   socket.on('leave-workspace', (workspaceId: string) => {
@@ -102,23 +107,24 @@ io.on('connection', (socket) => {
 // ===========================
 
 const PORT = process.env.PORT || 3001;
-
-server.listen(PORT, () => {
-  console.log(`
-╔════════════════════════════════════════════════════════╗
-║                                                        ║
-║   🚀 ft_transcendence Backend Server                  ║
-║                                                        ║
-║   Environment: ${process.env.NODE_ENV?.padEnd(36) || 'development'.padEnd(36)}║
-║   Port:        ${PORT.toString().padEnd(36)}║
-║   Database:    PostgreSQL                              ║
-║   Cache:       Redis                                   ║
-║   WebSocket:   Socket.IO                               ║
-║                                                        ║
-║   Health:      http://localhost:${PORT}/health${' '.repeat(16)}║
-║                                                        ║
-╚════════════════════════════════════════════════════════╝
-  `);
-});
+if (require.main === module) {
+  server.listen(PORT, () => {
+    log(`
+  ╔════════════════════════════════════════════════════════╗
+  ║                                                        ║
+  ║   🚀 ft_transcendence Backend Server                  ║
+  ║                                                        ║
+  ║   Environment: ${process.env.NODE_ENV?.padEnd(36) || 'development'.padEnd(36)}║
+  ║   Port:        ${PORT.toString().padEnd(36)}║
+  ║   Database:    PostgreSQL                              ║
+  ║   Cache:       Redis                                   ║
+  ║   WebSocket:   Socket.IO                               ║
+  ║                                                        ║
+  ║   Health:      http://localhost:${PORT}/health${' '.repeat(16)}║
+  ║                                                        ║
+  ╚════════════════════════════════════════════════════════╝
+    `);
+  });
+}
 
 export { app, server, io };
