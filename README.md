@@ -510,8 +510,121 @@ A stack tecnológica foi cuidadosamente selecionada para maximizar a produtivida
 
 # Database Schema
 
+The database uses **PostgreSQL** with **Prisma ORM** and was designed to support Kanban-style task management, workspace collaboration, notifications, chat, and gamification.
 
+## Structure overview
 
+- **User** represents each platform user.
+- **Workspace** groups members, columns, labels, messages, and ranking data.
+- **Column** organizes tasks inside a workspace.
+- **Task** is the central entity in the Kanban workflow.
+- Junction tables such as **WorkspaceMember**, **TaskAssignment**, **TaskLabel**, and **UserBadge** handle many-to-many relationships.
+- Supporting entities such as **Comment**, **Notification**, **Reaction**, **ActivityLog**, **UserXP**, and **LeaderboardEntry** enable collaboration and gamification features.
+
+## Visual representation
+
+```mermaid
+erDiagram
+    User ||--o{ WorkspaceMember : joins
+    Workspace ||--o{ WorkspaceMember : contains
+
+    Workspace ||--o{ Column : contains
+    Column ||--o{ Task : organizes
+
+    Task ||--o{ TaskAssignment : assigned
+    User ||--o{ TaskAssignment : receives
+
+    Task ||--o{ ChecklistItem : contains
+    Task ||--o{ Comment : receives
+    User ||--o{ Comment : writes
+
+    Comment ||--o{ CommentMention : mentions
+    User ||--o{ CommentMention : mentioned
+
+    User ||--o{ Notification : receives
+    Task ||--o{ Notification : references
+    Workspace ||--o{ Notification : references
+
+    Workspace ||--o{ ChatMessage : contains
+    User ||--o{ ChatMessage : sends
+
+    User ||--o{ Reaction : reacts
+    ChatMessage ||--o{ Reaction : receives
+    Comment ||--o{ Reaction : receives
+
+    Workspace ||--o{ Label : defines
+    Task ||--o{ TaskLabel : classifies
+    Label ||--o{ TaskLabel : links
+
+    User ||--o{ UserBadge : earns
+    Badge ||--o{ UserBadge : awarded
+
+    User ||--o{ UserXP : accumulates
+    Workspace ||--o{ ActivityLog : records
+    User ||--o{ ActivityLog : performs
+
+    User ||--o{ LeaderboardEntry : appears_in
+    Workspace ||--o{ LeaderboardEntry : contains
+```
+
+## Tables and relationships
+
+### Identity and collaboration core
+
+| Table | Purpose | Key fields | Relationships |
+|--------|---------|------------|---------------|
+| `User` | Stores application users | `id: Int`, `nickname: String`, `email: String`, `passwordHash: String`, `avatarUrl: String`, `createdAt: DateTime` | 1:N with `WorkspaceMember`, `TaskAssignment`, `Notification`, `Comment`, `Reaction`, `ChatMessage`, `ActivityLog`, `LeaderboardEntry`; 1:N with `UserBadge` and `UserXP` |
+| `Workspace` | Represents each workspace | `id: Int`, `name: String`, `description: String`, `createdAt: DateTime` | 1:N with `WorkspaceMember`, `Column`, `Notification`, `ActivityLog`, `ChatMessage`, `Label`, `LeaderboardEntry` |
+| `WorkspaceMember` | Links users to workspaces with permissions | `id: Int`, `workspaceId: Int`, `userId: Int`, `role: WorkspaceRole` | N:1 with `User`; N:1 with `Workspace` |
+
+### Kanban structure
+
+| Table | Purpose | Key fields | Relationships |
+|--------|---------|------------|---------------|
+| `Column` | Columns in the Kanban board | `id: Int`, `workspaceId: Int`, `name: String`, `order: Int` | N:1 with `Workspace`; 1:N with `Task` |
+| `Task` | Main task entity in the system | `id: Int`, `columnId: Int`, `title: String`, `description: String`, `orderInColumn: Int` | N:1 with `Column`; 1:N with `TaskAssignment`, `ChecklistItem`, `Notification`, `Comment`, `TaskLabel` |
+| `TaskAssignment` | Assigns tasks to users | `id: Int`, `taskId: Int`, `userId: Int` | N:1 with `Task`; N:1 with `User` |
+| `ChecklistItem` | Checklist items belonging to a task | `id: Int`, `taskId: Int`, `text: String`, `isCompleted: Boolean` | N:1 with `Task` |
+| `Label` | Reusable labels within a workspace | `id: Int`, `workspaceId: Int`, `name: String`, `color: String` | N:1 with `Workspace`; 1:N with `TaskLabel` |
+| `TaskLabel` | Junction between tasks and labels | `id: Int`, `taskId: Int`, `labelId: Int` | N:1 with `Task`; N:1 with `Label` |
+
+### Communication and activity
+
+| Table | Purpose | Key fields | Relationships |
+|--------|---------|------------|---------------|
+| `Comment` | Comments attached to tasks | `id: Int`, `taskId: Int`, `authorId: Int`, `content: String` | N:1 with `Task`; N:1 with `User`; 1:N with `CommentMention` and `Reaction` |
+| `CommentMention` | Stores user mentions inside comments | `id: Int`, `commentId: Int`, `userId: Int` | N:1 with `Comment`; N:1 with `User` |
+| `Notification` | System notifications | `id: Int`, `userId: Int`, `message: String`, `type: NotificationType`, `isRead: Boolean`, `relatedTaskId: Int?`, `relatedWorkspaceId: Int?` | N:1 with `User`; optional N:1 with `Task`; optional N:1 with `Workspace` |
+| `ChatMessage` | Internal workspace chat messages | `id: Int`, `workspaceId: Int`, `senderId: Int`, `content: String` | N:1 with `Workspace`; N:1 with `User`; 1:N with `Reaction` |
+| `Reaction` | Emoji reactions on messages or comments | `id: Int`, `emoji: String`, `userId: Int`, `messageId: Int?`, `commentId: Int?` | N:1 with `User`; optional N:1 with `ChatMessage`; optional N:1 with `Comment` |
+| `ActivityLog` | History of actions within a workspace | `id: Int`, `workspaceId: Int`, `userId: Int`, `action: String` | N:1 with `Workspace`; N:1 with `User` |
+
+### Gamification
+
+| Table | Purpose | Key fields | Relationships |
+|--------|---------|------------|---------------|
+| `Badge` | Badge catalog | `id: Int`, `name: String`, `description: String`, `iconUrl: String` | 1:N with `UserBadge` |
+| `UserBadge` | Badges earned by users | `id: Int`, `userId: Int`, `badgeId: Int` | N:1 with `User`; N:1 with `Badge` |
+| `UserXP` | Experience points per user | `id: Int`, `userId: Int`, `xp: Int` | N:1 with `User` |
+| `LeaderboardEntry` | Weekly ranking by workspace | `id: Int`, `userId: Int`, `workspaceId: Int`, `xpWeek: Int`, `rank: Int`, `weekYear: String` | N:1 with `User`; N:1 with `Workspace` |
+
+## Main data types
+
+- **`Int`**: identifiers, ordering, ranking, and XP values.
+- **`String`**: names, descriptions, text content, URLs, colors, and log actions.
+- **`Boolean`**: binary states such as `isCompleted` and `isRead`.
+- **`DateTime`**: timestamp auditing with `createdAt` and `updatedAt` in almost every table.
+- **Enums**:
+  - `WorkspaceRole`: `admin`, `member`, `guest`
+  - `NotificationType`: `mention`, `taskAssignment`, `comment`, `invite`
+
+## Important modeling rules
+
+- All main entities use an auto-increment `id` as the primary key.
+- `nickname` and `email` in `User` are unique.
+- The schema favors explicit relationships to simplify Prisma queries.
+- The fields `relatedTaskId`, `relatedWorkspaceId`, `messageId`, and `commentId` are optional so notifications and reactions can support different contexts.
+- Separate junction tables help scale permissions, assignments, and gamification without data duplication.
 
 # Features List
 
