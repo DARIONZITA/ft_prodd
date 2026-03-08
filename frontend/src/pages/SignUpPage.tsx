@@ -4,18 +4,26 @@ import LegalText from '../components/auth/LegalText'
 import FooterLink from '../components/auth/FooterLink'
 import PasswordInput from '../components/auth/PasswordInput'
 import { parseSignUp } from '../utils/authValidation'
+import { useNavigate } from 'react-router-dom'
+import api from '../api/axios'
+import type { AxiosError } from 'axios'
 
 export default function SignUpPage() {
   const [form, setForm] = useState({ email: '', username: '', password: '', repeat: '' })
+  const [loading, setLoading] = useState(false)
+  const [srvError, setSrvError] = useState<string | null>(null)
+  const navigate = useNavigate()
 
   const usernameRef = useRef<HTMLInputElement>(null)
   const passwordRef = useRef<HTMLInputElement>(null)
   const repeatRef   = useRef<HTMLInputElement>(null)
 
-  const set = (field: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) =>
+  const set = (field: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm(f => ({ ...f, [field]: e.target.value }))
+    setSrvError(null)
+  }
 
-  const handleSubmit = (e: React.SyntheticEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault()
     const result = parseSignUp(form)
     if (!result.success) {
@@ -31,8 +39,29 @@ export default function SignUpPage() {
         repeatRef.current.setCustomValidity(result.errors.repeat)
         return repeatRef.current.reportValidity()
       }
+      return
     }
+
     console.log(form)
+
+    setLoading(true)
+    setSrvError(null)
+
+    try {
+      const response = await api.post('/api/auth/signup', {
+        email: form.email,
+        username: form.username,
+        password: form.password,
+      })
+      localStorage.setItem('token', response.data.token)
+      navigate('/dashboard')
+    } catch (error) {
+      const axiosError = error as AxiosError<{ error: string }>
+      const message = axiosError.response?.data?.error || 'Something went wrong. Try again.'
+      setSrvError(message)
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -40,6 +69,8 @@ export default function SignUpPage() {
       <h1 className="font-display font-extrabold text-[32px] text-slate-900 tracking-tight mb-8">
         Sign up
       </h1>
+
+      {srvError && <p className="text-red-500 text-sm">{srvError}</p>}
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-3">
         <input
@@ -83,9 +114,10 @@ export default function SignUpPage() {
 
         <button
           type="submit"
-          className="w-full px-4 py-3.5 mt-1 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg font-display font-bold text-[15px] cursor-pointer transition-colors duration-150"
+          disabled={loading}
+          className="w-full px-4 py-3.5 mt-1 bg-cyan-600 hover:bg-cyan-700 disabled:bg-cyan-400 disabled:cursor-not-allowed text-white rounded-lg font-display font-bold text-[15px] cursor-pointer transition-colors duration-150"
         >
-          Sign up
+          {loading ? 'Signing up...' : 'Sign up'}
         </button>
       </form>
 
