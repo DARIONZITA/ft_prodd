@@ -1,0 +1,293 @@
+generator client {
+    provider = "prisma-client-js"
+    binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+}
+
+datasource db {
+    provider = "postgresql"
+    url      = env("DATABASE_URL")
+}
+
+enum WorkspaceRole {
+    admin
+    member
+    guest
+}
+
+enum NotificationType {
+    mention
+    taskAssignment
+    comment
+    invite
+}
+
+model User {
+    id        Int      @id @default(autoincrement())
+    nickname      String   @unique
+    email     String   @unique
+    passwordHash String
+    avatarUrl String
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+     // Relações inversas adicionadas
+    workspaceMemberships WorkspaceMember[]
+    taskAssignments      TaskAssignment[]
+    notifications        Notification[]
+    comments             Comment[]
+    commentMentions      CommentMention[]
+    reactions            Reaction[]
+    userBadges           UserBadge[]
+    userXPs              UserXP[]
+    activityLogs          ActivityLog[]
+    chatMessages        ChatMessage[]
+    LeaderboardEntries   LeaderboardEntry[]
+
+
+}
+
+model Workspace {
+    id        Int      @id @default(autoincrement())
+    name      String
+    description String
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    // Relações inversas adicionadas
+    members       WorkspaceMember[]
+    columns       Column[]
+    notifications Notification[]
+    activityLogs  ActivityLog[]
+    chatMessages  ChatMessage[]
+    labels        Label[]
+    leaderboardEntries LeaderboardEntry[]
+}
+
+model WorkspaceMember {
+    id          Int      @id @default(autoincrement())
+    workspaceId Int
+    userId      Int
+    role        WorkspaceRole
+    createdAt   DateTime @default(now())
+    updatedAt   DateTime @updatedAt
+
+    workspace Workspace @relation(fields: [workspaceId], references: [id])
+    user      User      @relation(fields: [userId], references: [id])
+}
+
+model Column {
+    id          Int      @id @default(autoincrement())
+    workspaceId Int
+    name        String
+    order       Int
+    createdAt   DateTime @default(now())
+    updatedAt   DateTime @updatedAt
+
+    workspace Workspace @relation(fields: [workspaceId], references: [id])
+
+    // Relações inversas adicionadas
+    tasks Task[]
+}
+
+model Task {
+    id              Int      @id @default(autoincrement())
+    columnId        Int
+    title           String
+    description     String
+    orderInColumn   Int
+    createdAt       DateTime @default(now())
+    updatedAt       DateTime @updatedAt
+
+    column Column @relation(fields: [columnId], references : [id])
+
+    // Relações inversas adicionadas
+    assignments   TaskAssignment[]
+    checklistItems ChecklistItem[]
+    notifications Notification[]
+    comments      Comment[]
+    taskLabels     TaskLabel[]
+}
+
+model TaskAssignment {
+    id        Int      @id @default(autoincrement())
+    taskId    Int
+    userId    Int
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    task Task @relation(fields: [taskId], references: [id])
+    user User @relation(fields: [userId], references: [id])
+}
+
+model ChecklistItem {
+    id        Int      @id @default(autoincrement())
+    taskId    Int
+    text   String
+    isCompleted Boolean  @default(false)
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    task Task @relation(fields: [taskId], references: [id])
+}
+
+model Notification {
+    id        Int      @id @default(autoincrement())
+    userId    Int
+    message   String
+    type      NotificationType
+    isRead    Boolean  @default(false)
+    relatedTaskId Int?
+    relatedWorkspaceId Int?
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    user User @relation(fields: [userId], references: [id])
+    task Task? @relation(fields: [relatedTaskId], references: [id])
+    workspace Workspace? @relation(fields: [relatedWorkspaceId], references: [id])
+}
+
+model Comment {
+    id          Int      @id @default(autoincrement())
+    taskId      Int
+    authorId    Int
+    content     String
+    createdAt   DateTime @default(now())
+    updatedAt   DateTime @updatedAt
+
+    task Task @relation(fields: [taskId], references: [id])
+    user User @relation(fields: [authorId], references: [id])
+
+    // Relações inversas adicionadas
+    commentMentions CommentMention[]
+    reactions Reaction[]
+
+
+}
+// CommentMention dont have in the original schema, but I think it is necessary to have a table to store the mentions in comments, so I added it here.
+model CommentMention {
+    id        Int      @id @default(autoincrement())
+    commentId Int
+    userId    Int
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    comment Comment @relation(fields: [commentId], references: [id])
+    user User @relation(fields: [userId], references: [id])
+}
+
+model ActivityLog {
+    id          Int      @id @default(autoincrement())
+    workspaceId Int // in original schema, there is no workspaceId is taskId, but I think it is necessary to have a workspaceId to know which workspace the activity log belongs to, so I added it here.
+    userId      Int
+    action      String
+    createdAt   DateTime @default(now())
+    updatedAt   DateTime @updatedAt
+
+    workspace Workspace @relation(fields: [workspaceId], references: [id])
+    user User @relation(fields: [userId], references: [id])
+}
+
+model ChatMessage {
+    id          Int      @id @default(autoincrement())
+    workspaceId Int
+    senderId    Int
+    content     String
+    createdAt   DateTime @default(now())
+    updatedAt   DateTime @updatedAt
+
+    workspace Workspace @relation(fields: [workspaceId], references: [id])
+    user User @relation(fields: [senderId], references: [id])
+
+    // Relações inversas adicionadas
+    reactions Reaction[]
+
+}
+
+
+model Reaction {
+    id         Int       @id @default(autoincrement())
+    emoji      String
+    userId     Int
+    messageId  Int?
+    commentId  Int?
+    createdAt  DateTime  @default(now())
+    updatedAt  DateTime  @updatedAt
+
+    user    User         @relation(fields: [userId], references: [id])
+    message ChatMessage? @relation(fields: [messageId], references: [id], onDelete: Cascade)
+    comment Comment?     @relation(fields: [commentId], references: [id], onDelete: Cascade)
+}
+
+model Label {
+    id          Int      @id @default(autoincrement())
+    workspaceId Int
+    name        String
+    color       String
+    createdAt   DateTime @default(now())
+    updatedAt   DateTime @updatedAt
+
+    workspace Workspace @relation(fields: [workspaceId], references: [id])
+
+    // Relações inversas adicionadas
+    taskLabels TaskLabel[]
+
+}
+
+model TaskLabel {
+    id        Int      @id @default(autoincrement())
+    taskId    Int
+    labelId   Int
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    task Task @relation(fields: [taskId], references: [id])
+    label Label @relation(fields: [labelId], references: [id])
+}
+
+model Badge {
+    id          Int      @id @default(autoincrement())
+    name        String
+    description String
+    iconUrl     String
+    createdAt   DateTime @default(now())
+    updatedAt   DateTime @updatedAt
+
+    // Relações inversas adicionadas
+    userBadges UserBadge[]
+
+}
+
+model UserBadge {
+    id        Int      @id @default(autoincrement())
+    userId    Int
+    badgeId   Int
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    user User @relation(fields: [userId], references: [id])
+    badge Badge @relation(fields: [badgeId], references: [id])
+}
+
+model UserXP {
+    id        Int      @id @default(autoincrement())
+    userId    Int
+    xp        Int      @default(0)
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    user User @relation(fields: [userId], references: [id])
+}
+
+model LeaderboardEntry {
+    id          Int      @id @default(autoincrement())
+    userId      Int
+    workspaceId Int
+    xpWeek      Int
+    rank        Int
+    weekYear    String
+    createdAt   DateTime @default(now())
+    updatedAt   DateTime @updatedAt
+
+    user User @relation(fields: [userId], references: [id])
+    workspace Workspace @relation(fields: [workspaceId], references: [id])
+}

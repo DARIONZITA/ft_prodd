@@ -2,6 +2,8 @@
 FROM node:18-alpine AS base
 WORKDIR /app
 RUN apk add --no-cache curl
+#openssl
+RUN apk add --no-cache openssl
 
 # Stage 2: Dependencies
 FROM base AS deps
@@ -11,6 +13,7 @@ RUN npm install --only=production && npm cache clean --force
 # Stage 3: Development Dependencies
 FROM base AS dev-deps
 COPY package*.json ./
+RUN apk add --no-cache python3 make g++
 RUN npm install
 
 # Stage 4: Development
