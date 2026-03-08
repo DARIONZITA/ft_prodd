@@ -1,10 +1,9 @@
 # Makefile para ft_prodd
 # Facilita o uso dos scripts com comandos mais curtos
 
-NAME := ft_prodd
-DOCKER-COMPOSE := ./config/docker-compose.yaml
-ENV_FILE := ./config/.env
-VOLUMES_DIR := /home/$USER/data
+NAME = ft_prodd
+DOCKER-COMPOSE = ./config/docker-compose.yaml
+ENV_FILE = ./config/.env
 
 DOCKER := docker compose -f $(DOCKER-COMPOSE) --env-file $(ENV_FILE)
 
@@ -136,22 +135,6 @@ install-all: ## Instalar dependências de todos os serviços
 	@echo "📦 Instalando dependências..."
 	@make install-backend
 	@make install-frontend
-
-# ===========================
-# LINTING E FORMATAÇÃO
-# ===========================
-
-lint-backend: ## Executar linter no backend
-	@$(DOCKER) exec backend npm run lint
-
-lint-frontend: ## Executar linter no frontend
-	@$(DOCKER) exec frontend npm run lint
-
-format-backend: ## Formatar código do backend
-	@$(DOCKER) exec backend npm run format
-
-format-frontend: ## Formatar código do frontend
-	@$(DOCKER) exec frontend npm run format
 
 # ===========================
 # COMANDOS DE RESET
