@@ -10,6 +10,7 @@ config/.env.*
 # Dependencies
 node_modules/
 */node_modules/
+backend/src/generated/
 
 # Build outputs
 dist/
