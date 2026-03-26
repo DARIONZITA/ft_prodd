@@ -7,26 +7,26 @@ import { ApiError } from '../utils/ApiError';
 
 const	router = Router( );
 
-router.post( '/register',
+router.post( '/signup',
 	async ( req, res, next ) => {
-		console.log("Entrou em /register");
+		console.log("Entrou em /signup");
 		const	result = registerSchema.safeParse(req.body);
 
 		if (!result.success)
 			return (next(new ApiError(400, result.error.issues.map( e => e.message ).join(', '))));
 
-		const	{ nickname, email, password, avatarUrl } = result.data;
+		const	{ username, email, password, avatarUrl } = result.data;
 
 		try
 		{
-			const	existing = await prisma.user.findFirst({ where: { OR: [ { email }, { nickname } ] }});
+			const	existing = await prisma.user.findFirst({ where: { OR: [ { email }, { nickname: username } ] }});
 
 			if (existing)
-				throw new ApiError(409, "Email ou nickname já existe");
+				throw new ApiError(409, "Email ou username já existe");
 
 			const	passwordHash = await hashPassword( password );
 			const	user = await prisma.user.create({
-				data: { nickname, email, passwordHash, avatarUrl: avatarUrl || '' },
+				data: { nickname: username, email, passwordHash, avatarUrl: avatarUrl || '' },
 				select: { id: true, nickname: true, email: true, avatarUrl: true }
 			});
 			const	token = generateToken( user.id, user.email );
@@ -42,9 +42,9 @@ router.post( '/register',
 	}
 );
 
-router.post('/login',
+router.post('/signin',
 	async ( req, res, next ) => {
-		console.log("Entrou em /login");
+		console.log("Entrou em /signin");
 		const	result = loginSchema.safeParse( req.body );
 
 		if (!result.success)
@@ -68,12 +68,12 @@ router.post('/login',
 
 			const	token = generateToken( user.id, user.email );
 
-			console.log("LOGIN BEM-SUCEDIDO!!!");
-			res.json( { success: true, message: "Login bem-sucedido", token, user } ); 
+			console.log("SIGNIN BEM-SUCEDIDO!!!");
+			res.json( { success: true, message: "Signin bem-sucedido", token, user } ); 
 		}
 		catch ( err )
 		{
-			console.log("FALHOU AO TENTAR LOGIN!!!");
+			console.log("FALHOU AO TENTAR SIGNIN!!!");
 			next( err );
 		}
 	}

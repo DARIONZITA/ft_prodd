@@ -15,7 +15,7 @@ import { z } from 'zod';
  
  export const	registerSchema = z.object(
  {
- 	nickname: z
+ 	username: z
  		.string()
  		.min(name_length.min, `Username deve ter pelo menos ${name_length.min} caracteres`)
  		.max(name_length.max, `Username demasiado longo, só pode ter até ${name_length.max} caracteres`)
