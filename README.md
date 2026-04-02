@@ -185,7 +185,7 @@ make test-coverage
 
 The backend has a health check endpoint:
 
-- Backend: http://localhost:3001/health
+- Backend: http://localhost:3001/api/health
 - Frontend: http://localhost:3000
 
 Use the verification script:
@@ -298,7 +298,7 @@ make info           # View service URLs
 |---------|-----|-----------|
 | **Frontend** | http://localhost:3000 | User interface |
 | **Backend API** | http://localhost:3001 | REST API |
-| **Health Check** | http://localhost:3001/health | Backend status |
+| **Health Check** | http://localhost:3001/api/health | Backend status |
 | **PostgreSQL** | localhost:5432 | Database |
 | **Redis** | localhost:6379 | Cache and sessions |
 

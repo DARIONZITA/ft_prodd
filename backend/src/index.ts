@@ -1,6 +1,6 @@
 import 'dotenv/config';
 import { env } from './config/env';
-import express from 'express';
+import express, { Request, Response } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
@@ -28,6 +28,10 @@ app.use(morgan('combined'));
 app.use(express.json({ limit: '10mb' }));
 
 // Rotas
+app.get('/api/health', (_req: Request, res: Response) => {
+	res.status(200).json({ success: true, message: 'API is healthy' });
+});
+
 app.use('/api/auth', authRoutes);
 
 // ← Middleware global de erro (deve ser o ÚLTIMO!)

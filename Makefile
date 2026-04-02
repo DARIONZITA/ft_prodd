@@ -165,7 +165,7 @@ info: ## Mostrar informações do projeto
 	@echo ""
 	@echo "Frontend:    http://localhost:3000"
 	@echo "Backend:     http://localhost:3001"
-	@echo "Health:      http://localhost:3001/health"
+	@echo "Health:      http://localhost:3001/api/health"
 	@echo "PostgreSQL:  localhost:5432"
 	@echo "Redis:       localhost:6379"
 	@echo ""

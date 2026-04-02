@@ -108,7 +108,7 @@ Veja `config/.env.example` na raiz do projeto.
 
 A documentação completa da API estará disponível em:
 - Development: http://localhost:3001/api-docs (Swagger)
-- Health check: http://localhost:3001/health
+- Health check: http://localhost:3001/api/health
 
 ## Tecnologias
 

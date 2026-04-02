@@ -89,7 +89,7 @@ total_endpoints=0
 # Check each service endpoint
 services=(
     "Frontend:http://localhost:3000"
-    "Backend API:http://localhost:3001/health"
+    "Backend API:http://localhost:3001/api/health"
 )
 
 for service_url in "${services[@]}"; do
