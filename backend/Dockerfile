@@ -20,6 +20,7 @@ RUN npm install
 FROM base AS development
 COPY --from=dev-deps /app/node_modules ./node_modules
 COPY . .
+RUN npx prisma generate
 EXPOSE 3001
 CMD ["npm", "run", "dev"]
 
