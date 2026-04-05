@@ -87,6 +87,9 @@
     "collectCoverageFrom": [
       "src/**/*.ts",
       "!src/index.ts"
+    ],
+    "testPathIgnorePatterns": [
+      "<rootDir>/src/Old_and_tests/"
     ]
   }
 }

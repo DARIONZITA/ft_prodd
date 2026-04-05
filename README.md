@@ -626,6 +626,59 @@ erDiagram
 
 # Modules
 
+## Advanced Permissions System
+
+This module enforces workspace-level RBAC (Role-Based Access Control) using the roles defined in Prisma: `admin`, `member`, and `guest`.
+
+### Implemented API routes
+
+- `GET /api/workspaces`
+  - Returns only workspaces where the authenticated user is a member.
+  - Includes the user role in each workspace record.
+
+- `GET /api/workspaces/:id`
+  - Returns workspace details only if the authenticated user belongs to that workspace.
+
+- `GET /api/workspaces/:id/members`
+  - Returns workspace members and their roles if requester belongs to workspace.
+
+- `GET /api/workspaces/:id/members/:userId`
+  - `admin` and `member`: can view any member in the workspace.
+  - `guest`: can view only their own membership profile.
+
+- `PUT /api/workspaces/:id/members/:userId`
+  - Admin-only route for role updates (`admin`, `member`, `guest`).
+  - Prevents removing/demoting the last admin of a workspace.
+
+- `DELETE /api/workspaces/:id/members/:userId`
+  - Admin-only route to remove a member from workspace.
+  - Prevents removing the last admin of a workspace.
+
+### Server-side validation
+
+- All route params (`:id`, `:userId`) are validated as positive integers with Zod.
+- Body payload for role updates is validated against allowed enum values.
+- Invalid input returns HTTP `400` with validation details.
+
+### Transaction safety (Prisma)
+
+Operations with multiple writes are executed inside `prisma.$transaction(...)`:
+
+- Member role updates (`PUT`) update membership + workspace timestamp + activity log atomically.
+- Member removal (`DELETE`) deletes membership + updates workspace timestamp + activity log atomically.
+
+This prevents partial writes and data corruption under concurrent usage.
+
+### Tests
+
+Automated tests cover:
+
+- Listing user workspaces.
+- Input validation failures.
+- Role-based restrictions (`guest` and non-admin behavior).
+- Successful admin role update with transaction execution.
+- Protection against removing the last workspace admin.
+
 
 
 

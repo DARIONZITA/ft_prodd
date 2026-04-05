@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { prisma } from '../index';
+import { prisma } from '../lib/prisma';
 import { hashPassword, comparePassword } from '../utils/password';
 import { generateToken } from '../utils/jwt';
 import { registerSchema, loginSchema } from '../validations/auth';
