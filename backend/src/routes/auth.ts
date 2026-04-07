@@ -7,6 +7,8 @@ import { ApiError } from '../utils/ApiError';
 
 const	router = Router( );
 
+//Criar uma função genérica que é chamada ambas as rotas, para evitar repetição de código
+
 router.post( '/signup',
 	async ( req, res, next ) => {
 		console.log("Entrou em /signup");
@@ -22,11 +24,11 @@ router.post( '/signup',
 			const	existing = await prisma.user.findFirst({ where: { OR: [ { email }, { nickname: username } ] }});
 
 			if (existing)
-				throw new ApiError(409, "Email ou username já existe");
+				return (next(new ApiError(409, "Email ou username já existe")));
 
 			const	passwordHash = await hashPassword( password );
 			const	user = await prisma.user.create({
-				data: { nickname: username, email, passwordHash, avatarUrl: avatarUrl || '' },
+				data: { nickname: username, email, passwordHash, avatarUrl: avatarUrl || '', updatedAt: new Date() },
 				select: { id: true, nickname: true, email: true, avatarUrl: true }
 			});
 			const	token = generateToken( user.id, user.email );
@@ -57,19 +59,19 @@ router.post('/signin',
 			const	user = await prisma.user.findUnique( { where: { email } } );
 
 			if (!user)
-				throw new ApiError(401, "Credenciais Inválidas");
+				return (next(new ApiError(401, "Credenciais Inválidas")));
 
 			const	valid = await comparePassword( password, user.passwordHash );
 
 			if (!valid)
-				throw new ApiError(401, "Credenciais Inválidas");
+				return (next(new ApiError(401, "Credenciais Inválidas")));
 
 			await prisma.user.update( { where: { id: user.id }, data: { updatedAt: new Date() } } );
 
 			const	token = generateToken( user.id, user.email );
 
 			console.log("SIGNIN BEM-SUCEDIDO!!!");
-			res.json( { success: true, message: "Signin bem-sucedido", token, user } ); 
+			res.status(200).json( { success: true, message: "Signin bem-sucedido", token, user } ); 
 		}
 		catch ( err )
 		{
