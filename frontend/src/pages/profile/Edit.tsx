@@ -24,6 +24,8 @@ export default function Edit({ user, onClose, onSave }: EditProps) {
 
   const initials = name.trim()[0]?.toUpperCase() ?? '?'
 
+  console.log(initials)
+
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
