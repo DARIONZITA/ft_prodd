@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { Bell, Menu, X, Plus, Search, LayoutDashboard, LayoutList, CheckCheck, HelpCircle, LogOut, Grid2x2, FileText, ArrowLeftRight } from 'lucide-react'
+import { Menu, X, Plus, Search, LayoutDashboard, LayoutList, CheckCheck, HelpCircle, LogOut, Grid2x2, FileText, ArrowLeftRight } from 'lucide-react'
+import NotificationsDropdown from './NotificationsDropdown'
 
 interface Workspace {
   id: string | number
@@ -62,15 +63,7 @@ export default function Sidebar({ user, activeView, onNavigate, onLogout = () =>
           <Avatar />
         </button>
 
-        <button
-          onClick={() => onNavigate('notifications')}
-          aria-label="Notifications"
-          className={`p-2 rounded-lg transition-colors duration-150 ${
-            activeView === 'notifications' ? 'bg-cyan-50 text-cyan-700' : 'text-slate-400 hover:bg-slate-100 hover:text-slate-700'
-          }`}
-        >
-          <Bell size={16} />
-        </button>
+        <NotificationsDropdown active={activeView === 'notifications'} bellSize={16} bellPaddingClassName="p-2" onViewAll={() => onNavigate('notifications')} />
 
         <div className="flex flex-col items-center gap-1 mt-1">
           {navItems.map(({ id, Icon }) => (
@@ -108,17 +101,7 @@ export default function Sidebar({ user, activeView, onNavigate, onLogout = () =>
           </span>
         </button>
 
-        <button
-          aria-label="Notifications"
-          onClick={() => onNavigate('notifications')}
-          className={`p-1.5 rounded-lg transition-colors duration-150 ${
-            activeView === 'notifications'
-              ? 'bg-cyan-50 text-cyan-700'
-              : 'text-slate-400 hover:text-slate-700 hover:bg-slate-100'
-          }`}
-        >
-          <Bell size={18} />
-        </button>
+        <NotificationsDropdown active={activeView === 'notifications'} onViewAll={() => onNavigate('notifications')} />
 
         <button
           aria-label="Close sidebar"
@@ -131,9 +114,12 @@ export default function Sidebar({ user, activeView, onNavigate, onLogout = () =>
 
       {/* Add Board */}
       <div className="px-3 mb-3">
-        <button className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg font-display font-bold text-sm cursor-pointer transition-colors duration-150">
+        <button
+          onClick={onCreateWorkspace}
+          className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg font-display font-bold text-sm cursor-pointer transition-colors duration-150"
+        >
           <Plus size={14} strokeWidth={2.5} />
-          Add Board
+          Create Workspace
         </button>
       </div>
 

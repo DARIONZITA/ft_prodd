@@ -17,9 +17,9 @@ function App() {
         <Route
           path="/dashboard"
           element={
-            <ProtectedRoute>
+            //<ProtectedRoute>
               <DashboardPagePlaceholder />
-            </ProtectedRoute>
+            //</ProtectedRoute>
           }
         />
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
