@@ -1,14 +1,16 @@
-import { User } from '@prisma/client';
-import express from 'express';
-
-//Declaration merging
+// Declaration merging for passport's Express.User
 declare global
 {
-	namespace	Express
+	namespace Express
 	{
-		interface	Request
+		interface User
 		{
-			user?: User;
+			id: number;
+			email?: string;
+			nickname?: string;
+			avatarUrl?: string;
 		}
 	}
 }
+
+export {};

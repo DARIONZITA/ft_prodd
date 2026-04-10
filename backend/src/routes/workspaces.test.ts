@@ -3,24 +3,6 @@ import request from 'supertest';
 import workspaceRoutes from './workspaces';
 import { errorHandler } from '../middleware/errorHandler';
 
-const prismaMock = {
-	workspaceMember: {
-		findMany: jest.fn(),
-		findFirst: jest.fn(),
-		update: jest.fn(),
-		delete: jest.fn(),
-		count: jest.fn()
-	},
-	workspace: {
-		findUnique: jest.fn(),
-		update: jest.fn()
-	},
-	activityLog: {
-		create: jest.fn()
-	},
-	$transaction: jest.fn()
-};
-
 jest.mock('../middleware/auth', () => ({
 	authenticate: (req: any, _res: any, next: any) => {
 		const userId = Number(req.header('x-user-id') || 1);
@@ -30,8 +12,26 @@ jest.mock('../middleware/auth', () => ({
 }));
 
 jest.mock('../lib/prisma', () => ({
-	prisma: prismaMock
+	prisma: {
+		workspaceMember: {
+			findMany: jest.fn(),
+			findFirst: jest.fn(),
+			update: jest.fn(),
+			delete: jest.fn(),
+			count: jest.fn()
+		},
+		workspace: {
+			findUnique: jest.fn(),
+			update: jest.fn()
+		},
+		activityLog: {
+			create: jest.fn()
+		},
+		$transaction: jest.fn()
+	}
 }));
+
+const prismaMock = (jest.requireMock('../lib/prisma') as { prisma: any }).prisma;
 
 const app = express();
 app.use(express.json());
@@ -45,7 +45,8 @@ describe('Workspace routes - Advanced Permissions System', () => {
 		prismaMock.$transaction.mockImplementation(async (callback: any) => callback({
 			workspaceMember: {
 				update: prismaMock.workspaceMember.update,
-				delete: prismaMock.workspaceMember.delete
+				delete: prismaMock.workspaceMember.delete,
+				count: prismaMock.workspaceMember.count
 			},
 			workspace: {
 				update: prismaMock.workspace.update
