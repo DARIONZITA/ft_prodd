@@ -1,5 +1,5 @@
 import { WorkspaceRole } from '@prisma/client';
-import { Router } from 'express';
+import { Router, Request, Response, NextFunction } from 'express';
 import { authenticate } from '../middleware/auth';
 import { prisma } from '../lib/prisma';
 import { ApiError } from '../utils/ApiError';
@@ -38,7 +38,7 @@ const ensureAdmin = (role: WorkspaceRole) => {
 
 router.use(authenticate);
 
-router.get('/', async (req, res, next) => {
+router.get('/', async (req: Request, res: Response, next: NextFunction) => {
 	try
 	{
 		const memberships = await prisma.workspaceMember.findMany({
@@ -71,7 +71,7 @@ router.get('/', async (req, res, next) => {
 	}
 });
 
-router.get('/:id', async (req, res, next) => {
+router.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
 	try
 	{
 		const { id } = parseOrThrow(workspaceIdParamsSchema, req.params);
@@ -98,7 +98,7 @@ router.get('/:id', async (req, res, next) => {
 	}
 });
 
-router.get('/:id/members', async (req, res, next) => {
+router.get('/:id/members', async (req: Request, res: Response, next: NextFunction) => {
 	try
 	{
 		const { id } = parseOrThrow(workspaceIdParamsSchema, req.params);
@@ -127,7 +127,7 @@ router.get('/:id/members', async (req, res, next) => {
 	}
 });
 
-router.get('/:id/members/:userId', async (req, res, next) => {
+router.get('/:id/members/:userId', async (req: Request, res: Response, next: NextFunction) => {
 	try
 	{
 		const { id, userId } = parseOrThrow(workspaceMemberParamsSchema, req.params);
@@ -161,7 +161,7 @@ router.get('/:id/members/:userId', async (req, res, next) => {
 	}
 });
 
-router.put('/:id/members/:userId', async (req, res, next) => {
+router.put('/:id/members/:userId', async (req: Request, res: Response, next: NextFunction) => {
 	try
 	{
 		const { id, userId } = parseOrThrow(workspaceMemberParamsSchema, req.params);
@@ -226,7 +226,7 @@ router.put('/:id/members/:userId', async (req, res, next) => {
 	}
 });
 
-router.delete('/:id/members/:userId', async (req, res, next) => {
+router.delete('/:id/members/:userId', async (req: Request, res: Response, next: NextFunction) => {
 	try
 	{
 		const { id, userId } = parseOrThrow(workspaceMemberParamsSchema, req.params);
