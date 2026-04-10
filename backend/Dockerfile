@@ -22,7 +22,8 @@ COPY --from=dev-deps /app/node_modules ./node_modules
 COPY . .
 RUN npx prisma generate
 EXPOSE 3001
-CMD ["npm", "run", "dev"]
+EXPOSE 5555
+CMD ["sh", "-c", "npx prisma migrate deploy && npm run dev"]
 
 # Stage 5: Builder
 FROM base AS builder
