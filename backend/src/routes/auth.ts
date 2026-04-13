@@ -45,7 +45,7 @@ router.post( '/signup',
 );
 
 router.post('/signin',
-	async ( req, res, next ) => {
+	async ( req, res, next: any ) => {
 		console.log("Entrou em /signin");
 		const	result = loginSchema.safeParse( req.body );
 
@@ -80,5 +80,15 @@ router.post('/signin',
 		}
 	}
 );
-
+/*
+const schema = z.object({
+  email: z.string().email().optional(),
+  username: z.string().min(3).optional(),
+  password: z.string().min(6),
+}).refine((data) => {
+  return !!data.email || !!data.username;
+}, {
+  message: "Email ou username é obrigatório",
+});
+*/
 export default	router;

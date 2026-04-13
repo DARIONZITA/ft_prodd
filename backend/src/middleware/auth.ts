@@ -3,13 +3,14 @@ import { verifyToken } from '../utils/jwt';
 import { prisma } from '../index';
 import { ApiError } from '../utils/ApiError';
 
-export const	authenticate = async ( req : Request, res : Response, next : NextFunction ) => {
+export const	authenticate = async ( req : Request, res : Response, next : NextFunction ) : Promise<boolean> => {
 	const	authHeader = req.headers.authorization;
 
 	if (!authHeader?.startsWith( 'Bearer ' ))
-		return (next(new ApiError(401, "Token Não fornecido")));
-		//throw new ApiError(401, "Token Não fornecido");
-
+	{
+		next(new ApiError(401, "Token Não fornecido"));
+		return (false);
+	}
 	const	token = authHeader.split(' ')[1];
 
 	try
@@ -20,10 +21,11 @@ export const	authenticate = async ( req : Request, res : Response, next : NextFu
 		if (!user)
 			throw new ApiError(401, 'Utilizador não encontrado');
 		req.user = user;
-		next();
+		return (true);
 	}
 	catch ( err )
 	{
 		next( err );
 	}
+	return (false);
 };
