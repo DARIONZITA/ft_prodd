@@ -12,9 +12,7 @@ export const	prisma = new PrismaClient( { datasources: { db: { url: env.DATABASE
 
 const   app = express();
 
-// Middlewares
-
-//adiciona cabeçalhos HTTP de segurança.
+//adiciona cabeçalhos HTTP de segurança na resposta.
 app.use(helmet());
 
 //define quais domínios podem acessar a API. Aqui, só o frontend local http://localhost:3000.
@@ -25,7 +23,7 @@ app.use(cors({ origin: 'http://localhost:3000', credentials: true }));
 app.use(morgan('combined'));
 
 //parseia JSON no body da request, com limite de 10MB.
-app.use(express.json({ limit: '10mb' }));
+app.use(express.json());
 
 // Rotas
 app.get('/api/health', (_req: Request, res: Response) => {
