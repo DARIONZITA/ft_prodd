@@ -7,6 +7,40 @@ import { ApiError } from '../utils/ApiError';
 
 const	router = Router( );
 
+/**
+ * @swagger
+ * /auth/signup:
+ *   post:
+ *     summary: Registrar novo utilizador
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               username: { type: string, example: "joao_silva" }
+ *               email: { type: string, example: "joao@example.com" }
+ *               password: { type: string, example: "senha123" }
+ *               avatarUrl: { type: string, example: "https://..." }
+ *     responses:
+ *       201:
+ *         description: Utilizador criado com sucesso
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success: { type: boolean }
+ *                 message: { type: string }
+ *                 token: { type: string }
+ *                 user: { $ref: '#/components/schemas/User' }
+ *       400:
+ *         description: Dados inválidos
+ *       409:
+ *         description: Email ou username já existe
+ */
 router.post( '/signup',
 	async ( req, res, next ) => {
 		console.log("Entrou em /signup");
@@ -42,6 +76,38 @@ router.post( '/signup',
 	}
 );
 
+/**
+ * @swagger
+ * /auth/signin:
+ *   post:
+ *     summary: Fazer login
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               email: { type: string, example: "joao@example.com" }
+ *               password: { type: string, example: "senha123" }
+ *     responses:
+ *       200:
+ *         description: Login bem-sucedido
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success: { type: boolean }
+ *                 message: { type: string }
+ *                 token: { type: string }
+ *                 user: { $ref: '#/components/schemas/User' }
+ *       400:
+ *         description: Dados inválidos
+ *       401:
+ *         description: Credenciais inválidas
+ */
 router.post('/signin',
 	async ( req, res, next ) => {
 		console.log("Entrou em /signin");

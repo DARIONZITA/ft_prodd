@@ -11,6 +11,140 @@ import {
 
 const router = Router();
 
+/**
+ * @swagger
+ * /workspaces:
+ *   get:
+ *     summary: Listar todos os workspaces do utilizador
+ *     tags: [Workspaces]
+ *     security:
+ *       - BearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Lista de workspaces
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success: { type: boolean }
+ *                 data:
+ *                   type: array
+ *                   items: { $ref: '#/components/schemas/Workspace' }
+ *       401:
+ *         description: Não autenticado
+ */
+
+/**
+ * @swagger
+ * /workspaces/{id}:
+ *   get:
+ *     summary: Obter detalhes de um workspace
+ *     tags: [Workspaces]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *     responses:
+ *       200:
+ *         description: Detalhes do workspace
+ *       404:
+ *         description: Workspace não encontrado
+ *       403:
+ *         description: Sem permissão
+ */
+
+/**
+ * @swagger
+ * /workspaces/{id}/members:
+ *   get:
+ *     summary: Listar membros de um workspace
+ *     tags: [Workspaces]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *     responses:
+ *       200:
+ *         description: Lista de membros
+ *       403:
+ *         description: Sem permissão
+ */
+
+/**
+ * @swagger
+ * /workspaces/{id}/members/{userId}:
+ *   get:
+ *     summary: Obter detalhes de um membro
+ *     tags: [Workspaces]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema: { type: integer }
+ *     responses:
+ *       200:
+ *         description: Detalhes do membro
+ *   put:
+ *     summary: Atualizar papel de um membro
+ *     tags: [Workspaces]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema: { type: integer }
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               role: { type: string, enum: [admin, editor, guest] }
+ *     responses:
+ *       200:
+ *         description: Membro atualizado
+ *       403:
+ *         description: Apenas admins podem fazer isso
+ *   delete:
+ *     summary: Remover membro do workspace
+ *     tags: [Workspaces]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema: { type: integer }
+ *     responses:
+ *       200:
+ *         description: Membro removido
+ *       403:
+ *         description: Apenas admins podem fazer isso
+ */
+
+
 const parseOrThrow = <T>(schema: { safeParse: (value: unknown) => { success: boolean; data?: T; error?: { issues: Array<{ message: string }> } } }, value: unknown): T => {
 	const result = schema.safeParse(value);
 
