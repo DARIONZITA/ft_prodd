@@ -7,7 +7,7 @@ ENV_FILE = ./config/.env
 
 DOCKER := docker compose -f $(DOCKER-COMPOSE) --env-file $(ENV_FILE)
 
-.PHONY: help setup up down restart logs ps clean rebuild health migrate dev test
+.PHONY: help setup up down restart logs ps clean rebuild rebuild-all rebuild-% health migrate dev test
 
 all: 
 	@$(DOCKER) up -d
@@ -45,9 +45,17 @@ ps: ## Ver status de todos os containers
 clean: ## Limpar tudo (containers, volumes, images)
 	@./scripts/clean.sh
 
-rebuild: ## Rebuild completo de todos os serviços
+rebuild: rebuild-all ## Alias para rebuild-all
+
+rebuild-all: ## Rebuild completo de todos os serviços
+	@echo "🔨 Rebuild de todos os serviços..."
 	@$(DOCKER) build --no-cache
 	@$(DOCKER) up -d
+
+rebuild-%: ## Rebuild um serviço específico (ex: make rebuild-backend)
+	@echo "🔨 Rebuild do serviço: $*"
+	@$(DOCKER) build --no-cache $*
+	@$(DOCKER) up -d $*
 
 health: ## Verificar saúde dos serviços
 	@./scripts/health-check.sh
