@@ -1,8 +1,8 @@
 import { Link } from 'react-router-dom'
 
 interface LogoProps {
-  iconSize: number
-  fontSize: string
+  iconSize?: number
+  fontSize?: string
 }
 
 export default function Logo({ iconSize = 32, fontSize = '18px' }: LogoProps) {
