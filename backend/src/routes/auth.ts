@@ -11,7 +11,7 @@ const	router = Router( );
  * @swagger
  * /auth/signup:
  *   post:
- *     summary: Registrar novo utilizador
+ *     summary: Register a new user
  *     tags: [Auth]
  *     requestBody:
  *       required: true
@@ -22,11 +22,11 @@ const	router = Router( );
  *             properties:
  *               username: { type: string, example: "joao_silva" }
  *               email: { type: string, example: "joao@example.com" }
- *               password: { type: string, example: "senha123" }
+ *               password: { type: string, example: "password123" }
  *               avatarUrl: { type: string, example: "https://..." }
  *     responses:
  *       201:
- *         description: Utilizador criado com sucesso
+ *         description: User created successfully
  *         content:
  *           application/json:
  *             schema:
@@ -37,9 +37,9 @@ const	router = Router( );
  *                 token: { type: string }
  *                 user: { $ref: '#/components/schemas/User' }
  *       400:
- *         description: Dados inválidos
+ *         description: Invalid input
  *       409:
- *         description: Email ou username já existe
+ *         description: Email or username already exists
  */
 router.post( '/signup',
 	async ( req, res, next ) => {
@@ -80,7 +80,7 @@ router.post( '/signup',
  * @swagger
  * /auth/signin:
  *   post:
- *     summary: Fazer login
+ *     summary: Sign in
  *     tags: [Auth]
  *     requestBody:
  *       required: true
@@ -90,10 +90,10 @@ router.post( '/signup',
  *             type: object
  *             properties:
  *               email: { type: string, example: "joao@example.com" }
- *               password: { type: string, example: "senha123" }
+ *               password: { type: string, example: "password123" }
  *     responses:
  *       200:
- *         description: Login bem-sucedido
+ *         description: Sign-in successful
  *         content:
  *           application/json:
  *             schema:
@@ -104,9 +104,9 @@ router.post( '/signup',
  *                 token: { type: string }
  *                 user: { $ref: '#/components/schemas/User' }
  *       400:
- *         description: Dados inválidos
+ *         description: Invalid input
  *       401:
- *         description: Credenciais inválidas
+ *         description: Invalid credentials
  */
 router.post('/signin',
 	async ( req, res, next ) => {

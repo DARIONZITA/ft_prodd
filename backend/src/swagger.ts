@@ -8,7 +8,7 @@ const options = {
 		info: {
 			title: 'FT Prodd API',
 			version: '1.0.0',
-			description: 'API Documentation para o Backend FT Prodd',
+			description: 'API documentation for the FT Prodd backend',
 		},
 		servers: [
 			{
@@ -22,7 +22,7 @@ const options = {
 					type: 'http',
 					scheme: 'bearer',
 					bearerFormat: 'JWT',
-					description: 'JWT Token no header Authorization',
+					description: 'JWT token in the Authorization header',
 				},
 			},
 			schemas: {

@@ -15,13 +15,13 @@ const router = Router();
  * @swagger
  * /workspaces:
  *   get:
- *     summary: Listar todos os workspaces do utilizador
+ *     summary: List all user workspaces
  *     tags: [Workspaces]
  *     security:
  *       - BearerAuth: []
  *     responses:
  *       200:
- *         description: Lista de workspaces
+ *         description: Workspace list
  *         content:
  *           application/json:
  *             schema:
@@ -32,14 +32,14 @@ const router = Router();
  *                   type: array
  *                   items: { $ref: '#/components/schemas/Workspace' }
  *       401:
- *         description: Não autenticado
+ *         description: Unauthorized
  */
 
 /**
  * @swagger
  * /workspaces/{id}:
  *   get:
- *     summary: Obter detalhes de um workspace
+ *     summary: Get workspace details
  *     tags: [Workspaces]
  *     security:
  *       - BearerAuth: []
@@ -50,18 +50,18 @@ const router = Router();
  *         schema: { type: integer }
  *     responses:
  *       200:
- *         description: Detalhes do workspace
+ *         description: Workspace details
  *       404:
- *         description: Workspace não encontrado
+ *         description: Workspace not found
  *       403:
- *         description: Sem permissão
+ *         description: Forbidden
  */
 
 /**
  * @swagger
  * /workspaces/{id}/members:
  *   get:
- *     summary: Listar membros de um workspace
+ *     summary: List workspace members
  *     tags: [Workspaces]
  *     security:
  *       - BearerAuth: []
@@ -72,16 +72,16 @@ const router = Router();
  *         schema: { type: integer }
  *     responses:
  *       200:
- *         description: Lista de membros
+ *         description: Member list
  *       403:
- *         description: Sem permissão
+ *         description: Forbidden
  */
 
 /**
  * @swagger
  * /workspaces/{id}/members/{userId}:
  *   get:
- *     summary: Obter detalhes de um membro
+ *     summary: Get member details
  *     tags: [Workspaces]
  *     security:
  *       - BearerAuth: []
@@ -96,9 +96,9 @@ const router = Router();
  *         schema: { type: integer }
  *     responses:
  *       200:
- *         description: Detalhes do membro
+ *         description: Member details
  *   put:
- *     summary: Atualizar papel de um membro
+ *     summary: Update a member role
  *     tags: [Workspaces]
  *     security:
  *       - BearerAuth: []
@@ -120,11 +120,11 @@ const router = Router();
  *               role: { type: string, enum: [admin, editor, guest] }
  *     responses:
  *       200:
- *         description: Membro atualizado
+ *         description: Member updated
  *       403:
- *         description: Apenas admins podem fazer isso
+ *         description: Only admins can perform this action
  *   delete:
- *     summary: Remover membro do workspace
+ *     summary: Remove a workspace member
  *     tags: [Workspaces]
  *     security:
  *       - BearerAuth: []
@@ -139,9 +139,9 @@ const router = Router();
  *         schema: { type: integer }
  *     responses:
  *       200:
- *         description: Membro removido
+ *         description: Member removed
  *       403:
- *         description: Apenas admins podem fazer isso
+ *         description: Only admins can perform this action
  */
 
 
