@@ -8,6 +8,7 @@ import { parseSignIn } from '../utils/authValidation'
 import { useNavigate } from 'react-router-dom'
 import api from '../api/axios'
 import type { AxiosError } from 'axios'
+import logo42 from '../assets/42.svg'
 
 export default function SignInPage() {
   const [email, setEmail] = useState('')
@@ -49,7 +50,7 @@ export default function SignInPage() {
       <Divider label="Sign in with" />
 
       <button className="w-full flex items-center justify-center gap-2.5 px-4 py-3 border border-slate-200 rounded-lg bg-white hover:bg-slate-100 cursor-pointer font-display font-semibold text-[15px] text-slate-900 mb-5 transition-colors duration-150">
-        <img src="/src/assets/42.svg" alt="42" className="h-5" />
+        <img src={logo42} alt="42" className="h-5" />
         Intra
       </button>
 
