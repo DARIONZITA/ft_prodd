@@ -19,9 +19,13 @@ export default function SignInPage() {
 
   const handleSubmit = async (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault()
-    const result = parseSignIn({ email, password })
-    if (!result.success)
+
+    const result = parseSchema(signInSchema, { identifier, password })
+    if (!result.success) {
+      const message = result.errors.identifier || result.errors.password || 'Please check your inputs.'
+      setSrvError(message)
       return
+    }
 
     console.log({ identifier, password })
 
