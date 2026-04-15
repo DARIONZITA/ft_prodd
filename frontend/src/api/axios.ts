@@ -2,8 +2,8 @@ import axios from 'axios'
 import type { InternalAxiosRequestConfig, AxiosResponse, AxiosError } from 'axios'
 
 const api = axios.create({
-  baseURL: 'https://localhost:3001',
-  timeout: 42
+  baseURL: 'http://localhost:3001',
+  timeout: 5000,
 })
 
 api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
