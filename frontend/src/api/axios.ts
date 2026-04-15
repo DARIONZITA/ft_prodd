@@ -18,8 +18,11 @@ api.interceptors.response.use(
   (response: AxiosResponse) => response,
   (error: AxiosError) => {
     if (error.response?.status === 401) {
-      localStorage.removeItem('token')
-      window.location.href = '/signin'
+      const token = localStorage.getItem('token')
+      if (token) {
+        localStorage.removeItem('token')
+        window.location.href = '/signin'
+      }
     }
     return Promise.reject(error)
   }
