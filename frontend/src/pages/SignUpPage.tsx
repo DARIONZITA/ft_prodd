@@ -3,7 +3,7 @@ import Layout from '../components/auth/Layout'
 import LegalText from '../components/auth/LegalText'
 import FooterLink from '../components/auth/FooterLink'
 import PasswordInput from '../components/auth/PasswordInput'
-import { parseSignUp } from '../utils/authValidation'
+import { signUpSchema, parseSchema } from '../utils/authValidation'
 import { useNavigate } from 'react-router-dom'
 import api from '../api/axios'
 import type { AxiosError } from 'axios'
@@ -25,7 +25,7 @@ export default function SignUpPage() {
 
   const handleSubmit = async (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault()
-    const result = parseSignUp(form)
+    const result = parseSchema(signUpSchema, form)
     if (!result.success) {
       if (result.errors.username && usernameRef.current) {
         usernameRef.current.setCustomValidity(result.errors.username)
