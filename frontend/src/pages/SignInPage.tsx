@@ -11,7 +11,7 @@ import type { AxiosError } from 'axios'
 import logo42 from '../assets/42.svg'
 
 export default function SignInPage() {
-  const [email, setEmail] = useState('')
+  const [identifier, setIdentifier] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [srvError, setSrvError] = useState<string | null>(null)
@@ -23,13 +23,13 @@ export default function SignInPage() {
     if (!result.success)
       return
 
-    console.log({ email, password })
+    console.log({ identifier, password })
 
     setLoading(true)
     setSrvError(null)
 
     try {
-      const response = await api.post('/api/auth/signin', { email, password })
+      const response = await api.post('/api/auth/signin', { identifier, password })
       localStorage.setItem('token', response.data.token)
       navigate('/dashboard')
     } catch (error) {
@@ -60,10 +60,10 @@ export default function SignInPage() {
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-3">
         <input
-          type="email"
-          placeholder="Enter your email..."
-          value={email}
-          onChange={e => { setEmail(e.target.value); setSrvError(null) }}
+          type="text"
+          placeholder="Enter your username or email..."
+          value={identifier}
+          onChange={e => { setIdentifier(e.target.value); setSrvError(null) }}
           required
           className="w-full px-3.5 py-3 border border-slate-200 rounded-lg font-body text-sm text-slate-900 bg-white outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/15 placeholder:text-slate-400"
         />

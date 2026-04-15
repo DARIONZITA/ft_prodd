@@ -19,8 +19,21 @@ const errno = {
 }
 
 export const signInSchema = z.object({
-  email:    z.email('Enter a valid email address.').min(1, 'Email is required.'),
-  password: z.string().min(1, 'Password is required.'),
+  identifier: z
+    .string()
+    .trim()
+    .min(1, errno.required('Username or email'))
+    .superRefine((value, ctx) => {
+      if (value.includes('@')) {
+        const emailResult = z.email(errno.EBAD).safeParse(value)
+        if (!emailResult.success)
+          ctx.addIssue({ code: 'custom', message: errno.EBAD })
+        return
+      }
+    }),
+  password: z
+    .string()
+    .min(1, errno.required('Password'))
 })
 
 export const signUpSchema = z.object({
