@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { prisma } from '../index';
 import { hashPassword, comparePassword } from '../utils/password';
 import { generateToken } from '../utils/jwt';
-import { registerSchema, loginSchema } from '../validations/auth';
+import { signupSchema, signinSchema } from '../validations/auth';
 import { ApiError } from '../utils/ApiError';
 
 const	router = Router( );
@@ -12,7 +12,7 @@ const	router = Router( );
 router.post( '/signup',
 	async ( req, res, next ) => {
 		console.log("Entrou em /signup");
-		const	result = registerSchema.safeParse(req.body);
+		const	result = signupSchema.safeParse(req.body);
 
 		if (!result.success)
 			return (next(new ApiError(400, result.error.issues.map( e => e.message ).join(', '))));
@@ -47,31 +47,33 @@ router.post( '/signup',
 router.post('/signin',
 	async ( req, res, next: any ) => {
 		console.log("Entrou em /signin");
-		const	result = loginSchema.safeParse( req.body );
+		const	result = signinSchema.safeParse( req.body );
 
 		if (!result.success)
 			return (next( new ApiError( 400, result.error.issues.map( e => e.message ).join(', '))));
 
-		const	{ email, password } = result.data;
+		const	{ identifier, password } = result.data;
 	
 		try
 		{
-			const	user = await prisma.user.findUnique( { where: { email } } );
+			const	user = await prisma.user.findFirst(
+			{
+				where: { OR: [ { email: identifier }, { nickname: identifier } ] }
+				select: { id: true, nickname: true, email: true, passwordHash: true, avatarUrl: true }
+			});
 
 			if (!user)
 				return (next(new ApiError(401, "Credenciais Inválidas")));
 
-			const	valid = await comparePassword( password, user.passwordHash );
+			const	{ passwordHash, ...userWithoutPassword } = user;
 
-			if (!valid)
+			if (!(await comparePassword( password, passwordHash )))
 				return (next(new ApiError(401, "Credenciais Inválidas")));
-
-			await prisma.user.update( { where: { id: user.id }, data: { updatedAt: new Date() } } );
 
 			const	token = generateToken( user.id, user.email );
 
 			console.log("SIGNIN BEM-SUCEDIDO!!!");
-			res.status(200).json( { success: true, message: "Signin bem-sucedido", token, user } ); 
+			res.status(200).json( { success: true, message: "Signin bem-sucedido", token, userWithoutPassword } ); 
 		}
 		catch ( err )
 		{
@@ -80,15 +82,5 @@ router.post('/signin',
 		}
 	}
 );
-/*
-const schema = z.object({
-  email: z.string().email().optional(),
-  username: z.string().min(3).optional(),
-  password: z.string().min(6),
-}).refine((data) => {
-  return !!data.email || !!data.username;
-}, {
-  message: "Email ou username é obrigatório",
-});
-*/
+
 export default	router;
