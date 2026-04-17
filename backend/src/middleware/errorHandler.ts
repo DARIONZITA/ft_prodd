@@ -9,5 +9,5 @@ export const	errorHandler = ( err : unknown, req : Request, res : Response, next
 	}
 
 	console.error( "ERRO Não Tratado: ", err );
-	return (res.status(500).json( { success: false, message: "Erro Interno do Servidor" } ));
+	return (res.status(500).json( { success: false, message: "ft_prodd: Internal Server Error" } ));
 };

@@ -9,48 +9,96 @@ import { z } from 'zod';
  //Em objs { } significa chave : valor
  //Em Classes/Structs { } significa var : tipo
  
- const	name_length = { min : 3, max : 30 };
- const	password_length = { min: 8, max: 128 }; 
- const	email_max_length = 255;
+const	username_length = { min : 3, max : 42 };
  
- export const	registerSchema = z.object(
- {
- 	username: z
- 		.string()
- 		.min(name_length.min, `Username deve ter pelo menos ${name_length.min} caracteres`)
- 		.max(name_length.max, `Username demasiado longo, só pode ter até ${name_length.max} caracteres`)
- 		.regex(/^[a-zA-Z0-9_]+$/, "Username só pode conter caracteres alfanumericos e '_' "),
+export const	emailSchema = z.object(
+{
+	email: z
+		.string()
+		.min(1, 'Email cannot be empty')
+		.email('Invalid Email')
+		.max(256, 'Email too long')
+
+});
+
+export const	signupUsernameSchema = z.object(
+{
+	username: z
+		.string()
+		.min(1, 'Username cannot be empty')
+		.min(username_length.min, `username must be at least ${username_length.min} characters`)
+		.max(username_length.max, `username too long, it can have up to ${username_length.max} characters`)
+		.regex(/^[a-zA-Z0-9_-]+$/, "username can only contain alphanumeric characters and '_', '-'")
  		/*O regex diz ^ do início da string
  		[ ] define o range ou os valores permitidos
  		+ pelo menos um caractere ou seja >= 1
  		$ até ao final da string, para uma validação completa e não parcial
  		*/
+});
 
- 	email: z
-	 	.string()
-	 	.email('Email Inválido')
-	 	.max(email_max_length, 'Email demasiado longo'),
+export const	signinUsernameSchema = z.object(
+{
+	username: z
+		.string()
+		.min(1, 'Username cannot be empty')
+		.max(username_length.max, `username too long, it can have up to ${username_length.max} characters`)
+		.regex(/^[a-zA-Z0-9_-]+$/, "username can only contain alphanumeric characters and '_', '-'")
 
+});
+
+export const	passwordSchema = z.object(
+{
 	password: z
 		.string()
-		.min(password_length.min, `Password deve conter pelo menos ${password_length.min} caracteres`)
-		.max(password_length.max, `Password demasiado longa, só pode ter até ${password_length.max} caracteres`),
+		.min(1, 'Password cannot be empty')
+		.min(8, "Password must be at least 8 characters")
+		.max(128, "Password too long, it can have up to 128 characters")
+		.regex(/[a-z]/, "Must contain a lowercase letter")
+		.regex(/[A-Z]/, "Must contain a uppercase letter")
+		.regex(/[0-9]/, "Must contain a number")
+		.regex(/[^a-zA-Z0-9]/, "Must contain a special character")
+
+});
+
+ export const	signupSchema = z.object(
+ {
+ 	username: signupUsernameSchema.shape.username,
+
+ 	email: emailSchema.shape.email,
+
+	password: passwordSchema.shape.password,
 
 	avatarUrl: z
 		.string()
-		.url("URL Inválida")
+		.url("Invalid URL")
 		.optional()
 		.or( z.literal('') ),
-		//.or() significa que se alguma validação anterior falhar
-		// tem de ser pq o valor recebido é um '' caso não erro na mesma
  
  });
  
-export const	loginSchema = z.object(
+export const	signinSchema = z.object(
 {
-	email: z.string().email("Email Inválido"),
-	password: z.string().min(1, "Password é Obrigatória")
+	identifier: signinUsernameSchema.shape.username.or( emailSchema.shape.email ),
+
+	password: passwordSchema.shape.password,
+
 });
 
-/*export type	RegisterInput = z.infer<typeof registerSchema>;
-export type	LoginInput = z.infer<typeof loginSchema>;*/
+/*
+export type	RegisterInput = z.infer<typeof registerSchema>;
+export type	LoginInput = z.infer<typeof loginSchema>;
+*/
+
+/*
+Retorno do safeParse em caso de erro, é mais ou menos isto, ou seja um objeto com success: false, e um array de issues com as mensagens de erro detalhadas:
+{
+	success: false,
+	error: {
+		issues: [
+			{ message: "At least 8 characters" },
+			{ message: "Must contain an uppercase letter" },
+			...
+		]
+	}
+}
+ */
