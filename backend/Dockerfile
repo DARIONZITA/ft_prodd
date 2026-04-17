@@ -39,6 +39,7 @@ COPY package*.json ./
 COPY prisma ./prisma
 RUN npx prisma generate
 EXPOSE 3001
+EXPOSE 5555
 CMD ["node", "dist/index.js"]
 
 # Default to development

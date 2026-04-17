@@ -66,6 +66,7 @@ services:
       - LOG_LEVEL=${LOG_LEVEL:-debug}
     ports:
       - "3001:3001"
+      - "5555:5555"
     volumes:
       - ../backend:/app
       - /app/node_modules
