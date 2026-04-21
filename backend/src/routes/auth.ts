@@ -19,10 +19,10 @@ router.post( '/signup',
 
 		try
 		{
-			const	existing = await prisma.user.findFirst({ where: { OR: [ { email }, { nickname: username } ] }});
-
-			if (existing)
-				return (next(new ApiError(409, "Email ou username já existe")));
+			if (await prisma.user.findFirst({ where: { email } }))
+				return (next(new ApiError(409, "Email already in use")));
+			if (await prisma.user.findFirst({ where: { nickname: username }}))
+				return (next(new ApiError(409, "Username already in use")));
 
 			const	passwordHash = await hashPassword( password );
 			const	user = await prisma.user.create({
@@ -32,7 +32,7 @@ router.post( '/signup',
 			const	token = generateToken( user.id, user.email );
 
 			console.log("REGISTOU COM SUCESSO!!!");
-			res.status(201).json( { success: true, message: "Utilizador criado", token, user } );
+			res.status(201).json( { success: true, message: "User created", token, user } );
 		}
 		catch ( err )
 		{
@@ -61,17 +61,17 @@ router.post('/signin',
 			});
 
 			if (!user)
-				return (next(new ApiError(401, "Credenciais Inválidas")));
+				return (next(new ApiError(401, "Invalid Credentials")));
 
 			const	{ passwordHash, ...userWithoutPassword } = user;
 
 			if (!(await comparePassword( password, passwordHash )))
-				return (next(new ApiError(401, "Credenciais Inválidas")));
+				return (next(new ApiError(401, "Invalid Credentials")));
 
 			const	token = generateToken( user.id, user.email );
 
 			console.log("SIGNIN BEM-SUCEDIDO!!!");
-			res.status(200).json( { success: true, message: "Signin bem-sucedido", token, userWithoutPassword } ); 
+			res.status(200).json( { success: true, message: "Signin successfully", token, userWithoutPassword } ); 
 		}
 		catch ( err )
 		{

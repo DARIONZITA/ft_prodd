@@ -4,7 +4,7 @@ import { ApiError } from '../utils/ApiError';
 export const	errorHandler = ( err : unknown, req : Request, res : Response, next : NextFunction ) => {
 	if (err instanceof ApiError)
 	{
-		console.log(`ERRO ACONTECEU!!!: ${err.statusCode}`);
+		console.log(`ERRO ACONTECEU!!!: ${err.statusCode}, ${err.message}`);
 		return (res.status(err.statusCode).json( { success: false, message: err.message } ));
 	}
 

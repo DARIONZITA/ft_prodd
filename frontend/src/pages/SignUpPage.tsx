@@ -56,8 +56,12 @@ export default function SignUpPage() {
       localStorage.setItem('token', response.data.token)
       navigate('/dashboard')
     } catch (error) {
-      const axiosError = error as AxiosError<{ error: string }>
-      const message = axiosError.response?.data?.error || 'Something went wrong. Try again.'
+      const axiosError = error as AxiosError<{ message: string }>
+      const message =
+        axiosError.response?.data?.message ||
+        (axiosError.request
+          ? 'Could not reach the server. Check your connection.'
+          : 'Something went wrong. Try again.')
       setSrvError(message)
     } finally {
       setLoading(false)
