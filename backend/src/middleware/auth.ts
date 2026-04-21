@@ -3,14 +3,12 @@ import { verifyToken } from '../utils/jwt';
 import { prisma } from '../index';
 import { ApiError } from '../utils/ApiError';
 
-export const	authenticate = async ( req : Request, res : Response, next : NextFunction ) : Promise<boolean> => {
+export const	authenticate = async ( req : Request, res : Response, next : NextFunction ) => {
 	const	authHeader = req.headers.authorization;
 
 	if (!authHeader?.startsWith( 'Bearer ' ))
-	{
-		next(new ApiError(401, "Token Not Provided"));
-		return (false);
-	}
+		return (next(new ApiError(401, "Token Não fornecido")));
+
 	const	token = authHeader.split(' ')[1];
 
 	try
@@ -19,13 +17,12 @@ export const	authenticate = async ( req : Request, res : Response, next : NextFu
 		const	user = await prisma.user.findUnique( { where: { id: payload.id } } );
 
 		if (!user)
-			throw new ApiError(401, 'User not found');
+			return (next(new ApiError(401, 'Utilizador não encontrado')));
 		req.user = user;
-		return (true);
+		next();
 	}
 	catch ( err )
 	{
 		next( err );
 	}
-	return (false);
 };

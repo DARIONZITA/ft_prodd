@@ -7,15 +7,13 @@ import { ApiError } from '../utils/ApiError';
 
 const	router = Router( );
 
-//Criar uma função genérica que é chamada ambas as rotas, para evitar repetição de código
-
 router.post( '/signup',
 	async ( req, res, next ) => {
 		console.log("Entrou em /signup");
 		const	result = signupSchema.safeParse(req.body);
 
 		if (!result.success)
-			return (next(new ApiError(400, result.error.issues.map( e => e.message ).join(', '))));
+			return (next(new ApiError( 400, result.error.issues[0].message )));
 
 		const	{ username, email, password, avatarUrl } = result.data;
 
@@ -24,7 +22,7 @@ router.post( '/signup',
 			const	existing = await prisma.user.findFirst({ where: { OR: [ { email }, { nickname: username } ] }});
 
 			if (existing)
-				return (next(new ApiError(409, "Email or username already exists")));
+				return (next(new ApiError(409, "Email ou username já existe")));
 
 			const	passwordHash = await hashPassword( password );
 			const	user = await prisma.user.create({
@@ -34,7 +32,7 @@ router.post( '/signup',
 			const	token = generateToken( user.id, user.email );
 
 			console.log("REGISTOU COM SUCESSO!!!");
-			res.status(201).json( { success: true, message: "User created", token, user } );
+			res.status(201).json( { success: true, message: "Utilizador criado", token, user } );
 		}
 		catch ( err )
 		{
@@ -50,7 +48,7 @@ router.post('/signin',
 		const	result = signinSchema.safeParse( req.body );
 
 		if (!result.success)
-			return (next( new ApiError( 400, result.error.issues.map( e => e.message ).join(', '))));
+			return (next( new ApiError( 400, result.error.issues[0].message )));
 
 		const	{ identifier, password } = result.data;
 	
@@ -58,22 +56,22 @@ router.post('/signin',
 		{
 			const	user = await prisma.user.findFirst(
 			{
-				where: { OR: [ { email: identifier }, { nickname: identifier } ] }
+				where: { OR: [ { email: identifier }, { nickname: identifier } ] },
 				select: { id: true, nickname: true, email: true, passwordHash: true, avatarUrl: true }
 			});
 
 			if (!user)
-				return (next(new ApiError(401, "Invalid Credentials")));
+				return (next(new ApiError(401, "Credenciais Inválidas")));
 
 			const	{ passwordHash, ...userWithoutPassword } = user;
 
 			if (!(await comparePassword( password, passwordHash )))
-				return (next(new ApiError(401, "Invalid Credentials")));
+				return (next(new ApiError(401, "Credenciais Inválidas")));
 
 			const	token = generateToken( user.id, user.email );
 
 			console.log("SIGNIN BEM-SUCEDIDO!!!");
-			res.status(200).json( { success: true, message: "signed in successfully", token, userWithoutPassword } ); 
+			res.status(200).json( { success: true, message: "Signin bem-sucedido", token, userWithoutPassword } ); 
 		}
 		catch ( err )
 		{
