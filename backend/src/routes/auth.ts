@@ -7,15 +7,13 @@ import { ApiError } from '../utils/ApiError';
 
 const	router = Router( );
 
-//Criar uma função genérica que é chamada ambas as rotas, para evitar repetição de código
-
 router.post( '/signup',
 	async ( req, res, next ) => {
 		console.log("Entrou em /signup");
 		const	result = signupSchema.safeParse(req.body);
 
 		if (!result.success)
-			return (next(new ApiError(400, result.error.issues.map( e => e.message ).join(', '))));
+			return (next(new ApiError( 400, result.error.issues[0].message )));
 
 		const	{ username, email, password, avatarUrl } = result.data;
 
@@ -50,7 +48,7 @@ router.post('/signin',
 		const	result = signinSchema.safeParse( req.body );
 
 		if (!result.success)
-			return (next( new ApiError( 400, result.error.issues.map( e => e.message ).join(', '))));
+			return (next( new ApiError( 400, result.error.issues[0].message )));
 
 		const	{ identifier, password } = result.data;
 	
@@ -58,7 +56,7 @@ router.post('/signin',
 		{
 			const	user = await prisma.user.findFirst(
 			{
-				where: { OR: [ { email: identifier }, { nickname: identifier } ] }
+				where: { OR: [ { email: identifier }, { nickname: identifier } ] },
 				select: { id: true, nickname: true, email: true, passwordHash: true, avatarUrl: true }
 			});
 
