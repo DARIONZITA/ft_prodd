@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { X } from 'lucide-react';
+import { X, Link2 } from 'lucide-react';
 import type { Column, Task, TaskPriority } from './Types';
 
 const AVAILABLE_LABELS = [
@@ -22,9 +22,10 @@ interface CreateTaskModalProps {
   onCreateTask: (task: Task) => void;
   columns: Column[];
   initialColumnId?: string;
+  backlogTasks?: Task[];
 }
 
-export default function CreateTaskModal({ onClose, onCreateTask, columns, initialColumnId }: CreateTaskModalProps) {
+export default function CreateTaskModal({ onClose, onCreateTask, columns, initialColumnId, backlogTasks = [] }: CreateTaskModalProps) {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [columnId, setColumnId] = useState(initialColumnId ?? columns[0]?.id ?? '');
@@ -32,6 +33,7 @@ export default function CreateTaskModal({ onClose, onCreateTask, columns, initia
   const [dueDate, setDueDate] = useState('');
   const [selectedAssignees, setSelectedAssignees] = useState(AVAILABLE_ASSIGNEES.slice(0, 1));
   const [selectedLabels, setSelectedLabels] = useState([AVAILABLE_LABELS[0]]);
+  const [linkedBacklogId, setLinkedBacklogId] = useState<string>('');
 
   useEffect(() => {
     if (!columns.length) return;
@@ -50,6 +52,9 @@ export default function CreateTaskModal({ onClose, onCreateTask, columns, initia
     () => columns.find((col) => col.id === columnId) ?? columns[0],
     [columns, columnId]
   );
+
+  const isBacklogColumn = selectedColumn?.columnTypeId === 'backlog';
+  const requiresBacklogLink = !isBacklogColumn && backlogTasks.length > 0;
 
   const handleToggleAssignee = (assignee: typeof AVAILABLE_ASSIGNEES[0]) => {
     setSelectedAssignees(prev =>
@@ -73,6 +78,11 @@ export default function CreateTaskModal({ onClose, onCreateTask, columns, initia
       return;
     }
 
+    if (requiresBacklogLink && !linkedBacklogId) {
+      alert('You must connect this task with a backlog item.');
+      return;
+    }
+
     const newTask: Task = {
       id: `TASK-${Math.floor(Math.random() * 1000)}`,
       title,
@@ -86,6 +96,7 @@ export default function CreateTaskModal({ onClose, onCreateTask, columns, initia
       createdBy: AVAILABLE_ASSIGNEES[0],
       sprint: 'Sprint 1',
       createdAt: new Date().toISOString().split('T')[0],
+      linkedBacklogId: requiresBacklogLink ? linkedBacklogId : undefined,
     };
 
     onCreateTask(newTask);
@@ -241,6 +252,39 @@ export default function CreateTaskModal({ onClose, onCreateTask, columns, initia
               ))}
             </div>
           </div>
+
+          {/* Connect with Backlog */}
+          {requiresBacklogLink && (
+            <div>
+              <label className="block font-mono text-[11px] uppercase tracking-wider text-slate-400 mb-2">
+                <span className="flex items-center gap-1.5">
+                  <Link2 className="w-3.5 h-3.5 text-cyan-500" />
+                  Connect with Backlog <span className="text-red-500">*</span>
+                </span>
+              </label>
+              <select
+                value={linkedBacklogId}
+                onChange={(e) => setLinkedBacklogId(e.target.value)}
+                className={`w-full text-sm border rounded-lg px-3 py-2.5 outline-none transition-all cursor-pointer appearance-none bg-white pr-8 ${
+                  linkedBacklogId
+                    ? 'border-cyan-400 ring-2 ring-cyan-500/20 text-slate-700'
+                    : 'border-red-300 ring-2 ring-red-500/10 text-slate-400'
+                }`}
+              >
+                <option value="">Select a backlog item…</option>
+                {backlogTasks.map((bt) => (
+                  <option key={bt.id} value={bt.id}>
+                    {bt.id} — {bt.title}
+                  </option>
+                ))}
+              </select>
+              {!linkedBacklogId && (
+                <p className="text-[11px] text-red-400 mt-1.5 flex items-center gap-1">
+                  ⚠ Every task must be linked to a backlog item
+                </p>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Footer */}

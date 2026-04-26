@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { X, MessageSquare, ChevronDown, Calendar, User2 } from 'lucide-react';
+import { X, MessageSquare, ChevronDown, Calendar, User2, Link2 } from 'lucide-react';
 import type { ChecklistItem, Column, ColumnTypeId, Task, TaskComment, TaskPriority } from './Types';
 
 const COLUMN_TYPE_COLORS: Record<ColumnTypeId, { dot: string; bg: string; border: string; text: string }> = {
@@ -92,6 +92,10 @@ export default function TaskDetailPanel({ task, columns, onClose, onUpdateTask }
   };
 
   const toggleChecklistItem = (itemId: string) => {
+    // Find the item to check if it's synced
+    const item = checklistItems.find((i) => i.id === itemId);
+    if (item?.linkedTaskId) return; // synced items cannot be toggled manually
+
     setChecklistItems((current) =>
       current.map((item) => (item.id === itemId ? { ...item, completed: !item.completed } : item))
     );
@@ -265,16 +269,33 @@ export default function TaskDetailPanel({ task, columns, onClose, onUpdateTask }
                       </div>
                     ) : (
                       checklistItems.map((item) => (
-                        <label key={item.id} className="flex items-start gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 cursor-pointer hover:bg-white transition-colors">
+                        <label key={item.id} className={`flex items-start gap-3 rounded-xl border px-3 py-3 transition-colors ${
+                          item.linkedTaskId
+                            ? 'border-cyan-200 bg-cyan-50/50 cursor-default'
+                            : 'border-slate-200 bg-slate-50 cursor-pointer hover:bg-white'
+                        }`}>
                           <input
                             type="checkbox"
                             checked={item.completed}
                             onChange={() => toggleChecklistItem(item.id)}
-                            className="mt-1 h-4 w-4 rounded border-slate-300 bg-white text-cyan-600 focus:ring-cyan-500"
+                            disabled={!!item.linkedTaskId}
+                            className={`mt-1 h-4 w-4 rounded border-slate-300 bg-white focus:ring-cyan-500 ${
+                              item.linkedTaskId
+                                ? 'text-cyan-400 cursor-not-allowed opacity-70'
+                                : 'text-cyan-600'
+                            }`}
                           />
-                          <span className={`text-sm leading-6 ${item.completed ? 'text-slate-400 line-through' : 'text-slate-700'}`}>
-                            {item.text}
-                          </span>
+                          <div className="flex-1 min-w-0">
+                            <span className={`text-sm leading-6 ${item.completed ? 'text-slate-400 line-through' : 'text-slate-700'}`}>
+                              {item.text}
+                            </span>
+                            {item.linkedTaskId && (
+                              <span className="inline-flex items-center gap-1 ml-2 text-[10px] text-cyan-500 font-medium">
+                                <Link2 className="w-3 h-3" />
+                                {item.linkedTaskId}
+                              </span>
+                            )}
+                          </div>
                         </label>
                       ))
                     )}

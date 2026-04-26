@@ -1,6 +1,6 @@
-import { useMemo, useState, useRef } from 'react';
-import { Plus, Calendar } from 'lucide-react';
-import type { Column, ColumnTypeId, Task } from './Types';
+import { useMemo, useState, useRef, useCallback } from 'react';
+import { Plus, Calendar, Link2 } from 'lucide-react';
+import type { ChecklistItem, Column, ColumnTypeId, Task } from './Types';
 import { useDroppable, DragDropProvider } from '@dnd-kit/react';
 import {useSortable} from '@dnd-kit/react/sortable';
 import CreateTaskModal from './CreateTaskModal';
@@ -172,59 +172,105 @@ interface ColumnCardProps {
   onAddTask: (id: string) => void;
   onTaskClick: (task: Task) => void;
   index: number;
+  backlogColumnId?: string;
 }
 
-function TaskCard({ task, onClick, index }: { task: Task; onClick: (task: Task) => void; index: number }) {
+function TaskCard({ task, onClick, index, isBacklogTask, isCompletedBacklog }: { task: Task; onClick: (task: Task) => void; index: number; isBacklogTask?: boolean; isCompletedBacklog?: boolean }) {
   const [element, setElement] = useState<Element | null>(null);
+  const dummyRef = useRef<HTMLDivElement | null>(null);
 
   const { isDragging } = useSortable({
     id: task.id,
     element,
-    handle: element,
+    handle: isBacklogTask ? dummyRef : element,
     index,
+    disabled: isBacklogTask,
     data: { type: 'TASK', taskId: task.id, fromColumnId: task.columnId, taskIndex: index }
   });
 
   const { ref: beforeRef, isDropTarget: isBeforeDropTarget } = useDroppable({
     id: `${task.id}::before`,
+    disabled: isBacklogTask,
     data: { type: 'TASK_INSERT', taskId: task.id, fromColumnId: task.columnId, side: 'before', taskIndex: index }
   });
 
   const { ref: afterRef, isDropTarget: isAfterDropTarget } = useDroppable({
     id: `${task.id}::after`,
+    disabled: isBacklogTask,
     data: { type: 'TASK_INSERT', taskId: task.id, fromColumnId: task.columnId, side: 'after', taskIndex: index }
   });
+
+  // Checklist progress for backlog cards
+  const checklistTotal = task.checklist?.length ?? 0;
+  const checklistDone = task.checklist?.filter(i => i.completed).length ?? 0;
 
   return (<div
               ref={setElement}
               key={task.id}
               onClick={() => onClick(task)}
-              className={`${isDragging ? 'shadow-lg rotate-4' : 'shadow-sm'} relative p-4 rounded-xl border cursor-pointer transition-all hover:shadow-md hover:-translate-y-0.5 group bg-white border-slate-200 hover:border-slate-300`}
+              className={`${isDragging ? 'shadow-lg rotate-4' : 'shadow-sm'} relative p-4 rounded-xl border transition-all group ${
+                isCompletedBacklog
+                  ? 'bg-slate-100 border-slate-200 opacity-60 cursor-default'
+                  : isBacklogTask
+                    ? 'bg-white border-slate-200 hover:shadow-md cursor-pointer'
+                    : 'bg-white border-slate-200 hover:shadow-md hover:-translate-y-0.5 cursor-pointer hover:border-slate-300'
+              }`}
             >
-              <div ref={beforeRef} className="absolute -top-2 left-0 right-0 h-1/2 z-10" />
-              {isBeforeDropTarget && !isDragging && (
-                <div className="absolute -top-1 left-2 right-2 h-0.5 rounded-full bg-cyan-500 z-20" />
+              {/* Hidden ref for backlog tasks so drag handle points to nothing */}
+              <div ref={dummyRef} className="hidden" />
+
+              {!isBacklogTask && (
+                <>
+                  <div ref={beforeRef} className="absolute -top-2 left-0 right-0 h-1/2 z-10" />
+                  {isBeforeDropTarget && !isDragging && (
+                    <div className="absolute -top-1 left-2 right-2 h-0.5 rounded-full bg-cyan-500 z-20" />
+                  )}
+                  <div ref={afterRef} className="absolute -bottom-2 left-0 right-0 h-1/2 z-10" />
+                  {isAfterDropTarget && !isDragging && (
+                    <div className="absolute -bottom-1 left-2 right-2 h-0.5 rounded-full bg-cyan-500 z-20" />
+                  )}
+                </>
               )}
 
-              <div ref={afterRef} className="absolute -bottom-2 left-0 right-0 h-1/2 z-10" />
-              {isAfterDropTarget && !isDragging && (
-                <div className="absolute -bottom-1 left-2 right-2 h-0.5 rounded-full bg-cyan-500 z-20" />
-              )}
-
-              <h4 className="text-sm font-medium mb-2 line-clamp-2 transition-colors text-slate-900 group-hover:text-cyan-600">
+              <h4 className={`text-sm font-medium mb-2 line-clamp-2 transition-colors ${
+                isCompletedBacklog
+                  ? 'text-slate-400 line-through'
+                  : 'text-slate-900 group-hover:text-cyan-600'
+              }`}>
                 {task.title}
               </h4>
 
+              {/* Backlog checklist progress bar */}
+              {isBacklogTask && checklistTotal > 0 && (
+                <div className="mb-3">
+                  <div className="flex items-center justify-between text-[10px] text-slate-400 mb-1">
+                    <span>{checklistDone}/{checklistTotal} items</span>
+                    <span>{Math.round((checklistDone / checklistTotal) * 100)}%</span>
+                  </div>
+                  <div className="h-1.5 rounded-full bg-slate-200 overflow-hidden">
+                    <div className={`h-full rounded-full transition-all ${isCompletedBacklog ? 'bg-green-400' : 'bg-cyan-500'}`} style={{ width: `${(checklistDone / checklistTotal) * 100}%` }} />
+                  </div>
+                </div>
+              )}
+
+              {/* Linked backlog badge for non-backlog tasks */}
+              {!isBacklogTask && task.linkedBacklogId && (
+                <div className="flex items-center gap-1 mb-2 text-[10px] text-cyan-600">
+                  <Link2 className="w-3 h-3" />
+                  <span className="font-medium">Linked to backlog</span>
+                </div>
+              )}
+
               <div className="space-y-2 mb-3 text-xs">
                 {task.dueDate && (
-                  <div className="text-slate-500">
+                  <div className={isCompletedBacklog ? 'text-slate-300' : 'text-slate-500'}>
                     <Calendar className="w-3 h-3 inline mr-1" /> {new Date(task.dueDate).toLocaleDateString()}
                   </div>
                 )}
                 {task.assignees.length > 0 && (
                   <div className="flex items-center gap-1">
                     {task.assignees.slice(0, 2).map((assignee) => (
-                      <img key={assignee.id} src={assignee.avatar} className="w-5 h-5 rounded-full" alt={assignee.name} title={assignee.name} />
+                      <img key={assignee.id} src={assignee.avatar} className={`w-5 h-5 rounded-full ${isCompletedBacklog ? 'opacity-40' : ''}`} alt={assignee.name} title={assignee.name} />
                     ))}
                     {task.assignees.length > 2 && (
                       <div className="w-5 h-5 rounded-full bg-slate-200 flex items-center justify-center text-[10px] text-slate-600">
@@ -238,14 +284,14 @@ function TaskCard({ task, onClick, index }: { task: Task; onClick: (task: Task) 
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-1">
                   <span className="text-xs">{getPriorityColor(task.priority)}</span>
-                  <span className={`text-xs font-medium ${getPriorityTextColor(task.priority)}`}>{task.priority}</span>
+                  <span className={`text-xs font-medium ${isCompletedBacklog ? 'text-slate-300' : getPriorityTextColor(task.priority)}`}>{task.priority}</span>
                 </div>
                 {task.labels.length > 0 && (
                   <div className="flex gap-1 overflow-hidden">
                     {task.labels.slice(0, 1).map((label) => (
                       <span
                         key={label.id}
-                        className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${label.bgColor} ${label.color} border ${label.borderColor}`}
+                        className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${isCompletedBacklog ? 'bg-slate-100 text-slate-300 border-slate-200' : `${label.bgColor} ${label.color} border ${label.borderColor}`}`}
                       >
                         {label.name}
                       </span>
@@ -259,11 +305,10 @@ function TaskCard({ task, onClick, index }: { task: Task; onClick: (task: Task) 
             </div>);
 }
 
-function ColumnCard({ column, tasks, isBacklog, onAddTask, onTaskClick, index }: ColumnCardProps) {
+function ColumnCard({ column, tasks, isBacklog, onAddTask, onTaskClick, index, backlogColumnId }: ColumnCardProps) {
   const [element, setElement] = useState<Element | null>(null);
   const handleRef = useRef<HTMLDivElement | null>(null);
 
-  // 1. Hook para ordenar as COLUNAS
   const { isDragging } = useSortable({ 
     id: column.id, 
     index, 
@@ -272,11 +317,10 @@ function ColumnCard({ column, tasks, isBacklog, onAddTask, onTaskClick, index }:
       data: {type: 'COLUMN', columnId: column.id}
   });
 
-  // 2. Hook para aceitar TAREFAS (Droppable)
-  // Nota: Não precisamos passar o 'element' aqui se usarmos a função de ref
   const { ref: dropRef } = useDroppable({
     id: column.id,
-});
+    disabled: isBacklog,
+  });
 
    return (
     <div
@@ -318,8 +362,15 @@ function ColumnCard({ column, tasks, isBacklog, onAddTask, onTaskClick, index }:
         {tasks.length === 0 ? (
           <div className="text-slate-400 text-sm text-center py-8 font-medium">No tasks</div>
         ) : (
-          tasks.map((task, index) => (
-            <TaskCard key={task.id} task={task} onClick={onTaskClick} index={index} />
+          tasks.map((task, idx) => (
+            <TaskCard
+              key={task.id}
+              task={task}
+              onClick={onTaskClick}
+              index={idx}
+              isBacklogTask={isBacklog}
+              isCompletedBacklog={isBacklog && !!task.isCompleted}
+            />
           ))
         )}
       </div>
@@ -380,6 +431,18 @@ export default function KanbanBoardPage() {
     );
   }, [tasks, searchQuery]);
 
+  // Find the backlog column id
+  const backlogColumnId = useMemo(
+    () => columns.find((col) => col.columnTypeId === 'backlog')?.id,
+    [columns]
+  );
+
+  // All backlog tasks (for the "Connect with Backlog" selector)
+  const backlogTasks = useMemo(
+    () => tasks.filter((t) => backlogColumnId && t.columnId === backlogColumnId && !t.isCompleted),
+    [tasks, backlogColumnId]
+  );
+
   const tasksByColumn = useMemo(() => {
     const grouped: Record<string, Task[]> = {};
     columns.forEach((column) => {
@@ -392,8 +455,18 @@ export default function KanbanBoardPage() {
       }
     });
 
+    // Sort: within backlog column, completed backlogs go to end
     Object.keys(grouped).forEach((columnId) => {
-      grouped[columnId].sort((a, b) => a.order - b.order);
+      const col = columns.find((c) => c.id === columnId);
+      if (col?.columnTypeId === 'backlog') {
+        grouped[columnId].sort((a, b) => {
+          if (a.isCompleted && !b.isCompleted) return 1;
+          if (!a.isCompleted && b.isCompleted) return -1;
+          return a.order - b.order;
+        });
+      } else {
+        grouped[columnId].sort((a, b) => a.order - b.order);
+      }
     });
 
     return grouped;
@@ -436,26 +509,82 @@ export default function KanbanBoardPage() {
       .filter((task) => task.columnId === columnId)
       .reduce((max, task) => Math.max(max, task.order), 0) + 1;
 
-    setTasks([...tasks, { ...newTask, columnId, order: nextOrder }]);
+    const finalTask = { ...newTask, columnId, order: nextOrder };
+
+    // If the new task is linked to a backlog, add a checklist item to that backlog
+    if (finalTask.linkedBacklogId) {
+      const newChecklistItem: ChecklistItem = {
+        id: `check-link-${finalTask.id}`,
+        text: finalTask.title,
+        completed: false,
+        linkedTaskId: finalTask.id,
+      };
+
+      setTasks((prev) => [
+        ...prev.map((t) =>
+          t.id === finalTask.linkedBacklogId
+            ? { ...t, checklist: [...(t.checklist ?? []), newChecklistItem] }
+            : t
+        ),
+        finalTask,
+      ]);
+    } else {
+      setTasks((prev) => [...prev, finalTask]);
+    }
+
     setShowCreateModal(false);
   };
 
   const handleUpdateTask = (updatedTask: Task) => {
     const currentTask = tasks.find((task) => task.id === updatedTask.id);
     const isDoneColumn = doneColumnIds.has(updatedTask.columnId);
+    const wasDone = currentTask ? doneColumnIds.has(currentTask.columnId) : false;
 
     const normalizedTask: Task = {
       ...updatedTask,
       completedAt: isDoneColumn ? currentTask?.completedAt ?? todayIso : undefined,
     };
 
-    setTasks(tasks.map((task) => (task.id === normalizedTask.id ? normalizedTask : task)));
+    let newTasks = tasks.map((task) => (task.id === normalizedTask.id ? normalizedTask : task));
+
+    // Sync checklist if the task moved to/from Done
+    if (normalizedTask.linkedBacklogId && isDoneColumn !== wasDone) {
+      newTasks = newTasks.map((t) => {
+        if (t.id === normalizedTask.linkedBacklogId) {
+          const updatedChecklist = (t.checklist ?? []).map((item) =>
+            item.linkedTaskId === normalizedTask.id
+              ? { ...item, completed: isDoneColumn }
+              : item
+          );
+          return { ...t, checklist: updatedChecklist };
+        }
+        return t;
+      });
+      newTasks = recomputeBacklogCompletion(newTasks, normalizedTask.linkedBacklogId);
+    }
+
+    setTasks(newTasks);
     setSelectedTask(normalizedTask);
   };
 
   const handleAddColumn = () => {
     openCreateColumnModal();
   };
+
+  // Helper: recompute backlog completion status
+  const recomputeBacklogCompletion = useCallback((allTasks: Task[], backlogId: string): Task[] => {
+    const backlog = allTasks.find((t) => t.id === backlogId);
+    if (!backlog) return allTasks;
+
+    const checklist = backlog.checklist ?? [];
+    if (checklist.length === 0) return allTasks;
+
+    const allDone = checklist.every((item) => item.completed);
+
+    return allTasks.map((t) =>
+      t.id === backlogId ? { ...t, isCompleted: allDone } : t
+    );
+  }, []);
 
   const handleDragEnd = (event: any) => {
     if (event.canceled || !event.operation.target) return;
@@ -464,14 +593,11 @@ export default function KanbanBoardPage() {
     const overId = String(event.operation.target.id);
     const type = event.operation.source.data?.type;
     const overData = event.operation.target.data;
-    console.log('Drag End:', { activeId, overId, type, overData });
+
     if (type === 'COLUMN') {
         if (overData?.type === 'TASK_INSERT' || overData?.type === 'TASK') 
         {
-            // pegamos o id da coluna dea tarefa de destino, que é onde queremos inserir a coluna
             const targetColumnId = String(overData.fromColumnId);
-
-            // se a coluna de destino for a mesma da coluna arrastada, não faz sentido mover
             if (targetColumnId === activeId) return;
 
             setColumns((prev) => {
@@ -506,6 +632,10 @@ export default function KanbanBoardPage() {
     const activeTask = prevTasks.find((t) => t.id === activeId);
     if (!activeTask) return prevTasks;
 
+    // BLOCK: backlog tasks cannot be dragged to other columns
+    const sourceCol = columns.find((c) => c.id === activeTask.columnId);
+    if (sourceCol?.columnTypeId === 'backlog') return prevTasks;
+
     const sourceColumnId = String(
       event.operation.source.data?.fromColumnId ?? activeTask.columnId
     );
@@ -516,6 +646,10 @@ export default function KanbanBoardPage() {
         : overData?.type === 'TASK'
           ? String(overData.fromColumnId)
           : overId;
+
+    // BLOCK: cannot drop into backlog column
+    const targetCol = columns.find((c) => c.id === targetColumnId);
+    if (targetCol?.columnTypeId === 'backlog') return prevTasks;
 
     // 1. remover o ativo globalmente
     const withoutActive = prevTasks.filter((t) => t.id !== activeId);
@@ -545,9 +679,10 @@ export default function KanbanBoardPage() {
         : insertAt;
 
     // 5. inserir
+    const movedTask = { ...activeTask, columnId: targetColumnId };
     const newTargetTasks = [
       ...targetTasks.slice(0, finalIndex),
-      { ...activeTask, columnId: targetColumnId },
+      movedTask,
       ...targetTasks.slice(finalIndex),
     ].map((t, i) => ({
       ...t,
@@ -559,7 +694,33 @@ export default function KanbanBoardPage() {
       (t) => t.columnId !== targetColumnId
     );
 
-    return sortTasks([...others, ...newTargetTasks]);
+    let result = sortTasks([...others, ...newTargetTasks]);
+
+    // 7. SYNC: if the task is linked to a backlog, update checklist
+    if (activeTask.linkedBacklogId) {
+      const isDone = doneColumnIds.has(targetColumnId);
+      const wasDone = doneColumnIds.has(sourceColumnId);
+
+      if (isDone !== wasDone) {
+        // Update the checklist item in the backlog
+        result = result.map((t) => {
+          if (t.id === activeTask.linkedBacklogId) {
+            const updatedChecklist = (t.checklist ?? []).map((item) =>
+              item.linkedTaskId === activeTask.id
+                ? { ...item, completed: isDone }
+                : item
+            );
+            return { ...t, checklist: updatedChecklist };
+          }
+          return t;
+        });
+
+        // Recompute backlog completion
+        result = recomputeBacklogCompletion(result, activeTask.linkedBacklogId);
+      }
+    }
+
+    return result;
   });
 }
   };
@@ -594,6 +755,7 @@ export default function KanbanBoardPage() {
                   onAddTask={openCreateTaskModal}
                   onTaskClick={setSelectedTask}
                   index={index}
+                  backlogColumnId={backlogColumnId}
                 />
               );
             })}
@@ -623,6 +785,7 @@ export default function KanbanBoardPage() {
           onCreateTask={handleAddTask}
           columns={columns}
           initialColumnId={createTaskColumnId}
+          backlogTasks={backlogTasks}
         />
       )}
 

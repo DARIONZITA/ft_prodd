@@ -36,6 +36,7 @@ export interface ChecklistItem {
   id: string;
   text: string;
   completed: boolean;
+  linkedTaskId?: string;
 }
 
 export interface Task {
@@ -54,4 +55,6 @@ export interface Task {
   createdBy: Assignee;
   sprint: string;
   createdAt: string;
+  linkedBacklogId?: string;
+  isCompleted?: boolean;
 }
