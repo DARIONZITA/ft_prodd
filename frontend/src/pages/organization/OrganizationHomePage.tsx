@@ -32,6 +32,7 @@ interface OrganizationHomePageProps {
   onCreateWorkspace?: () => void
   onOpenSettings?: () => void
   onOpenMembers?: () => void
+  onOpenBoard?: () => void
 }
 //mockdata
 const activities: ActivityItem[] = [
@@ -75,7 +76,7 @@ const team: TeamMember[] = [
   { name: 'Maria', role: 'Designer', initials: 'MA', accent: 'linear-gradient(135deg, #8b5cf6 0%, #d946ef 100%)', online: false },
 ]
 
-export default function OrganizationHomePage({ workspace, onOpenSettings, onOpenMembers }: OrganizationHomePageProps) {
+export default function OrganizationHomePage({ workspace, onOpenSettings, onOpenMembers, onOpenBoard }: OrganizationHomePageProps) {
   const taskCount = workspace.taskCount ?? 42
   const completedThisWeek = workspace.completedThisWeek ?? 24
   const pendingCount = workspace.pendingCount ?? Math.max(0, taskCount - completedThisWeek - 10)
@@ -140,7 +141,7 @@ export default function OrganizationHomePage({ workspace, onOpenSettings, onOpen
           <article>
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-3xl font-black text-slate-900">Recent Activity</h2>
-              <button className="inline-flex items-center gap-2 rounded-xl border border-cyan-600 bg-cyan-600 px-4 py-2 text-sm font-bold text-white shadow-[0_10px_24px_rgba(8,145,178,0.28)] transition-all duration-150 hover:-translate-y-0.5 hover:bg-cyan-700 hover:shadow-[0_14px_28px_rgba(8,145,178,0.34)]">
+              <button onClick={onOpenBoard} className="inline-flex items-center gap-2 rounded-xl border border-cyan-600 bg-cyan-600 px-4 py-2 text-sm font-bold text-white shadow-[0_10px_24px_rgba(8,145,178,0.28)] transition-all duration-150 hover:-translate-y-0.5 hover:bg-cyan-700 hover:shadow-[0_14px_28px_rgba(8,145,178,0.34)]">
                 View Board <span aria-hidden="true">→</span>
               </button>
             </div>

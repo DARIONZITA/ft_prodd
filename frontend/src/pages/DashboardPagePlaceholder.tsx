@@ -8,6 +8,7 @@ import OrganizationHomePage from './organization/OrganizationHomePage'
 import CreateOrganizationModal from './organization/CreateOrganizationModal'
 import OrganizationSettingsPage from './organization/OrganizationSettingsPage.tsx'
 import OrganizationMembersPage from './organization/OrganizationMembersPage.tsx'
+import KanbanBoardPage from '../components/tasks/KanbanBoardPage.tsx'
 import NotificationsPage from './NotificationsPage.tsx'
 
 interface Workspace {
@@ -100,6 +101,7 @@ type ActiveView =
   | 'organization-members'
   | `workspace-${string | number}`
   | `user-${string | number}`
+  | 'kanbanBoard'
 
 // ─── Placeholder ─────────────────────────────────────────────────────────────
 
@@ -195,6 +197,7 @@ export default function DashboardPagePlaceholder() {
     if (activeView === 'notifications') return <NotificationsPage />
     if (activeView === 'all-boards') return <PlaceholderView title="All Boards" />
     if (activeView === 'completed') return <PlaceholderView title="Completed Tasks" />
+    if (activeView === 'kanbanBoard') return <KanbanBoardPage />
     if (activeView === 'organization-settings') {
       return currentWorkspace ? (
         <OrganizationSettingsPage
@@ -222,6 +225,8 @@ export default function DashboardPagePlaceholder() {
           onCreateWorkspace={() => setCreateOrganizationOpen(true)}
           onOpenSettings={() => setActiveView('organization-settings')}
           onOpenMembers={() => setActiveView('organization-members')}
+          onOpenBoard={() => setActiveView('kanbanBoard')}
+          
         />
       ) : (
         <PlaceholderView title="Workspace" />
