@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Menu, X, Plus, Search, LayoutDashboard, LayoutList, CheckCheck, HelpCircle, LogOut, Grid2x2, FileText, ArrowLeftRight } from 'lucide-react'
+import { Menu, X, Plus, Search, LayoutDashboard, LayoutList, CheckCheck, HelpCircle, LogOut, Grid2x2, FileText, ArrowLeftRight, Trophy, Medal } from 'lucide-react'
 import NotificationsDropdown from './NotificationsDropdown'
 
 interface Workspace {
@@ -18,6 +18,11 @@ interface SidebarProps {
   user: User
   activeView: string
   onNavigate: (view: string, payload?: string | number) => void
+  xpSummary?: {
+    level: number
+    xp: number
+    xpRequired: number
+  }
   onLogout?: () => void
   onCreateWorkspace?: () => void
   className?: string
@@ -25,7 +30,7 @@ interface SidebarProps {
 
 const WORKSPACE_ICONS = [Grid2x2, FileText, ArrowLeftRight]
 
-export default function Sidebar({ user, activeView, onNavigate, onLogout = () => {}, onCreateWorkspace = () => {}, className = '' }: SidebarProps) {
+export default function Sidebar({ user, activeView, onNavigate, xpSummary, onLogout = () => {}, onCreateWorkspace = () => {}, className = '' }: SidebarProps) {
   const [searchQuery, setSearchQuery] = useState('')
   const [isOpen, setIsOpen] = useState(true)
 
@@ -37,7 +42,17 @@ export default function Sidebar({ user, activeView, onNavigate, onLogout = () =>
     { id: 'dashboard',  label: 'Dashboard',  Icon: LayoutDashboard },
     { id: 'all-boards', label: 'All Boards', Icon: LayoutList },
     { id: 'completed',  label: 'Completed',  Icon: CheckCheck },
+    { id: 'leaderboard', label: 'Leaderboard', Icon: Trophy },
+    { id: 'badges', label: 'Badges', Icon: Medal },
   ]
+
+  const xpPercent = xpSummary
+    ? Math.max(0, Math.min(100, Math.round((xpSummary.xp / Math.max(xpSummary.xpRequired, 1)) * 100)))
+    : 0
+
+  const xpRemaining = xpSummary
+    ? Math.max(0, xpSummary.xpRequired - xpSummary.xp)
+    : 0
 
   const Avatar = () => user.avatarUrl ? (
     <img src={user.avatarUrl} alt={user.name} className="w-8 h-8 rounded-full object-cover flex-shrink-0" />
@@ -205,6 +220,26 @@ export default function Sidebar({ user, activeView, onNavigate, onLogout = () =>
 
       {/* Footer */}
       <div className="border-t border-slate-200 px-2 py-2.5 flex flex-col gap-0.5">
+        {xpSummary && (
+          <div className="mb-2 rounded-xl border border-slate-200 bg-slate-50 p-3">
+            <div className="flex items-center gap-2">
+              <div className="h-8 w-8 flex-shrink-0 rounded-lg bg-gradient-to-br from-cyan-400 to-indigo-600 text-center font-display text-xs font-black leading-8 text-white">
+                {xpSummary.level}
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="mb-1 flex items-center justify-between">
+                  <span className="font-display text-[11px] font-bold text-slate-700">Level {xpSummary.level}</span>
+                  <span className="font-mono text-[9px] text-slate-400">{xpSummary.xp.toLocaleString()} XP</span>
+                </div>
+                <div className="h-1.5 overflow-hidden rounded-full bg-slate-200">
+                  <div className="h-full rounded-full bg-gradient-to-r from-cyan-400 to-indigo-500" style={{ width: `${xpPercent}%` }} />
+                </div>
+                <p className="mt-1 font-mono text-[9px] text-slate-400">{xpRemaining.toLocaleString()} to next level</p>
+              </div>
+            </div>
+          </div>
+        )}
+
         <button
           onClick={onCreateWorkspace}
           className="flex items-center gap-2.5 px-3 py-2 rounded-lg font-body text-sm font-medium text-slate-500 hover:bg-slate-100 hover:text-slate-800 w-full text-left transition-colors duration-150"

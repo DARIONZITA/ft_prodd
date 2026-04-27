@@ -10,6 +10,10 @@ import OrganizationSettingsPage from './organization/OrganizationSettingsPage.ts
 import OrganizationMembersPage from './organization/OrganizationMembersPage.tsx'
 import KanbanBoardPage from '../components/tasks/KanbanBoardPage.tsx'
 import NotificationsPage from './NotificationsPage.tsx'
+import LeaderboardPage from './gamification/LeaderboardPage.tsx'
+import BadgesPage from './gamification/BadgesPage.tsx'
+import LevelUpToast from '../components/gamification/LevelUpToast.tsx'
+import type { BadgeItem, LeaderboardEntry, LeaderboardPeriod, XpSummary } from '../components/gamification/Types.ts'
 
 interface Workspace {
   id: string | number
@@ -89,6 +93,52 @@ const MOCK_OTHER_USER = {
   xpRequired: 1000,
 }
 
+const XP_SUMMARY: XpSummary = {
+  level: 8,
+  xp: 2340,
+  xpRequired: 3500,
+}
+
+const WEEKLY_LEADERBOARD: LeaderboardEntry[] = [
+  { id: 'u-1', name: 'Alex K.', avatar: 'https://ui-avatars.com/api/?name=Alex+K&background=f59e0b&color=fff', level: 14, xp: 4880, progressPercent: 88 },
+  { id: 'u-2', name: 'Maria L.', avatar: 'https://ui-avatars.com/api/?name=Maria+L&background=4f46e5&color=fff', level: 11, xp: 3120, progressPercent: 61 },
+  { id: 'u-3', name: 'Sam T.', avatar: 'https://ui-avatars.com/api/?name=Sam+T&background=ea580c&color=fff', level: 10, xp: 2790, progressPercent: 54 },
+  { id: 'u-4', name: 'Priya R.', avatar: 'https://ui-avatars.com/api/?name=Priya+R&background=6366f1&color=fff', level: 9, xp: 2510, progressPercent: 52 },
+  { id: 'u-5', name: 'Tom B.', avatar: 'https://ui-avatars.com/api/?name=Tom+B&background=0ea5e9&color=fff', level: 8, xp: 2190, progressPercent: 44 },
+  { id: 'u-6', name: 'Leo N.', avatar: 'https://ui-avatars.com/api/?name=Leo+N&background=8b5cf6&color=fff', level: 7, xp: 1870, progressPercent: 38 },
+  { id: 'u-7', name: 'Chen W.', avatar: 'https://ui-avatars.com/api/?name=Chen+W&background=10b981&color=fff', level: 7, xp: 1560, progressPercent: 31 },
+  { id: 'u-8', name: 'Nina P.', avatar: 'https://ui-avatars.com/api/?name=Nina+P&background=f43f5e&color=fff', level: 6, xp: 1340, progressPercent: 27 },
+  { id: 'u-9', name: 'Ryan C.', avatar: 'https://ui-avatars.com/api/?name=Ryan+C&background=f97316&color=fff', level: 6, xp: 1120, progressPercent: 23 },
+  { id: 'u-10', name: 'Zara M.', avatar: 'https://ui-avatars.com/api/?name=Zara+M&background=64748b&color=fff', level: 5, xp: 940, progressPercent: 19 },
+  { id: 'u-me', name: 'Edson', avatar: 'https://ui-avatars.com/api/?name=Edson&background=0891b2&color=fff', level: XP_SUMMARY.level, xp: XP_SUMMARY.xp, progressPercent: 66, isCurrentUser: true, dailyDelta: 2 },
+]
+
+const ALL_TIME_LEADERBOARD: LeaderboardEntry[] = [
+  { id: 'u-1', name: 'Alex K.', avatar: 'https://ui-avatars.com/api/?name=Alex+K&background=f59e0b&color=fff', level: 22, xp: 19880, progressPercent: 82 },
+  { id: 'u-2', name: 'Maria L.', avatar: 'https://ui-avatars.com/api/?name=Maria+L&background=4f46e5&color=fff', level: 19, xp: 17120, progressPercent: 76 },
+  { id: 'u-3', name: 'Sam T.', avatar: 'https://ui-avatars.com/api/?name=Sam+T&background=ea580c&color=fff', level: 18, xp: 15990, progressPercent: 71 },
+  { id: 'u-4', name: 'Priya R.', avatar: 'https://ui-avatars.com/api/?name=Priya+R&background=6366f1&color=fff', level: 16, xp: 14710, progressPercent: 68 },
+  { id: 'u-5', name: 'Tom B.', avatar: 'https://ui-avatars.com/api/?name=Tom+B&background=0ea5e9&color=fff', level: 15, xp: 13690, progressPercent: 61 },
+  { id: 'u-6', name: 'Leo N.', avatar: 'https://ui-avatars.com/api/?name=Leo+N&background=8b5cf6&color=fff', level: 14, xp: 12470, progressPercent: 54 },
+  { id: 'u-7', name: 'Chen W.', avatar: 'https://ui-avatars.com/api/?name=Chen+W&background=10b981&color=fff', level: 13, xp: 11090, progressPercent: 49 },
+  { id: 'u-8', name: 'Nina P.', avatar: 'https://ui-avatars.com/api/?name=Nina+P&background=f43f5e&color=fff', level: 12, xp: 10340, progressPercent: 46 },
+  { id: 'u-9', name: 'Ryan C.', avatar: 'https://ui-avatars.com/api/?name=Ryan+C&background=f97316&color=fff', level: 11, xp: 9520, progressPercent: 41 },
+  { id: 'u-10', name: 'Zara M.', avatar: 'https://ui-avatars.com/api/?name=Zara+M&background=64748b&color=fff', level: 10, xp: 8990, progressPercent: 38 },
+  { id: 'u-me', name: 'Edson', avatar: 'https://ui-avatars.com/api/?name=Edson&background=0891b2&color=fff', level: XP_SUMMARY.level, xp: 8340, progressPercent: 35, isCurrentUser: true, dailyDelta: 1 },
+]
+
+const BADGES: BadgeItem[] = [
+  { id: 'first-task', name: 'First Task', description: 'Complete your first task on the board.', icon: '✅', xpReward: 50, category: 'tasks', earnedAt: '19 Feb 2026', isNew: true },
+  { id: 'sprint-hero', name: 'Sprint Hero', description: 'Complete all tasks in a sprint without missing deadline.', icon: '🦸', xpReward: 200, category: 'milestones', earnedAt: '18 Feb 2026', isNew: true },
+  { id: 'code-reviewer', name: 'Code Reviewer', description: 'Review 5 pull requests and leave feedback.', icon: '🔎', xpReward: 120, category: 'collaboration', earnedAt: '15 Feb 2026' },
+  { id: 'streak-7', name: '7-Day Streak', description: 'Log activity for 7 consecutive days.', icon: '🔥', xpReward: 150, category: 'streaks', earnedAt: '14 Feb 2026' },
+  { id: 'team-player', name: 'Team Player', description: 'Comment on 10 tasks assigned to teammates.', icon: '🤝', xpReward: 80, category: 'collaboration', earnedAt: '10 Feb 2026' },
+  { id: 'task-master', name: 'Task Master', description: 'Complete 50 tasks.', icon: '💯', xpReward: 300, category: 'tasks', progressCurrent: 32, progressTotal: 50 },
+  { id: 'streak-30', name: '30-Day Streak', description: 'Stay active for 30 consecutive days.', icon: '🔥', xpReward: 400, category: 'streaks', progressCurrent: 7, progressTotal: 30 },
+  { id: 'all-star', name: 'All-Star', description: 'Reach top 3 on leaderboard three times.', icon: '🌟', xpReward: 500, category: 'milestones', progressCurrent: 1, progressTotal: 3 },
+  { id: 'bug-hunter', name: 'Bug Hunter', description: 'Close 20 bug tasks.', icon: '👾', xpReward: 180, category: 'tasks', progressCurrent: 8, progressTotal: 20 },
+]
+
 // ─── View type ────────────────────────────────────────────────────────────────
 
 type ActiveView =
@@ -97,6 +147,8 @@ type ActiveView =
   | 'notifications'
   | 'all-boards'
   | 'completed'
+  | 'leaderboard'
+  | 'badges'
   | 'organization-settings'
   | 'organization-members'
   | `workspace-${string | number}`
@@ -121,6 +173,8 @@ export default function DashboardPagePlaceholder() {
   const [createOrganizationOpen, setCreateOrganizationOpen] = useState(false)
   const [user, setUser] = useState<User>(MOCK_USER)
   const [selectedWorkspaceId, setSelectedWorkspaceId] = useState<string | number>(MOCK_USER.workspaces[0]?.id ?? 0)
+  const [leaderboardPeriod, setLeaderboardPeriod] = useState<LeaderboardPeriod>('week')
+  const [showLevelUpToast, setShowLevelUpToast] = useState(false)
 
   // Friends state — in real app this comes from API
   const [friends, setFriends] = useState<Friend[]>(MOCK_FRIENDS)
@@ -197,6 +251,25 @@ export default function DashboardPagePlaceholder() {
     if (activeView === 'notifications') return <NotificationsPage />
     if (activeView === 'all-boards') return <PlaceholderView title="All Boards" />
     if (activeView === 'completed') return <PlaceholderView title="Completed Tasks" />
+    if (activeView === 'leaderboard') {
+      return (
+        <LeaderboardPage
+          entries={leaderboardPeriod === 'week' ? WEEKLY_LEADERBOARD : ALL_TIME_LEADERBOARD}
+          period={leaderboardPeriod}
+          onPeriodChange={setLeaderboardPeriod}
+          onOpenBadges={() => setActiveView('badges')}
+        />
+      )
+    }
+    if (activeView === 'badges') {
+      return (
+        <BadgesPage
+          badges={BADGES}
+          onOpenLeaderboard={() => setActiveView('leaderboard')}
+          onShowLevelUp={() => setShowLevelUpToast(true)}
+        />
+      )
+    }
     if (activeView === 'kanbanBoard') return <KanbanBoardPage />
     if (activeView === 'organization-settings') {
       return currentWorkspace ? (
@@ -247,6 +320,7 @@ export default function DashboardPagePlaceholder() {
         user={user}
         activeView={activeView}
         onNavigate={handleNavigate}
+        xpSummary={XP_SUMMARY}
         onLogout={() => console.log('logout')}
         onCreateWorkspace={() => setCreateOrganizationOpen(true)}
       />
@@ -270,6 +344,16 @@ export default function DashboardPagePlaceholder() {
         isOpen={createOrganizationOpen}
         onClose={() => setCreateOrganizationOpen(false)}
         onCreate={handleCreateOrganization}
+      />
+
+      <LevelUpToast
+        open={showLevelUpToast}
+        onClose={() => setShowLevelUpToast(false)}
+        previousLevel={XP_SUMMARY.level}
+        newLevel={XP_SUMMARY.level + 1}
+        currentXp={XP_SUMMARY.xp}
+        nextLevelXp={XP_SUMMARY.xpRequired}
+        unlockedBadgeName="Sprint Hero"
       />
 
     </div>
