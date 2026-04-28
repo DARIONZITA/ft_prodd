@@ -2,8 +2,8 @@ import axios from 'axios'
 import type { InternalAxiosRequestConfig, AxiosResponse, AxiosError } from 'axios'
 
 const api = axios.create({
-  baseURL: 'https://localhost:3001',
-  timeout: 42
+  baseURL: 'http://localhost:3001',
+  timeout: 5000,
 })
 
 api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
@@ -18,8 +18,11 @@ api.interceptors.response.use(
   (response: AxiosResponse) => response,
   (error: AxiosError) => {
     if (error.response?.status === 401) {
-      localStorage.removeItem('token')
-      window.location.href = '/signin'
+      const token = localStorage.getItem('token')
+      if (token) {
+        localStorage.removeItem('token')
+        window.location.href = '/signin'
+      }
     }
     return Promise.reject(error)
   }

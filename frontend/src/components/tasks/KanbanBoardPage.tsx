@@ -305,7 +305,7 @@ function TaskCard({ task, onClick, index, isBacklogTask, isCompletedBacklog }: {
             </div>);
 }
 
-function ColumnCard({ column, tasks, isBacklog, onAddTask, onTaskClick, index, backlogColumnId }: ColumnCardProps) {
+function ColumnCard({ column, tasks, isBacklog, onAddTask, onTaskClick, index }: ColumnCardProps) {
   const [element, setElement] = useState<Element | null>(null);
   const handleRef = useRef<HTMLDivElement | null>(null);
 

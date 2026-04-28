@@ -1,50 +1,82 @@
 import { z } from 'zod'
 
+const	email_max_len = 256;
+const	username_len = { min : 3, max : 42 };
+const	password_len = { min: 8, max: 128 }; 
+
+const errno = {
+  ELONG: 'Email is too long.',
+  EBAD: 'Enter a valid email address.',
+  UBAD: 'Username can only contain letters, numbers, underscores, and hyphens.',
+
+  required: (field_name: string) => `${field_name} is required.`,
+  range: (field_name: string, len: { min: number; max: number }) => ({
+    min: `${field_name} must be at least ${len.min} characters.`,
+    max: `${field_name} must be at most ${len.max} characters.`,
+  }),
+  contains: (what: string, field_name = 'Password') =>
+  `${field_name} must contain at least one ${what}.`,
+}
+
 export const signInSchema = z.object({
-  email:    z.email('Enter a valid email address.').min(1, 'Email is required.'),
-  password: z.string().min(1, 'Password is required.'),
+  identifier: z
+    .string()
+    .trim()
+    .min(1, errno.required('Username or email'))
+    .superRefine((value, ctx) => {
+      if (value.includes('@')) {
+        const emailResult = z.email(errno.EBAD).safeParse(value)
+        if (!emailResult.success)
+          ctx.addIssue({ code: 'custom', message: errno.EBAD })
+        return
+      }
+    }),
+  password: z
+    .string()
+    .min(1, errno.required('Password'))
 })
 
 export const signUpSchema = z.object({
-  email: z.email('Enter a valid email address.').min(1, 'Email is required.'),
+  email: z
+    .string()
+    .trim()
+    .min(1, errno.required('Email'))
+    .max(email_max_len, errno.ELONG)
+    .pipe(z.email(errno.EBAD)),
   username: z
     .string()
-    .min(1, 'Username is required.')
-    .min(3, 'Username must be at least 3 characters.')
-    .max(20, 'Username must be at most 20 characters.')
-    .regex(/^[a-zA-Z0-9_-]+$/, 'Username can only contain letters, numbers, underscores, and hyphens.'),
+    .trim()
+    .min(1, errno.required('Username'))
+    .min(username_len.min, errno.range('Username', username_len).min)
+    .max(username_len.max, errno.range('Username', username_len).max)
+    .regex(/^[a-zA-Z0-9_-]+$/, errno.UBAD),
   password: z
     .string()
-    .min(1, 'Password is required.')
-    .min(8, 'Password must be at least 8 characters.')
-    .regex(/[A-Z]/, 'Password must contain at least one uppercase letter.')
-    .regex(/[0-9]/, 'Password must contain at least one number.')
-    .regex(/[^A-Za-z0-9]/, 'Password must contain at least one special character.'),
+    .min(1, errno.required('Password'))
+    .min(password_len.min, errno.range('Password', password_len).min)
+    .max(password_len.max, errno.range('Password', password_len).max)
+    .regex(/[a-z]/, errno.contains('lowercase letter'))
+    .regex(/[A-Z]/, errno.contains('uppercase letter'))
+    .regex(/[0-9]/, errno.contains('number'))
+    .regex(/[^A-Za-z0-9]/, errno.contains('special character')),
   repeat: z.string().min(1, 'Please confirm your password.'),
 }).refine(data => data.password === data.repeat, {
   message: 'Passwords do not match.',
   path: ['repeat'],
 })
 
-export type SignInErrors = Partial<Record<keyof z.infer<typeof signInSchema>, string>>
-export type SignUpErrors = Partial<Record<keyof z.infer<typeof signUpSchema>, string>>
+export function parseSchema<T extends z.ZodTypeAny>(schema: T, data: unknown) {
+  const result = schema.safeParse(data)
 
-export function parseSignIn(data: unknown): { success: true } | { success: false; errors: SignInErrors } {
-  const result = signInSchema.safeParse(data)
   if (result.success)
-    return { success: true }
-  const errors: SignInErrors = {}
-  for (const issue of result.error.issues)
-    errors[issue.path[0] as keyof SignInErrors] ??= issue.message
-  return { success: false, errors }
-}
+    return { success: true } as const
 
-export function parseSignUp(data: unknown): { success: true } | { success: false; errors: SignUpErrors } {
-  const result = signUpSchema.safeParse(data)
-  if (result.success)
-    return { success: true }
-  const errors: SignUpErrors = {}
-  for (const issue of result.error.issues)
-    errors[issue.path[0] as keyof SignUpErrors] ??= issue.message
+  const errors: Record<string, string> = {}
+
+  for (const issue of result.error.issues) {
+    const field = String(issue.path[0])
+    errors[field] ??= issue.message
+  }
+
   return { success: false, errors }
 }

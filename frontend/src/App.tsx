@@ -4,7 +4,7 @@ import SignInPage from './pages/SignInPage'
 import SignUpPage from './pages/SignUpPage'
 import LoadingPage from './pages/LoadingPage'
 import DashboardPagePlaceholder from './pages/DashboardPagePlaceholder'
-import ProtectedRoute from './components/ProtectedRoute'
+// import ProtectedRoute from './components/ProtectedRoute'
 
 function App() {
   return (

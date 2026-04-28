@@ -81,7 +81,6 @@ export default function OrganizationHomePage({ workspace, onOpenSettings, onOpen
   const completedThisWeek = workspace.completedThisWeek ?? 24
   const pendingCount = workspace.pendingCount ?? Math.max(0, taskCount - completedThisWeek - 10)
   const memberCount = workspace.memberCount ?? 5
-  const onlineCount = workspace.onlineCount ?? 3
 
   return (
     <div className="relative flex-1 h-full overflow-y-auto bg-slate-100 text-slate-900">
