@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import Sidebar from '../components/SideBar'
 import UserProfile from './profile/This'
@@ -240,6 +240,26 @@ export default function DashboardPagePlaceholder() {
     navigate(`/dashboard?${nextParams.toString()}`)
   }
 
+  const handleLogout = () => {
+    try {
+      // Clear auth-related localStorage keys (adjust keys if your app uses different ones)
+      localStorage.removeItem('token')
+      localStorage.removeItem('auth')
+    } catch (e) {
+      // ignore
+    }
+    // Replace history entry so user cannot go back to protected page
+    navigate('/signin', { replace: true })
+  }
+
+  // If user is not authenticated, force redirect to signin. Runs on location changes
+  useEffect(() => {
+    const token = localStorage.getItem('token')
+    if (!token) {
+      navigate('/signin', { replace: true })
+    }
+  }, [location, navigate])
+
   // ── Friends modal handlers ───────────────────────────────────────────────
   const handleAccept = (id: string | number) => {
     const req = pendingRequests.find(r => r.id === id)
@@ -360,7 +380,7 @@ export default function DashboardPagePlaceholder() {
         activeView={activeView}
         onNavigate={handleNavigate}
         xpSummary={XP_SUMMARY}
-        onLogout={() => console.log('logout')}
+        onLogout={handleLogout}
         onCreateWorkspace={() => setCreateOrganizationOpen(true)}
       />
 
