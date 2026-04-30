@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { useNavigate, useLocation } from 'react-router-dom'
 import Sidebar from '../components/SideBar'
 import UserProfile from './profile/This'
 import OtherUserProfile from './profile/Other'
@@ -168,17 +169,35 @@ function PlaceholderView({ title }: { title: string }) {
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function DashboardPagePlaceholder() {
-  const [activeView, setActiveView] = useState<ActiveView>('dashboard')
+  const navigate = useNavigate()
+  const location = useLocation()
+  
+  // Parse URL search params
+  const searchParams = new URLSearchParams(location.search)
+  const viewParam = searchParams.get('view') || 'dashboard'
+  const workspaceParam = searchParams.get('workspace')
+
+  const activeView = useMemo<ActiveView>(() => {
+    if (workspaceParam) {
+      return `workspace-${workspaceParam}` as ActiveView
+    }
+
+    return viewParam as ActiveView
+  }, [viewParam, workspaceParam])
+
   const [friendsOpen, setFriendsOpen] = useState(false)
   const [createOrganizationOpen, setCreateOrganizationOpen] = useState(false)
   const [user, setUser] = useState<User>(MOCK_USER)
-  const [selectedWorkspaceId, setSelectedWorkspaceId] = useState<string | number>(MOCK_USER.workspaces[0]?.id ?? 0)
   const [leaderboardPeriod, setLeaderboardPeriod] = useState<LeaderboardPeriod>('week')
   const [showLevelUpToast, setShowLevelUpToast] = useState(false)
 
   // Friends state — in real app this comes from API
   const [friends, setFriends] = useState<Friend[]>(MOCK_FRIENDS)
   const [pendingRequests, setPending] = useState<PendingRequest[]>(MOCK_PENDING)
+
+  const selectedWorkspaceId = useMemo<string | number>(() => {
+    return workspaceParam || MOCK_USER.workspaces[0]?.id || 0
+  }, [workspaceParam])
 
   const currentWorkspace = useMemo(() => {
     const workspaceId = activeView.startsWith('workspace-')
@@ -191,13 +210,34 @@ export default function DashboardPagePlaceholder() {
   const handleNavigate = (view: string, payload?: string | number) => {
     setCreateOrganizationOpen(false)
 
+    const nextParams = new URLSearchParams()
+
     if (view === 'workspace' && payload != null) {
-      setSelectedWorkspaceId(payload)
-      setActiveView(`workspace-${payload}`)
+      nextParams.set('workspace', String(payload))
+      navigate(`/dashboard?${nextParams.toString()}`)
       return
     }
 
-    setActiveView(view as ActiveView)
+    if (view.startsWith('workspace-')) {
+      const workspaceId = view.replace('workspace-', '')
+      nextParams.set('workspace', workspaceId)
+      navigate(`/dashboard?${nextParams.toString()}`)
+      return
+    }
+
+    if (view.startsWith('user-')) {
+      nextParams.set('view', view)
+      navigate(`/dashboard?${nextParams.toString()}`)
+      return
+    }
+
+    if (view === 'dashboard') {
+      navigate('/dashboard')
+      return
+    }
+
+    nextParams.set('view', view)
+    navigate(`/dashboard?${nextParams.toString()}`)
   }
 
   // ── Friends modal handlers ───────────────────────────────────────────────
@@ -219,7 +259,7 @@ export default function DashboardPagePlaceholder() {
 
   const handleViewProfile = (id: string | number) => {
     setFriendsOpen(false)
-    setActiveView(`user-${id}`)
+    handleNavigate(`user-${id}`)
   }
 
   const handleCreateOrganization = (data: { name: string; description: string; visibility: 'private' | 'team'; template: string }) => {
@@ -239,8 +279,7 @@ export default function DashboardPagePlaceholder() {
       ...currentUser,
       workspaces: [newWorkspace, ...currentUser.workspaces],
     }))
-    setSelectedWorkspaceId(newWorkspaceId)
-    setActiveView(`workspace-${newWorkspaceId}`)
+    handleNavigate('workspace', newWorkspaceId)
     setCreateOrganizationOpen(false)
   }
 
@@ -257,7 +296,7 @@ export default function DashboardPagePlaceholder() {
           entries={leaderboardPeriod === 'week' ? WEEKLY_LEADERBOARD : ALL_TIME_LEADERBOARD}
           period={leaderboardPeriod}
           onPeriodChange={setLeaderboardPeriod}
-          onOpenBadges={() => setActiveView('badges')}
+          onOpenBadges={() => handleNavigate('badges')}
         />
       )
     }
@@ -265,7 +304,7 @@ export default function DashboardPagePlaceholder() {
       return (
         <BadgesPage
           badges={BADGES}
-          onOpenLeaderboard={() => setActiveView('leaderboard')}
+          onOpenLeaderboard={() => handleNavigate('leaderboard')}
           onShowLevelUp={() => setShowLevelUpToast(true)}
         />
       )
@@ -275,8 +314,8 @@ export default function DashboardPagePlaceholder() {
       return currentWorkspace ? (
         <OrganizationSettingsPage
           workspace={currentWorkspace}
-          onBack={() => setActiveView(`workspace-${currentWorkspace.id}`)}
-          onOpenMembers={() => setActiveView('organization-members')}
+          onBack={() => handleNavigate('workspace', currentWorkspace.id)}
+          onOpenMembers={() => handleNavigate('organization-members')}
         />
       ) : (
         <PlaceholderView title="Organization Settings" />
@@ -285,7 +324,7 @@ export default function DashboardPagePlaceholder() {
 
     if (activeView === 'organization-members') {
       return currentWorkspace ? (
-        <OrganizationMembersPage workspace={currentWorkspace} onBackToSettings={() => setActiveView('organization-settings')} />
+        <OrganizationMembersPage workspace={currentWorkspace} onBackToSettings={() => handleNavigate('organization-settings')} />
       ) : (
         <PlaceholderView title="Organization Members" />
       )
@@ -296,9 +335,9 @@ export default function DashboardPagePlaceholder() {
         <OrganizationHomePage
           workspace={currentWorkspace}
           onCreateWorkspace={() => setCreateOrganizationOpen(true)}
-          onOpenSettings={() => setActiveView('organization-settings')}
-          onOpenMembers={() => setActiveView('organization-members')}
-          onOpenBoard={() => setActiveView('kanbanBoard')}
+          onOpenSettings={() => handleNavigate('organization-settings')}
+          onOpenMembers={() => handleNavigate('organization-members')}
+          onOpenBoard={() => handleNavigate('kanbanBoard')}
           
         />
       ) : (
