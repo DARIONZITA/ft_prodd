@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Menu, X, Plus, Search, LayoutDashboard, LayoutList, CheckCheck, HelpCircle, LogOut, Grid2x2, FileText, ArrowLeftRight, Trophy, Medal } from 'lucide-react'
+import { Menu, Plus, Search, ChevronsLeft, LogOut, Grid2x2, FileText, ArrowLeftRight, Trophy, Medal } from 'lucide-react'
 import NotificationsDropdown from './NotificationsDropdown'
 
 interface Workspace {
@@ -47,9 +47,6 @@ export default function Sidebar({ user, activeView, onNavigate, xpSummary, onLog
   const initials = user.name?.trim()[0]?.toUpperCase() ?? '?'
 
   const navItems = [
-    { id: 'dashboard',  label: 'Dashboard',  Icon: LayoutDashboard },
-    { id: 'all-boards', label: 'All Boards', Icon: LayoutList },
-    { id: 'completed',  label: 'Completed',  Icon: CheckCheck },
     { id: 'leaderboard', label: 'Leaderboard', Icon: Trophy },
     { id: 'badges', label: 'Badges', Icon: Medal },
   ]
@@ -77,12 +74,12 @@ export default function Sidebar({ user, activeView, onNavigate, xpSummary, onLog
         <button
           aria-label="Open sidebar"
           onClick={() => setIsOpen(true)}
-          className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors duration-150"
+          className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors duration-150 cursor-pointer"
         >
           <Menu size={18} />
         </button>
 
-        <button onClick={() => onNavigate('profile')} aria-label="View profile" className="mt-1">
+        <button onClick={() => onNavigate('profile')} aria-label="View profile" className="mt-1 cursor-pointer">
           <Avatar />
         </button>
 
@@ -93,7 +90,7 @@ export default function Sidebar({ user, activeView, onNavigate, xpSummary, onLog
             <button
               key={id}
               onClick={() => onNavigate(id)}
-              className={`p-2 rounded-lg transition-colors duration-150 ${
+              className={`p-2 rounded-lg transition-colors duration-150 cursor-pointer ${
                 activeView === id ? 'bg-cyan-50 text-cyan-700' : 'text-slate-400 hover:bg-slate-100 hover:text-slate-700'
               }`}
             >
@@ -114,7 +111,7 @@ export default function Sidebar({ user, activeView, onNavigate, xpSummary, onLog
         <button
           onClick={() => onNavigate('profile')}
           aria-label="View profile"
-          className={`flex items-center gap-2 flex-1 min-w-0 text-left rounded-lg transition-colors duration-150 p-1 -ml-1 ${
+          className={`flex items-center gap-2 flex-1 min-w-0 text-left rounded-lg transition-colors duration-150 p-1 -ml-1 cursor-pointer ${
             activeView === 'profile' ? 'bg-cyan-50' : 'hover:bg-slate-100'
           }`}
         >
@@ -129,9 +126,9 @@ export default function Sidebar({ user, activeView, onNavigate, xpSummary, onLog
         <button
           aria-label="Close sidebar"
           onClick={() => setIsOpen(false)}
-          className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors duration-150"
+          className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors duration-150 cursor-pointer"
         >
-          <X size={18} />
+          <ChevronsLeft size={20} />
         </button>
       </div>
 
@@ -205,7 +202,7 @@ export default function Sidebar({ user, activeView, onNavigate, xpSummary, onLog
                 role="listitem"
                 onClick={() => onNavigate('workspace', ws.id)}
                 title={ws.name}
-                className={`flex items-center gap-2.5 px-3 py-2 rounded-lg font-body text-sm font-medium w-full text-left transition-colors duration-150 ${
+                className={`flex items-center gap-2.5 px-3 py-2 rounded-lg font-body text-sm font-medium w-full text-left transition-colors duration-150 cursor-pointer ${
                   isActive
                     ? 'bg-cyan-50 text-cyan-700 font-semibold'
                     : 'text-slate-500 hover:bg-slate-100 hover:text-slate-800'
@@ -250,18 +247,14 @@ export default function Sidebar({ user, activeView, onNavigate, xpSummary, onLog
 
         <button
           onClick={onCreateWorkspace}
-          className="flex items-center gap-2.5 px-3 py-2 rounded-lg font-body text-sm font-medium text-slate-500 hover:bg-slate-100 hover:text-slate-800 w-full text-left transition-colors duration-150"
+          className="flex items-center gap-2.5 px-3 py-2 rounded-lg font-body text-sm font-medium text-slate-500 hover:bg-slate-100 hover:text-slate-800 w-full text-left transition-colors duration-150 cursor-pointer"
         >
           <Plus size={14} />
           Create Workspace
         </button>
-        <button className="flex items-center gap-2.5 px-3 py-2 rounded-lg font-body text-sm font-medium text-slate-500 hover:bg-slate-100 hover:text-slate-800 w-full text-left transition-colors duration-150">
-          <HelpCircle size={14} />
-          Help &amp; resources
-        </button>
         <button
           onClick={onLogout}
-          className="flex items-center gap-2.5 px-3 py-2 rounded-lg font-body text-sm font-medium text-red-500 hover:bg-red-50 hover:text-red-600 w-full text-left transition-colors duration-150"
+          className="flex items-center gap-2.5 px-3 py-2 rounded-lg font-body text-sm font-medium text-red-500 hover:bg-red-50 hover:text-red-600 w-full text-left transition-colors duration-150 cursor-pointer"
         >
           <LogOut size={14} />
           Logout
