@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Menu, X, Plus, Search, LayoutDashboard, LayoutList, CheckCheck, HelpCircle, LogOut, Grid2x2, FileText, ArrowLeftRight, Trophy, Medal } from 'lucide-react'
 import NotificationsDropdown from './NotificationsDropdown'
 
@@ -32,7 +32,15 @@ const WORKSPACE_ICONS = [Grid2x2, FileText, ArrowLeftRight]
 
 export default function Sidebar({ user, activeView, onNavigate, xpSummary, onLogout = () => {}, onCreateWorkspace = () => {}, className = '' }: SidebarProps) {
   const [searchQuery, setSearchQuery] = useState('')
-  const [isOpen, setIsOpen] = useState(true)
+  const [isOpen, setIsOpen] = useState(() => {
+    const saved = localStorage.getItem('sidebar-open')
+    return saved !== null ? saved === 'true' : true
+  })
+
+  // Persist sidebar state to localStorage
+  useEffect(() => {
+    localStorage.setItem('sidebar-open', String(isOpen))
+  }, [isOpen])
 
   const filteredWorkspaces = user.workspaces.filter(ws => ws.name.toLowerCase().includes(searchQuery.toLowerCase()))
 
