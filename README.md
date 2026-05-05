@@ -626,6 +626,183 @@ erDiagram
 
 # Modules
 
+## Organization System Module
+
+This module provides complete workspace management capabilities, allowing users to create, edit, and delete workspaces, as well as manage workspace members with role-based access control.
+
+### Overview
+
+The Organization System is the core module for managing organizational units within the application. It enables:
+- **Workspace Creation**: Users can create new workspaces and automatically become administrators
+- **Workspace Management**: Admins can update workspace details and delete workspaces
+- **Member Management**: Admins can add and remove members, assign roles
+- **Role-Based Access Control (RBAC)**: Three roles with specific permissions (`admin`, `member`, `guest`)
+
+### Implemented API Routes
+
+#### Workspace CRUD Operations
+
+- **`POST /api/workspaces`** - Create Workspace
+  - Request: `{ name: string, description?: string }`
+  - Response: `201 Created` - New workspace data
+  - Creates a new workspace and automatically adds the creator as admin
+  - Uses transaction to ensure atomicity
+  
+- **`GET /api/workspaces`** - List User Workspaces
+  - Returns all workspaces where the authenticated user is a member
+  - Includes user's role in each workspace
+  
+- **`GET /api/workspaces/:id`** - Get Workspace Details
+  - Returns workspace details with user's role
+  - Only accessible to workspace members
+  
+- **`PUT /api/workspaces/:id`** - Update Workspace
+  - Request: `{ name?: string, description?: string }`
+  - Admin-only operation
+  - Updates workspace details atomically with activity logging
+  
+- **`DELETE /api/workspaces/:id`** - Delete Workspace
+  - Admin-only operation
+  - Deletes workspace and all related data (members, activity logs) atomically
+  - Prevents cascading delete errors through careful transaction management
+
+#### Member Management
+
+- **`POST /api/workspaces/:id/members`** - Add Member
+  - Request: `{ userId: number, role?: "admin" | "member" | "guest" }`
+  - Admin-only operation
+  - Validates user exists and is not already a member
+  - Adds member atomically with activity logging
+  - Defaults to "member" role if not specified
+  
+- **`GET /api/workspaces/:id/members`** - List Members
+  - Returns all members of a workspace
+  - Accessible to any workspace member
+  
+- **`GET /api/workspaces/:id/members/:userId`** - Get Member Details
+  - `admin` and `member`: Can view any member
+  - `guest`: Can only view their own profile
+  
+- **`PUT /api/workspaces/:id/members/:userId`** - Update Member Role
+  - Admin-only operation
+  - Prevents removing the last admin of a workspace
+  - Updates role atomically with activity logging
+  
+- **`DELETE /api/workspaces/:id/members/:userId`** - Remove Member
+  - Admin-only operation
+  - Prevents removing the last admin of a workspace
+  - Removes member atomically with activity logging
+
+### Role-Based Access Control (RBAC)
+
+The module implements three roles with specific permissions:
+
+| Role | Create Workspace | Update Workspace | Delete Workspace | Add Members | Remove Members | View Members | View Own Profile |
+|------|-----------------|-----------------|-----------------|------------|----------------|-------------|-----------------|
+| **admin** | Yes* | Yes | Yes | Yes | Yes | Yes | Yes |
+| **member** | Yes* | No | No | No | No | Yes | Yes |
+| **guest** | Yes* | No | No | No | No | Yes | Yes (only own) |
+
+*Authenticated users can create workspaces (automatically becoming admin)
+
+### Input Validation
+
+All inputs are validated server-side using Zod schemas:
+
+```typescript
+// Workspace creation/update
+createWorkspaceSchema: {
+  name: string (1-255 characters)
+  description?: string (0-1000 characters)
+}
+
+// Member addition
+addWorkspaceMemberSchema: {
+  userId: positive integer
+  role?: "admin" | "member" | "guest" (defaults to "member")
+}
+
+// All ID parameters (workspaceId, userId)
+  must be positive integers
+```
+
+Validation errors return HTTP `400` with descriptive messages.
+
+### Transaction Safety
+
+Multiple operations are wrapped in Prisma transactions to ensure data consistency:
+
+- **Workspace Creation**: Creates workspace + adds creator as admin + logs activity atomically
+- **Workspace Deletion**: Deletes activity logs + removes members + deletes workspace atomically
+- **Member Addition**: Creates membership + updates workspace timestamp + logs activity atomically
+- **Member Removal**: Deletes membership + updates workspace timestamp + logs activity atomically + prevents last-admin removal
+
+Transaction safety prevents:
+- Partial writes under concurrent requests
+- Data corruption from failed operations
+- Inconsistent state between related records
+
+### Data Protection
+
+- **Last Admin Protection**: Cannot remove or demote the last admin of a workspace
+- **User Existence Validation**: Cannot add non-existent users to workspace
+- **Duplicate Prevention**: Cannot add users who are already workspace members
+- **Permission Enforcement**: Operations respect user roles (RBAC)
+
+### Activity Logging
+
+All workspace and member operations are logged for auditing:
+- Workspace creation, updates, and deletion
+- Member additions and removals
+- Member role changes
+- Timestamps and user IDs recorded for all operations
+
+### Testing
+
+Comprehensive test suite covering:
+
+- Workspace CRUD operations (create, read, update, delete)
+- Member management (add, remove, update roles)
+- RBAC enforcement (admin-only operations)
+- Last admin protection
+- Input validation and error handling
+- Transaction safety and atomicity
+- Guest user restrictions
+- Permission enforcement across all operations
+
+Run tests:
+```bash
+npm test -- workspaces.test.ts
+npm test -- --coverage
+```
+
+### Error Handling
+
+The module returns appropriate HTTP status codes:
+
+| Status | Scenario |
+|--------|----------|
+| 201 | Workspace or member created successfully |
+| 200 | Operation successful |
+| 400 | Invalid input or validation error |
+| 403 | Permission denied (RBAC) or workspace membership required |
+| 404 | Resource not found (workspace, user, or member) |
+
+### Implementation Details
+
+**File Locations:**
+- Routes: [backend/src/routes/workspaces.ts](backend/src/routes/workspaces.ts)
+- Validations: [backend/src/validations/workspace.ts](backend/src/validations/workspace.ts)
+- RBAC Middleware: [backend/src/middleware/rbac.ts](backend/src/middleware/rbac.ts)
+- Tests: [backend/src/routes/workspaces.test.ts](backend/src/routes/workspaces.test.ts)
+- Database Schema: [backend/prisma/schema.prisma](backend/prisma/schema.prisma)
+
+**Dependencies:**
+- Express.js - Web framework
+- Prisma - ORM with transaction support
+- Zod - Input validation
+- TypeScript - Type safety
+
 ## Advanced Permissions System
 
 This module enforces workspace-level RBAC (Role-Based Access Control) using the roles defined in Prisma: `admin`, `member`, and `guest`.
