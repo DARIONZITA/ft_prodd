@@ -160,7 +160,16 @@ make health
 make dev
 ```
 
-Runs the project with visible logs for easier debugging.
+Runs the project with visible logs for easier debugging. This starts the frontend development server through the dev profile, without nginx.
+
+To choose the frontend mode directly with Compose:
+
+```bash
+docker compose -f config/docker-compose.yaml up frontend
+docker compose --profile dev -f config/docker-compose.yaml up frontend-dev
+```
+
+By default, frontend development listens on port 5173 in the container and is published on port 5173 on the host. You can change the host port with FRONTEND_DEV_PORT.
 
 ---
 
@@ -555,24 +564,24 @@ erDiagram
 
 ### Core Entities
 
-| Table             | Description                          | Key Fields                                             |
-| ----------------- | ------------------------------------ | ------------------------------------------------------ |
-| `User`            | Platform users                       | `id`, `nickname`, `email`, `passwordHash`, `createdAt` |
-| `Workspace`       | Collaborative workspace              | `id`, `name`, `description`, `createdAt`               |
-| `WorkspaceMember` | Links users to workspaces with roles | `id`, `workspaceId`, `userId`, `role`                  |
+| Table             | Description                          | Key Fields                                                    |
+| ----------------- | ------------------------------------ | ------------------------------------------------------------- |
+| `User`            | Platform users                       | `id`, `nickname`, `email`, `passwordHash`, `createdAt`       |
+| `Workspace`       | Collaborative workspace              | `id`, `name`, `description`, `totalTask`, `createdAt`        |
+| `WorkspaceMember` | Links users to workspaces with roles | `id`, `workspaceId`, `userId`, `role`                        |
 
 ---
 
 ### Task Management (Kanban)
 
-| Table            | Description                      | Key Fields                                                |
-| ---------------- | -------------------------------- | --------------------------------------------------------- |
-| `Column`         | Task grouping inside a workspace | `id`, `workspaceId`, `name`, `order`                      |
-| `Task`           | Main task entity                 | `id`, `columnId`, `title`, `description`, `orderInColumn` |
-| `TaskAssignment` | Assigns tasks to users           | `taskId`, `userId`                                        |
-| `ChecklistItem`  | Task checklist items             | `id`, `taskId`, `text`, `isCompleted`                     |
-| `Label`          | Reusable labels                  | `id`, `workspaceId`, `name`, `color`                      |
-| `TaskLabel`      | Task-label relationship          | `taskId`, `labelId`                                       |
+| Table            | Description                      | Key Fields                                                                              |
+| ---------------- | -------------------------------- | --------------------------------------------------------------------------------------- |
+| `Column`         | Task grouping inside a workspace | `id`, `workspaceId`, `name`, `order`                                                    |
+| `Task`           | Main task entity                 | `id`, `columnId`, `title`, `description`, `priority`, `dueDate`, `isDone`, `dateCompleted`, `orderInColumn` |
+| `TaskAssignment` | Assigns tasks to users           | `taskId`, `userId`                                                                      |
+| `ChecklistItem`  | Task checklist items             | `id`, `taskId`, `text`, `isCompleted`                                                   |
+| `Label`          | Reusable labels                  | `id`, `workspaceId`, `name`, `color`                                                    |
+| `TaskLabel`      | Task-label relationship          | `taskId`, `labelId`                                                                     |
 
 ---
 
@@ -606,13 +615,15 @@ The schema uses the following main data types:
 
 * **Int**: identifiers, ordering, ranking, XP values
 * **String**: names, descriptions, content, URLs
-* **Boolean**: state flags (e.g., `isCompleted`, `isRead`)
-* **DateTime**: timestamps for entity creation and updates
+* **Boolean**: state flags (e.g., `isCompleted`, `isRead`, `isDone`)
+* **DateTime**: timestamps for entity creation, updates, deadlines (e.g., `dueDate`, `dateCompleted`)
+* **Enum**: categorical values (e.g., `WorkspaceRole`, `NotificationType`, `Priority`)
 
 ### Enums
 
 * `WorkspaceRole`: `admin`, `member`, `guest`
 * `NotificationType`: `mention`, `taskAssignment`, `comment`, `invite`
+* `Priority`: `LOW`, `MEDIUM`, `HIGH`
 
 ---
 
