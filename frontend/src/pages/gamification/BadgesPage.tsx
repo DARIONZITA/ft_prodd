@@ -8,13 +8,6 @@ interface BadgesPageProps {
   onShowLevelUp: () => void;
 }
 
-const categoryLabels: Record<'all' | BadgeCategory, string> = {
-  all: 'All',
-  tasks: 'Tasks',
-  collaboration: 'Collaboration',
-  streaks: 'Streaks',
-  milestones: 'Milestones',
-};
 
 export default function BadgesPage({ badges, onOpenLeaderboard, onShowLevelUp }: BadgesPageProps) {
   const [selectedCategory, setSelectedCategory] = useState<'all' | BadgeCategory>('all');
@@ -56,22 +49,6 @@ export default function BadgesPage({ badges, onOpenLeaderboard, onShowLevelUp }:
               Simulate level up
             </button>
           </div>
-        </div>
-
-        <div className="mb-7 flex flex-wrap gap-2">
-          {(Object.keys(categoryLabels) as Array<'all' | BadgeCategory>).map((category) => (
-            <button
-              key={category}
-              onClick={() => setSelectedCategory(category)}
-              className={`rounded-full border px-4 py-1.5 text-sm font-medium transition-colors ${
-                selectedCategory === category
-                  ? 'border-cyan-600 bg-cyan-600 text-white'
-                  : 'border-slate-200 bg-white text-slate-600 hover:border-cyan-300 hover:text-cyan-700'
-              }`}
-            >
-              {categoryLabels[category]}
-            </button>
-          ))}
         </div>
 
         <div className="mb-10">

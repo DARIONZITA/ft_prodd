@@ -102,9 +102,6 @@ export default function NotificationsPage() {
             >
               <CheckCheck size={15} /> Mark all as read
             </button>
-            <button type="button" className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-500 hover:bg-slate-50">
-              <Settings size={14} /> Preferences
-            </button>
           </div>
         </div>
 

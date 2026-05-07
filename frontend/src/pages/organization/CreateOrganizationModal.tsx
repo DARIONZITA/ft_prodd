@@ -80,24 +80,6 @@ export default function CreateOrganizationModal({ isOpen, onClose, onCreate }: C
         <div className="bg-slate-50 px-6 py-5">
           <div className="grid gap-5">
             <div>
-              <p className="mb-2 text-lg font-semibold text-slate-700">Workspace Icon</p>
-              <div className="flex items-center gap-4">
-                <div className="flex h-[72px] w-[72px] items-center justify-center rounded-xl border border-dashed border-slate-300 bg-slate-200/70 text-slate-500">
-                  <Building2 size={24} />
-                </div>
-                <div>
-                  <button
-                    type="button"
-                    className="inline-flex items-center gap-2 text-base font-bold text-cyan-600 transition-colors duration-150 hover:text-cyan-700"
-                  >
-                    <Upload size={16} /> Upload Image
-                  </button>
-                  <p className="mt-1 text-sm text-slate-400">Recommended size: 256x256px. Max 2MB.</p>
-                </div>
-              </div>
-            </div>
-
-            <div>
               <label htmlFor="organization-name" className="mb-2 block text-lg font-semibold text-slate-700">
                 Organization Name
               </label>

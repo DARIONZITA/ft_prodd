@@ -41,24 +41,7 @@ export default function OrganizationSettingsPage({ workspace, onBack, onOpenMemb
           </div>
 
           <div className="space-y-5 px-6 py-5">
-            <div>
-              <p className="mb-2 text-sm font-semibold text-slate-700">Workspace Logo</p>
-              <div className="flex items-center gap-4">
-                <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-gradient-to-br from-cyan-500 to-indigo-500 text-3xl font-black text-white">
-                  42
-                </div>
-                <div>
-                  <button
-                    type="button"
-                    className="rounded-lg border border-slate-300 bg-white px-4 py-1.5 text-sm font-semibold text-slate-700 hover:bg-slate-50"
-                  >
-                    Change Logo
-                  </button>
-                  <p className="mt-2 text-xs text-slate-400">Recommended size 400x400px. JPG or PNG.</p>
-                </div>
-              </div>
-            </div>
-
+            
             <div>
               <label htmlFor="settings-name" className="mb-1 block text-sm font-semibold text-slate-700">
                 Organization Name
