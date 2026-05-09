@@ -1,8 +1,9 @@
-import { useMemo, useState, useRef, useCallback } from 'react';
+import { useMemo, useState, useRef, useCallback, useEffect } from 'react';
 import { Plus, Calendar, Link2 } from 'lucide-react';
 import type { ChecklistItem, Column, ColumnTypeId, Task } from './Types';
-import { useDroppable, DragDropProvider } from '@dnd-kit/react';
+import { useDroppable, DragDropProvider, useDragDropManager} from '@dnd-kit/react';
 import {useSortable} from '@dnd-kit/react/sortable';
+import { PointerSensor, PointerActivationConstraints } from '@dnd-kit/dom';
 import CreateTaskModal from './CreateTaskModal';
 import CreateColumnModal from './CreateColumnModal';
 import {move} from '@dnd-kit/helpers';
@@ -43,7 +44,6 @@ const INITIAL_TASKS: Task[] = [
     assignees: [{ id: '1', name: 'Gama', avatar: 'https://ui-avatars.com/api/?name=Gama&background=4f46e5&color=fff', initials: 'GA' }],
     labels: [{ id: 'l1', name: 'Research', color: 'text-indigo-600', bgColor: 'bg-indigo-50', borderColor: 'border-indigo-100' }],
     createdBy: { id: '1', name: 'Gama', avatar: 'https://ui-avatars.com/api/?name=Gama', initials: 'GA' },
-    sprint: 'Sprint 1',
     createdAt: '2026-02-15',
   },
   {
@@ -57,7 +57,6 @@ const INITIAL_TASKS: Task[] = [
     assignees: [{ id: '1', name: 'Gama', avatar: 'https://ui-avatars.com/api/?name=Gama', initials: 'GA' }],
     labels: [{ id: 'l2', name: 'Database', color: 'text-yellow-700', bgColor: 'bg-yellow-50', borderColor: 'border-yellow-100' }],
     createdBy: { id: '1', name: 'Gama', avatar: 'https://ui-avatars.com/api/?name=Gama', initials: 'GA' },
-    sprint: 'Sprint 1',
     createdAt: '2026-02-15',
   },
   {
@@ -70,7 +69,6 @@ const INITIAL_TASKS: Task[] = [
     assignees: [],
     labels: [{ id: 'l3', name: 'DevOps', color: 'text-green-600', bgColor: 'bg-green-50', borderColor: 'border-green-100' }],
     createdBy: { id: '1', name: 'Gama', avatar: 'https://ui-avatars.com/api/?name=Gama', initials: 'GA' },
-    sprint: 'Sprint 1',
     createdAt: '2026-02-15',
   },
   {
@@ -84,7 +82,6 @@ const INITIAL_TASKS: Task[] = [
     assignees: [{ id: '2', name: 'Jose M', avatar: 'https://ui-avatars.com/api/?name=Jose+M&background=0891b2&color=fff', initials: 'JM' }],
     labels: [{ id: 'l4', name: 'Backend', color: 'text-cyan-700', bgColor: 'bg-cyan-50', borderColor: 'border-cyan-100' }],
     createdBy: { id: '1', name: 'Gama', avatar: 'https://ui-avatars.com/api/?name=Gama', initials: 'GA' },
-    sprint: 'Sprint 1',
     createdAt: '2026-02-15',
   },
   {
@@ -98,7 +95,6 @@ const INITIAL_TASKS: Task[] = [
     assignees: [{ id: '3', name: 'Andre C', avatar: 'https://ui-avatars.com/api/?name=Andre+C&background=0e7490&color=fff', initials: 'AC' }, { id: '2', name: 'Jose M', avatar: 'https://ui-avatars.com/api/?name=Jose+M&background=0891b2&color=fff', initials: 'JM' }],
     labels: [{ id: 'l4', name: 'Backend', color: 'text-cyan-700', bgColor: 'bg-cyan-50', borderColor: 'border-cyan-100' }, { id: 'l5', name: 'Feature', color: 'text-cyan-700', bgColor: 'bg-cyan-50', borderColor: 'border-cyan-100' }],
     createdBy: { id: '1', name: 'Gama', avatar: 'https://ui-avatars.com/api/?name=Gama', initials: 'GA' },
-    sprint: 'Sprint 1-2',
     createdAt: '2026-02-15',
   },
   {
@@ -112,12 +108,11 @@ const INITIAL_TASKS: Task[] = [
     assignees: [{ id: '4', name: 'Ana S', avatar: 'https://ui-avatars.com/api/?name=Ana+S&background=4f46e5&color=fff', initials: 'AS' }],
     labels: [],
     createdBy: { id: '1', name: 'Gama', avatar: 'https://ui-avatars.com/api/?name=Gama', initials: 'GA' },
-    sprint: 'Sprint 1',
     createdAt: '2026-02-15',
   },
   {
     id: 'TASK-106',
-    title: 'Deploy staging environment',
+    title: 'Deplo staging environment',
     description: 'Production deployment',
     columnId: 'col-5',
     priority: 'High',
@@ -126,7 +121,6 @@ const INITIAL_TASKS: Task[] = [
     assignees: [{ id: '3', name: 'Andre C', avatar: 'https://ui-avatars.com/api/?name=Andre+C&background=0e7490&color=fff', initials: 'AC' }],
     labels: [{ id: 'l3', name: 'DevOps', color: 'text-green-600', bgColor: 'bg-green-50', borderColor: 'border-green-100' }],
     createdBy: { id: '1', name: 'Gama', avatar: 'https://ui-avatars.com/api/?name=Gama', initials: 'GA' },
-    sprint: 'Sprint 1',
     createdAt: '2026-02-15',
   },
 ];
@@ -175,8 +169,12 @@ interface ColumnCardProps {
   backlogColumnId?: string;
 }
 
+
+
 function TaskCard({ task, onClick, index, isBacklogTask, isCompletedBacklog }: { task: Task; onClick: (task: Task) => void; index: number; isBacklogTask?: boolean; isCompletedBacklog?: boolean }) {
   const [element, setElement] = useState<Element | null>(null);
+  const moveMouse = useRef({ x: 0, y: 0 });
+  const [animationLeft, setAnimationLeaft] = useState<boolean>(true);
   const dummyRef = useRef<HTMLDivElement | null>(null);
 
   const { isDragging } = useSortable({
@@ -204,11 +202,36 @@ function TaskCard({ task, onClick, index, isBacklogTask, isCompletedBacklog }: {
   const checklistTotal = task.checklist?.length ?? 0;
   const checklistDone = task.checklist?.filter(i => i.completed).length ?? 0;
 
+   const manager = useDragDropManager();
+
+  useEffect(() => {
+    const listener = (event: { operation?: { position?: { current?: { x: number; y: number } } } }) => {
+      const position = event?.operation?.position?.current;
+      if (!position) return;
+
+      const { x, y } = position;
+      if (isDragging) {
+        if (moveMouse.current.x < x && animationLeft) {
+          setAnimationLeaft(false);
+        }
+        if (moveMouse.current.x > x && !animationLeft) {
+          setAnimationLeaft(true);
+        }
+      }
+      moveMouse.current = { x, y };
+    };
+    manager.monitor.addEventListener("dragmove", listener);
+    return () => manager.monitor.removeEventListener("dragmove", listener);
+  }, [manager, isDragging, animationLeft]);
+
   return (<div
               ref={setElement}
               key={task.id}
               onClick={() => onClick(task)}
-              className={`${isDragging ? 'shadow-lg rotate-4' : 'shadow-sm'} relative p-4 rounded-xl border transition-all group ${
+             className={`${isDragging 
+                ? `${animationLeft ? '-rotate-4' : 'rotate-4'} shadow-lg`
+                : 'shadow-sm'
+              } relative p-4 rounded-xl border transition-all group ${
                 isCompletedBacklog
                   ? 'bg-slate-100 border-slate-200 opacity-60 cursor-default'
                   : isBacklogTask
@@ -232,7 +255,7 @@ function TaskCard({ task, onClick, index, isBacklogTask, isCompletedBacklog }: {
                 </>
               )}
 
-              <h4 className={`text-sm font-medium mb-2 line-clamp-2 transition-colors ${
+              <h4 className={`font-display text-sm font-bold mb-2 line-clamp-2 transition-colors ${
                 isCompletedBacklog
                   ? 'text-slate-400 line-through'
                   : 'text-slate-900 group-hover:text-cyan-600'
@@ -261,7 +284,7 @@ function TaskCard({ task, onClick, index, isBacklogTask, isCompletedBacklog }: {
                 </div>
               )}
 
-              <div className="space-y-2 mb-3 text-xs">
+              <div className="space-y-2 mb-3 font-mono text-xs">
                 {task.dueDate && (
                   <div className={isCompletedBacklog ? 'text-slate-300' : 'text-slate-500'}>
                     <Calendar className="w-3 h-3 inline mr-1" /> {new Date(task.dueDate).toLocaleDateString()}
@@ -282,22 +305,22 @@ function TaskCard({ task, onClick, index, isBacklogTask, isCompletedBacklog }: {
               </div>
 
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-1 font-mono">
                   <span className="text-xs">{getPriorityColor(task.priority)}</span>
-                  <span className={`text-xs font-medium ${isCompletedBacklog ? 'text-slate-300' : getPriorityTextColor(task.priority)}`}>{task.priority}</span>
+                  <span className={`text-[10px] uppercase font-bold tracking-wide ${isCompletedBacklog ? 'text-slate-300' : getPriorityTextColor(task.priority)}`}>{task.priority}</span>
                 </div>
                 {task.labels.length > 0 && (
                   <div className="flex gap-1 overflow-hidden">
                     {task.labels.slice(0, 1).map((label) => (
                       <span
                         key={label.id}
-                        className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${isCompletedBacklog ? 'bg-slate-100 text-slate-300 border-slate-200' : `${label.bgColor} ${label.color} border ${label.borderColor}`}`}
+                        className={`font-mono text-[9px] uppercase tracking-wider font-bold px-1.5 py-0.5 rounded-full ${isCompletedBacklog ? 'bg-slate-100 text-slate-300 border-slate-200' : `${label.bgColor} ${label.color} border ${label.borderColor}`}`}
                       >
                         {label.name}
                       </span>
                     ))}
                     {task.labels.length > 1 && (
-                      <span className="text-[10px] text-slate-500 px-1">+{task.labels.length - 1}</span>
+                      <span className="font-mono text-[10px] text-slate-500 px-1">+{task.labels.length - 1}</span>
                     )}
                   </div>
                 )}
@@ -334,11 +357,11 @@ function ColumnCard({ column, tasks, isBacklog, onAddTask, onTaskClick, index }:
       <div ref={handleRef} className="flex items-center justify-between py-3 px-2 mb-2 group">
         <div className="flex items-center gap-2">
           <div className={`w-2 h-2 rounded-full ${column.color}`}></div>
-          <h3 className={`font-bold text-sm uppercase tracking-wide ${isBacklog ? 'text-white' : 'text-slate-900'}`}>
+          <h3 className={`font-display font-bold text-sm uppercase tracking-wide ${isBacklog ? 'text-white' : 'text-slate-900'}`}>
             {column.name}
           </h3>
           <span
-            className={`px-1.5 py-0.5 rounded text-xs font-mono font-medium ${
+            className={`px-1.5 py-0.5 rounded text-xs font-mono font-bold ${
               isBacklog
                 ? 'bg-indigo-100 text-indigo-700 border border-indigo-200'
                 : 'bg-slate-200 text-slate-600'
@@ -724,6 +747,7 @@ export default function KanbanBoardPage() {
   });
 }
   };
+ 
 
   return (
     <div className="h-screen flex-1 min-w-0 flex flex-col bg-slate-50 overflow-hidden">
@@ -737,7 +761,14 @@ export default function KanbanBoardPage() {
         todayLabel={todayLabel}
       />
 
-      <DragDropProvider onDragEnd={handleDragEnd}>
+      <DragDropProvider
+        sensors={(defaults) => [
+          ...defaults,
+          PointerSensor.configure({
+            activationConstraints: [new PointerActivationConstraints.Distance({ value: 5 })],
+          }),
+        ]}
+        onDragEnd={handleDragEnd}>
         {viewMode === 'board' ? (
           <div className="flex-1 overflow-x-auto overflow-y-hidden px-8 pb-8">
             <div className="flex h-full gap-6 min-w-max">
@@ -762,7 +793,7 @@ export default function KanbanBoardPage() {
             <div className="w-[240px] flex items-start pt-1">
               <button
                 onClick={handleAddColumn}
-                className="w-full rounded-xl border border-dashed border-slate-300 bg-white/80 py-4 px-3 text-sm font-medium text-slate-500 hover:text-cyan-700 hover:border-cyan-400 hover:bg-cyan-50 transition-colors"
+                className="w-full rounded-xl border border-dashed border-slate-300 bg-white/80 py-4 px-3 font-body text-sm font-semibold text-slate-500 hover:text-cyan-700 hover:border-cyan-400 hover:bg-cyan-50 transition-colors"
               >
                 + Add column
               </button>
