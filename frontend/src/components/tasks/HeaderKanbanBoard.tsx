@@ -20,12 +20,6 @@ export function HeaderKanbanBoard({
   todayLabel,
 }: PropsHeaderkanbanBoard) {
     const userMode: 'Admin' | 'Member' | 'Viewer' = 'Admin';
-    const userModeMessage =
-      userMode === 'Admin'
-        ? 'Total Access'
-        : userMode === 'Member'
-          ? 'Member Access'
-          : 'Viewer Access';
 
     return (
       <>
@@ -36,9 +30,7 @@ export function HeaderKanbanBoard({
           <span className="font-semibold text-slate-700 px-2 py-1 rounded bg-slate-100 border border-slate-200 hidden sm:inline-block">
             User Mode: {userMode}
           </span>
-          <span className="text-slate-500 px-2 py-1 rounded bg-amber-50 border border-amber-200 text-xs sm:text-sm">
-            {userModeMessage}
-          </span>
+          
         </div>
 
         <nav className="hidden md:flex items-center gap-1 bg-slate-100 p-1 rounded-lg">

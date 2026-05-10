@@ -1,5 +1,5 @@
 import { useMemo, useState, useRef, useCallback, useEffect } from 'react';
-import { Plus, Calendar, Link2 } from 'lucide-react';
+import { Plus, Calendar, Link2, Circle } from 'lucide-react';
 import type { ChecklistItem, Column, ColumnTypeId, Task } from './Types';
 import { useDroppable, DragDropProvider, useDragDropManager} from '@dnd-kit/react';
 import {useSortable} from '@dnd-kit/react/sortable';
@@ -125,10 +125,10 @@ const INITIAL_TASKS: Task[] = [
   },
 ];
 
-const getPriorityColor = (priority: string) => {
-  if (priority === 'High') return '🔴';
-  if (priority === 'Medium') return '🟡';
-  return '🟢';
+const getPriorityIcon = (priority: string) => {
+  if (priority === 'High') return <Circle className="w-3 h-3 fill-red-500 text-red-500" />;
+  if (priority === 'Medium') return <Circle className="w-3 h-3 fill-amber-500 text-amber-500" />;
+  return <Circle className="w-3 h-3 fill-green-500 text-green-500" />;
 };
 
 const getPriorityTextColor = (priority: string) => {
@@ -306,7 +306,7 @@ function TaskCard({ task, onClick, index, isBacklogTask, isCompletedBacklog }: {
 
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-1 font-mono">
-                  <span className="text-xs">{getPriorityColor(task.priority)}</span>
+                  {getPriorityIcon(task.priority)}
                   <span className={`text-[10px] uppercase font-bold tracking-wide ${isCompletedBacklog ? 'text-slate-300' : getPriorityTextColor(task.priority)}`}>{task.priority}</span>
                 </div>
                 {task.labels.length > 0 && (

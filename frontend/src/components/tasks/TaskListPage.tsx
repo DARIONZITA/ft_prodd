@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ChevronRight, Plus } from 'lucide-react';
+import { ChevronRight, Plus, Circle } from 'lucide-react';
 import { useDroppable } from '@dnd-kit/react';
 import { useSortable } from '@dnd-kit/react/sortable';
 import type { Column, Task } from './Types';
@@ -11,10 +11,10 @@ interface TaskListPageProps {
   onAddTask: (columnId: string) => void;
 }
 
-const getPriorityColor = (priority: string) => {
-  if (priority === 'High') return '🔴';
-  if (priority === 'Medium') return '🟡';
-  return '🟢';
+const getPriorityIcon = (priority: string) => {
+  if (priority === 'High') return <Circle className="w-3 h-3 fill-red-500 text-red-500" />;
+  if (priority === 'Medium') return <Circle className="w-3 h-3 fill-amber-500 text-amber-500" />;
+  return <Circle className="w-3 h-3 fill-green-500 text-green-500" />;
 };
 
 const getPriorityTextColor = (priority: string) => {
@@ -75,7 +75,7 @@ function TaskRow({ task, onTaskClick, index }: { task: Task; onTaskClick: (task:
       </div>
       <span className="font-mono text-xs text-slate-400">{task.dueDate ? new Date(task.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '-'}</span>
       <div className="flex items-center gap-1">
-        <span className="text-xs">{getPriorityColor(task.priority)}</span>
+        {getPriorityIcon(task.priority)}
         <span className={`text-xs font-medium ${getPriorityTextColor(task.priority)}`}>{task.priority}</span>
       </div>
       <div className="flex gap-1 overflow-hidden">
