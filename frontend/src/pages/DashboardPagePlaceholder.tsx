@@ -14,7 +14,8 @@ import NotificationsPage from './NotificationsPage.tsx'
 import LeaderboardPage from './gamification/LeaderboardPage.tsx'
 import BadgesPage from './gamification/BadgesPage.tsx'
 import LevelUpToast from '../components/gamification/LevelUpToast.tsx'
-import type { BadgeItem, LeaderboardEntry, LeaderboardPeriod, XpSummary } from '../components/gamification/Types.ts'
+import { SHARED_BADGES } from '../components/gamification/SharedBadges.ts'
+import type { LeaderboardEntry, LeaderboardPeriod, XpSummary } from '../components/gamification/Types.ts'
 
 interface Workspace {
   id: string | number
@@ -128,17 +129,8 @@ const ALL_TIME_LEADERBOARD: LeaderboardEntry[] = [
   { id: 'u-me', name: 'Edson', avatar: 'https://ui-avatars.com/api/?name=Edson&background=0891b2&color=fff', level: XP_SUMMARY.level, xp: 8340, progressPercent: 35, isCurrentUser: true, dailyDelta: 1 },
 ]
 
-const BADGES: BadgeItem[] = [
-  { id: 'first-task', name: 'First Task', description: 'Complete your first task on the board.', icon: '✅', xpReward: 50, category: 'tasks', earnedAt: '19 Feb 2026', isNew: true },
-  { id: 'sprint-hero', name: 'Sprint Hero', description: 'Complete all tasks in a sprint without missing deadline.', icon: '🦸', xpReward: 200, category: 'milestones', earnedAt: '18 Feb 2026', isNew: true },
-  { id: 'code-reviewer', name: 'Code Reviewer', description: 'Review 5 pull requests and leave feedback.', icon: '🔎', xpReward: 120, category: 'collaboration', earnedAt: '15 Feb 2026' },
-  { id: 'streak-7', name: '7-Day Streak', description: 'Log activity for 7 consecutive days.', icon: '🔥', xpReward: 150, category: 'streaks', earnedAt: '14 Feb 2026' },
-  { id: 'team-player', name: 'Team Player', description: 'Comment on 10 tasks assigned to teammates.', icon: '🤝', xpReward: 80, category: 'collaboration', earnedAt: '10 Feb 2026' },
-  { id: 'task-master', name: 'Task Master', description: 'Complete 50 tasks.', icon: '💯', xpReward: 300, category: 'tasks', progressCurrent: 32, progressTotal: 50 },
-  { id: 'streak-30', name: '30-Day Streak', description: 'Stay active for 30 consecutive days.', icon: '🔥', xpReward: 400, category: 'streaks', progressCurrent: 7, progressTotal: 30 },
-  { id: 'all-star', name: 'All-Star', description: 'Reach top 3 on leaderboard three times.', icon: '🌟', xpReward: 500, category: 'milestones', progressCurrent: 1, progressTotal: 3 },
-  { id: 'bug-hunter', name: 'Bug Hunter', description: 'Close 20 bug tasks.', icon: '👾', xpReward: 180, category: 'tasks', progressCurrent: 8, progressTotal: 20 },
-]
+// Use shared badges data
+const BADGES = SHARED_BADGES
 
 // ─── View type ────────────────────────────────────────────────────────────────
 

@@ -1,3 +1,5 @@
+import type React from 'react';
+
 export type LeaderboardPeriod = 'week' | 'all-time';
 
 export interface XpSummary {
@@ -23,11 +25,13 @@ export interface BadgeItem {
   id: string;
   name: string;
   description: string;
-  icon: string;
+  Icon: React.ElementType;
+  color: string;
   xpReward: number;
   category: BadgeCategory;
   earnedAt?: string;
   isNew?: boolean;
   progressCurrent?: number;
   progressTotal?: number;
+  requirement: string;
 }

@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Lock, Sparkles, X } from 'lucide-react';
+import { Lock, Sparkles, X, Clock, Target, Users, Zap, FolderOpen, MessageSquare, CheckCircle2, Flame, Trophy, Star, Layers, Calendar } from 'lucide-react';
 import type { BadgeCategory, BadgeItem } from '../../components/gamification/Types';
 
 interface BadgesPageProps {
@@ -69,7 +69,9 @@ export default function BadgesPage({ badges, onOpenLeaderboard, onShowLevelUp }:
                       NEW
                     </span>
                   ) : null}
-                  <div className="text-4xl">{badge.icon}</div>
+                  <div className={`w-12 h-12 ${badge.color} rounded-xl flex items-center justify-center mx-auto`}>
+                    <badge.Icon className="w-6 h-6 text-white" />
+                  </div>
                   <p className="mt-2 text-xs font-semibold text-slate-800">{badge.name}</p>
                   <span className="mt-2 inline-block rounded-full bg-cyan-50 px-2 py-0.5 font-mono text-[10px] text-cyan-700">+{badge.xpReward} XP</span>
                 </button>
@@ -91,7 +93,9 @@ export default function BadgesPage({ badges, onOpenLeaderboard, onShowLevelUp }:
                 return (
                   <div key={badge.id} className="rounded-2xl border border-slate-100 bg-white p-4 opacity-60">
                     <div className="mb-1 flex items-center justify-between">
-                      <div className="text-4xl grayscale">{badge.icon}</div>
+                      <div className={`w-10 h-10 ${badge.color} rounded-xl flex items-center justify-center grayscale opacity-50`}>
+                      <badge.Icon className="w-5 h-5 text-white" />
+                    </div>
                       <Lock className="h-4 w-4 text-slate-400" />
                     </div>
                     <p className="text-xs font-semibold text-slate-500">{badge.name}</p>
@@ -126,7 +130,9 @@ export default function BadgesPage({ badges, onOpenLeaderboard, onShowLevelUp }:
               <X className="h-4 w-4" />
             </button>
 
-            <div className="text-6xl">{selectedBadge.icon}</div>
+            <div className={`w-16 h-16 ${selectedBadge.color} rounded-2xl flex items-center justify-center mx-auto`}>
+              <selectedBadge.Icon className="w-8 h-8 text-white" />
+            </div>
             <h3 className="mt-3 font-display text-2xl font-bold text-slate-900">{selectedBadge.name}</h3>
             <p className="mt-2 text-sm text-slate-500">{selectedBadge.description}</p>
 
