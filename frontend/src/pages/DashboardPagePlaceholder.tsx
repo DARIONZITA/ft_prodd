@@ -1,21 +1,21 @@
-import { useMemo, useState, useEffect } from 'react'
+import { useMemo, useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import Sidebar from '../components/SideBar'
 import UserProfile from './profile/This'
 import OtherUserProfile from './profile/Other'
 import Friends, { MOCK_FRIENDS, MOCK_PENDING } from './profile/Friends'
 import type { Friend, PendingRequest } from '../components/friend/Types'
-import OrganizationHomePage from './organization/OrganizationHomePage'
 import CreateOrganizationModal from './organization/CreateOrganizationModal'
 import OrganizationSettingsPage from './organization/OrganizationSettingsPage.tsx'
 import OrganizationMembersPage from './organization/OrganizationMembersPage.tsx'
+import WorkspaceLogsPage from './organization/WorkspaceLogsPage.tsx'
 import KanbanBoardPage from '../components/tasks/KanbanBoardPage.tsx'
 import NotificationsPage from './NotificationsPage.tsx'
 import LeaderboardPage from './gamification/LeaderboardPage.tsx'
 import BadgesPage from './gamification/BadgesPage.tsx'
 import LevelUpToast from '../components/gamification/LevelUpToast.tsx'
 import { SHARED_BADGES } from '../components/gamification/SharedBadges.ts'
-import type { LeaderboardEntry, LeaderboardPeriod, XpSummary } from '../components/gamification/Types.ts'
+import type { LeaderboardEntry, XpSummary } from '../components/gamification/Types.ts'
 
 interface Workspace {
   id: string | number
@@ -101,20 +101,6 @@ const XP_SUMMARY: XpSummary = {
   xpRequired: 3500,
 }
 
-const WEEKLY_LEADERBOARD: LeaderboardEntry[] = [
-  { id: 'u-1', name: 'Alex K.', avatar: 'https://ui-avatars.com/api/?name=Alex+K&background=f59e0b&color=fff', level: 14, xp: 4880, progressPercent: 88 },
-  { id: 'u-2', name: 'Maria L.', avatar: 'https://ui-avatars.com/api/?name=Maria+L&background=4f46e5&color=fff', level: 11, xp: 3120, progressPercent: 61 },
-  { id: 'u-3', name: 'Sam T.', avatar: 'https://ui-avatars.com/api/?name=Sam+T&background=ea580c&color=fff', level: 10, xp: 2790, progressPercent: 54 },
-  { id: 'u-4', name: 'Priya R.', avatar: 'https://ui-avatars.com/api/?name=Priya+R&background=6366f1&color=fff', level: 9, xp: 2510, progressPercent: 52 },
-  { id: 'u-5', name: 'Tom B.', avatar: 'https://ui-avatars.com/api/?name=Tom+B&background=0ea5e9&color=fff', level: 8, xp: 2190, progressPercent: 44 },
-  { id: 'u-6', name: 'Leo N.', avatar: 'https://ui-avatars.com/api/?name=Leo+N&background=8b5cf6&color=fff', level: 7, xp: 1870, progressPercent: 38 },
-  { id: 'u-7', name: 'Chen W.', avatar: 'https://ui-avatars.com/api/?name=Chen+W&background=10b981&color=fff', level: 7, xp: 1560, progressPercent: 31 },
-  { id: 'u-8', name: 'Nina P.', avatar: 'https://ui-avatars.com/api/?name=Nina+P&background=f43f5e&color=fff', level: 6, xp: 1340, progressPercent: 27 },
-  { id: 'u-9', name: 'Ryan C.', avatar: 'https://ui-avatars.com/api/?name=Ryan+C&background=f97316&color=fff', level: 6, xp: 1120, progressPercent: 23 },
-  { id: 'u-10', name: 'Zara M.', avatar: 'https://ui-avatars.com/api/?name=Zara+M&background=64748b&color=fff', level: 5, xp: 940, progressPercent: 19 },
-  { id: 'u-me', name: 'Edson', avatar: 'https://ui-avatars.com/api/?name=Edson&background=0891b2&color=fff', level: XP_SUMMARY.level, xp: XP_SUMMARY.xp, progressPercent: 66, isCurrentUser: true, dailyDelta: 2 },
-]
-
 const ALL_TIME_LEADERBOARD: LeaderboardEntry[] = [
   { id: 'u-1', name: 'Alex K.', avatar: 'https://ui-avatars.com/api/?name=Alex+K&background=f59e0b&color=fff', level: 22, xp: 19880, progressPercent: 82 },
   { id: 'u-2', name: 'Maria L.', avatar: 'https://ui-avatars.com/api/?name=Maria+L&background=4f46e5&color=fff', level: 19, xp: 17120, progressPercent: 76 },
@@ -170,11 +156,17 @@ export default function DashboardPagePlaceholder() {
   const workspaceParam = searchParams.get('workspace')
 
   const activeView = useMemo<ActiveView>(() => {
+    // Priorizar viewParam se existir (kanbanBoard, workspace-logs, etc)
+    if (viewParam && viewParam !== 'dashboard') {
+      return viewParam as ActiveView
+    }
+    
+    // Se temos apenas workspaceParam sem view específico
     if (workspaceParam) {
       return `workspace-${workspaceParam}` as ActiveView
     }
 
-    return viewParam as ActiveView
+    return viewParam as ActiveView || 'dashboard'
   }, [viewParam, workspaceParam])
 
   const [friendsOpen, setFriendsOpen] = useState(false)
@@ -191,12 +183,20 @@ export default function DashboardPagePlaceholder() {
   }, [workspaceParam])
 
   const currentWorkspace = useMemo(() => {
-    const workspaceId = activeView.startsWith('workspace-')
-      ? activeView.replace('workspace-', '')
-      : selectedWorkspaceId
-
-    return user.workspaces.find(workspace => String(workspace.id) === String(workspaceId)) ?? user.workspaces[0]
-  }, [activeView, selectedWorkspaceId, user.workspaces])
+    // Get workspace from URL param first (works for kanbanBoard, workspace-logs, etc.)
+    if (workspaceParam) {
+      return user.workspaces.find(workspace => String(workspace.id) === String(workspaceParam)) ?? user.workspaces[0]
+    }
+    
+    // Fallback: try to extract from activeView (for 'workspace-{id}' pattern)
+    if (activeView.startsWith('workspace-') && activeView !== 'workspace-logs') {
+      const workspaceId = activeView.replace('workspace-', '')
+      return user.workspaces.find(workspace => String(workspace.id) === String(workspaceId)) ?? user.workspaces[0]
+    }
+    
+    // Default: use selected workspace or first one
+    return user.workspaces.find(workspace => String(workspace.id) === String(selectedWorkspaceId)) ?? user.workspaces[0]
+  }, [activeView, selectedWorkspaceId, user.workspaces, workspaceParam])
 
   const handleNavigate = (view: string, payload?: string | number) => {
     setCreateOrganizationOpen(false)
@@ -205,6 +205,14 @@ export default function DashboardPagePlaceholder() {
 
     if (view === 'workspace' && payload != null) {
       nextParams.set('workspace', String(payload))
+      nextParams.set('view', 'kanbanBoard')
+      navigate(`/dashboard?${nextParams.toString()}`)
+      return
+    }
+
+    if (view === 'workspace-logs' && payload != null) {
+      nextParams.set('workspace', String(payload))
+      nextParams.set('view', 'workspace-logs')
       navigate(`/dashboard?${nextParams.toString()}`)
       return
     }
@@ -236,7 +244,7 @@ export default function DashboardPagePlaceholder() {
       // Clear auth-related localStorage keys (adjust keys if your app uses different ones)
       localStorage.removeItem('token')
       localStorage.removeItem('auth')
-    } catch (e) {
+    } catch {
       // ignore
     }
     // Replace history entry so user cannot go back to protected page
@@ -319,7 +327,14 @@ export default function DashboardPagePlaceholder() {
         />
       )
     }
-    if (activeView === 'kanbanBoard') return <KanbanBoardPage />
+    if (activeView === 'kanbanBoard') {
+      return (
+        <KanbanBoardPage
+          onOpenSettings={() => handleNavigate('organization-settings')}
+          onOpenMembers={() => handleNavigate('organization-members')}
+        />
+      )
+    }
     if (activeView === 'organization-settings') {
       return currentWorkspace ? (
         <OrganizationSettingsPage
@@ -340,20 +355,25 @@ export default function DashboardPagePlaceholder() {
       )
     }
 
-    if (activeView.startsWith('workspace-')) {
+    if (activeView === 'workspace-logs') {
       return currentWorkspace ? (
-        <OrganizationHomePage
-          workspace={currentWorkspace}
-          onCreateWorkspace={() => setCreateOrganizationOpen(true)}
-          onOpenSettings={() => handleNavigate('organization-settings')}
-          onOpenMembers={() => handleNavigate('organization-members')}
-          onOpenBoard={() => handleNavigate('kanbanBoard')}
-          
+        <WorkspaceLogsPage
+          workspaceName={currentWorkspace.name}
+          onBack={() => {
+            // Navigate back to kanban preserving current workspace
+            const nextParams = new URLSearchParams()
+            nextParams.set('workspace', String(currentWorkspace.id))
+            nextParams.set('view', 'kanbanBoard')
+            navigate(`/dashboard?${nextParams.toString()}`)
+          }}
         />
       ) : (
-        <PlaceholderView title="Workspace" />
+        <PlaceholderView title="Workspace Logs" />
       )
     }
+
+    // Workspace home removed - clicking workspace now goes directly to kanbanBoard
+    // Logs page is accessed via sidebar footer button
 
     if (activeView.startsWith('user-')) {
       // In a real app, fetch the user by ID. For now show the mock other user.
@@ -372,6 +392,7 @@ export default function DashboardPagePlaceholder() {
         xpSummary={XP_SUMMARY}
         onLogout={handleLogout}
         onCreateWorkspace={() => setCreateOrganizationOpen(true)}
+        activeWorkspace={currentWorkspace}
       />
 
       {renderMain()}

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Menu, Plus, Search, ChevronsLeft, LogOut, Grid2x2, FileText, ArrowLeftRight, Trophy, Medal } from 'lucide-react'
+import { Menu, Plus, Search, ChevronsLeft, LogOut, Grid2x2, FileText, ArrowLeftRight, Trophy, Medal, ScrollText } from 'lucide-react'
 import NotificationsDropdown from './NotificationsDropdown'
 
 interface Workspace {
@@ -26,11 +26,12 @@ interface SidebarProps {
   onLogout?: () => void
   onCreateWorkspace?: () => void
   className?: string
+  activeWorkspace?: Workspace | null
 }
 
 const WORKSPACE_ICONS = [Grid2x2, FileText, ArrowLeftRight]
 
-export default function Sidebar({ user, activeView, onNavigate, xpSummary, onLogout = () => {}, onCreateWorkspace = () => {}, className = '' }: SidebarProps) {
+export default function Sidebar({ user, activeView, onNavigate, xpSummary, onLogout = () => {}, onCreateWorkspace = () => {}, className = '', activeWorkspace = null }: SidebarProps) {
   const [searchQuery, setSearchQuery] = useState('')
   const [isOpen, setIsOpen] = useState(() => {
     const saved = localStorage.getItem('sidebar-open')
@@ -51,15 +52,7 @@ export default function Sidebar({ user, activeView, onNavigate, xpSummary, onLog
     { id: 'badges', label: 'Badges', Icon: Medal },
   ]
 
-  const xpPercent = xpSummary
-    ? Math.max(0, Math.min(100, Math.round((xpSummary.xp / Math.max(xpSummary.xpRequired, 1)) * 100)))
-    : 0
-
-  const xpRemaining = xpSummary
-    ? Math.max(0, xpSummary.xpRequired - xpSummary.xp)
-    : 0
-
-  const Avatar = () => user.avatarUrl ? (
+  const renderAvatar = () => user.avatarUrl ? (
     <img src={user.avatarUrl} alt={user.name} className="w-8 h-8 rounded-full object-cover flex-shrink-0" />
   ) : (
     <div className="w-8 h-8 rounded-full bg-cyan-600 text-white text-xs font-bold flex items-center justify-center flex-shrink-0 font-display">
@@ -80,7 +73,7 @@ export default function Sidebar({ user, activeView, onNavigate, xpSummary, onLog
         </button>
 
         <button onClick={() => onNavigate('profile')} aria-label="View profile" className="mt-1 cursor-pointer">
-          <Avatar />
+          {renderAvatar()}
         </button>
 
         <NotificationsDropdown active={activeView === 'notifications'} bellSize={16} bellPaddingClassName="p-2" onViewAll={() => onNavigate('notifications')} />
@@ -115,7 +108,7 @@ export default function Sidebar({ user, activeView, onNavigate, xpSummary, onLog
             activeView === 'profile' ? 'bg-cyan-50' : 'hover:bg-slate-100'
           }`}
         >
-          <Avatar />
+          {renderAvatar()}
           <span className="flex-1 min-w-0 truncate font-display font-semibold text-sm text-slate-900">
             {user.name}
           </span>
@@ -195,7 +188,7 @@ export default function Sidebar({ user, activeView, onNavigate, xpSummary, onLog
         ) : (
           filteredWorkspaces.map((ws, idx) => {
             const WsIcon = WORKSPACE_ICONS[idx % WORKSPACE_ICONS.length]
-            const isActive = activeView === `workspace-${ws.id}`
+            const isActive = activeWorkspace?.id === ws.id
             return (
               <button
                 key={ws.id}
@@ -225,9 +218,23 @@ export default function Sidebar({ user, activeView, onNavigate, xpSummary, onLog
 
       {/* Footer */}
       <div className="border-t border-slate-200 px-2 py-2.5 flex flex-col gap-0.5">
-       
-
-      
+        {/* Workspace Logs - only show when workspace is active */}
+        {activeWorkspace && (
+          <button
+            onClick={() => onNavigate('workspace-logs', activeWorkspace.id)}
+            className={`flex items-center gap-2.5 px-3 py-2 rounded-lg font-body text-sm font-medium w-full text-left transition-colors duration-150 cursor-pointer ${
+              activeView === 'workspace-logs' 
+                ? 'bg-cyan-50 text-cyan-700 font-semibold' 
+                : 'text-slate-500 hover:bg-slate-100 hover:text-slate-800'
+            }`}
+          >
+            <ScrollText size={14} />
+            <span className="flex-1 min-w-0 truncate">
+              Logs: {activeWorkspace.name}
+            </span>
+          </button>
+        )}
+        
         <button
           onClick={onLogout}
           className="flex items-center gap-2.5 px-3 py-2 rounded-lg font-body text-sm font-medium text-red-500 hover:bg-red-50 hover:text-red-600 w-full text-left transition-colors duration-150 cursor-pointer"
