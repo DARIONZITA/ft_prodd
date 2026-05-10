@@ -151,7 +151,24 @@ export default function OrganizationMembersPage({ workspace, onBackToSettings }:
               <span className="text-right">Actions</span>
             </div>
 
-            {filteredMembers.map(member => (
+            {filteredMembers.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-20 px-8 text-center bg-white">
+                <span className="flex h-16 w-16 items-center justify-center rounded-full bg-slate-50 text-slate-300 mb-4">
+                  <Search size={28} />
+                </span>
+                <h3 className="font-display text-xl font-bold text-slate-900">No members found</h3>
+                <p className="font-body text-slate-500 mt-2 max-w-sm">
+                  We couldn't find any members matching your search. Try different keywords or invite a new member.
+                </p>
+                <button
+                  onClick={() => setQuery('')}
+                  className="mt-6 font-body text-sm font-bold text-cyan-600 hover:text-cyan-700 hover:underline"
+                >
+                  Clear Search
+                </button>
+              </div>
+            ) : (
+              filteredMembers.map(member => (
               <div key={member.id} className="grid grid-cols-[2fr_1.2fr_1.2fr_0.8fr] items-center border-b border-slate-100 px-8 py-5 last:border-b-0">
                 <div className="flex items-center gap-4">
                   <span className={`flex h-12 w-12 items-center justify-center rounded-full font-display text-lg font-bold text-white ${member.accent}`}>
@@ -181,7 +198,7 @@ export default function OrganizationMembersPage({ workspace, onBackToSettings }:
                   )}
                 </div>
               </div>
-            ))}
+            )))}
           </section>
         )}
       </div>

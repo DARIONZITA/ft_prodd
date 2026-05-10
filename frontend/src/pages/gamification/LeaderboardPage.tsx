@@ -28,11 +28,11 @@ export default function LeaderboardPage({ entries, period, onPeriodChange, onOpe
   const renderPodiumCard = (entry: LeaderboardEntry, rank: 1 | 2 | 3) => {
     const ringClass = PODIUM_COLORS[rank].split(' ')[2];
     const gradientClass = PODIUM_COLORS[rank].split(' ').slice(0, 2).join(' ');
-    const avatarSizeClass = rank === 1 ? 'h-20 w-20' : 'h-16 w-16';
-    const pedestalHeightClass = rank === 1 ? 'h-24' : rank === 2 ? 'h-16' : 'h-12';
+    const avatarSizeClass = rank === 1 ? 'h-16 w-16 sm:h-20 sm:w-20' : 'h-12 w-12 sm:h-16 sm:w-16';
+    const pedestalHeightClass = rank === 1 ? 'h-20 sm:h-24' : rank === 2 ? 'h-14 sm:h-16' : 'h-10 sm:h-12';
 
     return (
-      <div key={entry.id} className={`flex flex-col items-center gap-2 ${rank === 1 ? '-mt-5' : ''}`}>
+      <div key={entry.id} className={`flex flex-col items-center gap-2 ${rank === 1 ? 'sm:-mt-5' : ''}`}>
         {rank === 1 ? (
           <div className="mb-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-amber-700">
             Leader
@@ -52,17 +52,17 @@ export default function LeaderboardPage({ entries, period, onPeriodChange, onOpe
         </div>
         <p className="font-display text-sm font-bold text-slate-900">{entry.name}</p>
         <span className="rounded-full bg-slate-100 px-2 py-0.5 font-mono text-[10px] text-slate-500">LVL {entry.level}</span>
-        <div className={`flex w-24 items-center justify-center rounded-t-xl bg-gradient-to-b ${pedestalHeightClass} ${gradientClass}`}>
-          <span className="font-display text-3xl font-black text-white/70">{rank}</span>
+        <div className={`flex w-20 sm:w-24 items-center justify-center rounded-t-xl bg-gradient-to-b ${pedestalHeightClass} ${gradientClass}`}>
+          <span className="font-display text-2xl sm:text-3xl font-black text-white/70">{rank}</span>
         </div>
       </div>
     );
   };
 
   return (
-    <div className="flex-1 overflow-y-auto bg-slate-50 px-6 py-8">
+    <div className="flex-1 overflow-y-auto bg-slate-50 px-4 sm:px-6 py-4 sm:py-8">
       <div className="mx-auto max-w-4xl">
-        <div className="mb-8 flex flex-wrap items-start justify-between gap-3">
+        <div className="mb-6 sm:mb-8 flex flex-col sm:flex-row sm:items-start justify-between gap-4 sm:gap-3">
           <div>
             <h1 className="font-display text-3xl font-bold text-slate-900">Leaderboard</h1>
             <p className="mt-1 text-sm text-slate-500">XP ranking for active members</p>
@@ -89,7 +89,7 @@ export default function LeaderboardPage({ entries, period, onPeriodChange, onOpe
             </div>
             <button
               onClick={onOpenBadges}
-              className="rounded-xl border border-cyan-200 bg-cyan-50 px-3 py-2 text-xs font-semibold text-cyan-700 transition-colors hover:bg-cyan-100"
+              className="rounded-xl border border-cyan-200 bg-cyan-50 px-3 py-2 text-xs font-semibold text-cyan-700 transition-colors hover:bg-cyan-100 flex-shrink-0"
             >
               View badges
             </button>
@@ -97,7 +97,7 @@ export default function LeaderboardPage({ entries, period, onPeriodChange, onOpe
         </div>
 
         {podium.length === 3 ? (
-          <div className="mb-10 flex flex-wrap items-end justify-center gap-5 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="mb-6 sm:mb-10 flex flex-wrap items-end justify-center gap-3 sm:gap-5 rounded-2xl border border-slate-200 bg-white p-4 sm:p-6 shadow-sm">
             {renderPodiumCard(podium[1], 2)}
             {renderPodiumCard(podium[0], 1)}
             {renderPodiumCard(podium[2], 3)}
@@ -112,17 +112,19 @@ export default function LeaderboardPage({ entries, period, onPeriodChange, onOpe
             {rest.map((entry, idx) => {
               const rank = idx + 4;
               return (
-                <div key={entry.id} className="flex items-center gap-4 px-5 py-3 transition-colors hover:bg-slate-50">
+                <div key={entry.id} className="flex flex-wrap sm:flex-nowrap items-center gap-3 sm:gap-4 px-4 sm:px-5 py-3 transition-colors hover:bg-slate-50">
                   <span className="w-5 text-right font-mono text-sm font-bold text-slate-400">{rank}</span>
-                  <img src={entry.avatar} alt={entry.name} className="h-9 w-9 rounded-full object-cover" />
+                  <img src={entry.avatar} alt={entry.name} className="h-8 w-8 sm:h-9 sm:w-9 rounded-full object-cover" />
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-medium text-slate-800">{entry.name}</p>
-                    <div className="mt-1 h-1.5 w-32 overflow-hidden rounded-full bg-slate-100">
+                    <div className="mt-1 h-1.5 w-24 sm:w-32 overflow-hidden rounded-full bg-slate-100">
                       <div className="h-full rounded-full bg-cyan-400" style={{ width: `${entry.progressPercent}%` }} />
                     </div>
                   </div>
-                  <span className="rounded-full bg-slate-100 px-2 py-0.5 font-mono text-xs text-slate-500">LVL {entry.level}</span>
-                  <span className="w-24 text-right font-mono text-sm font-semibold text-slate-700">{formatXp(entry.xp)}</span>
+                  <div className="flex items-center gap-2 w-full sm:w-auto justify-end mt-2 sm:mt-0 ml-8 sm:ml-0">
+                    <span className="rounded-full bg-slate-100 px-2 py-0.5 font-mono text-xs text-slate-500">LVL {entry.level}</span>
+                    <span className="w-20 sm:w-24 text-right font-mono text-sm font-semibold text-slate-700">{formatXp(entry.xp)}</span>
+                  </div>
                 </div>
               );
             })}
@@ -130,26 +132,31 @@ export default function LeaderboardPage({ entries, period, onPeriodChange, onOpe
         </div>
 
         {currentUser && currentRank ? (
-          <div className="mt-4 rounded-2xl border border-cyan-200 bg-cyan-50 px-5 py-4">
-            <div className="flex items-center gap-4">
-              <span className="rounded-full bg-cyan-100 px-2 py-0.5 font-mono text-[11px] font-semibold uppercase text-cyan-700">
+          <div className="mt-4 rounded-2xl border border-cyan-200 bg-cyan-50 px-4 sm:px-5 py-4">
+            <div className="flex flex-wrap sm:flex-nowrap items-center gap-3 sm:gap-4">
+              <span className="hidden sm:inline rounded-full bg-cyan-100 px-2 py-0.5 font-mono text-[11px] font-semibold uppercase text-cyan-700">
                 You
               </span>
               <span className="w-5 text-right font-mono text-sm font-bold text-cyan-700">{currentRank}</span>
-              <img src={currentUser.avatar} alt={currentUser.name} className="h-9 w-9 rounded-full ring-2 ring-cyan-300" />
-              <div className="flex-1">
-                <p className="text-sm font-semibold text-cyan-900">{currentUser.name}</p>
-                <div className="mt-1 h-1.5 w-32 overflow-hidden rounded-full bg-cyan-100">
+              <img src={currentUser.avatar} alt={currentUser.name} className="h-8 w-8 sm:h-9 sm:w-9 rounded-full ring-2 ring-cyan-300" />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-cyan-900 truncate">
+                  <span className="sm:hidden mr-2 rounded-full bg-cyan-100 px-2 py-0.5 font-mono text-[10px] font-semibold uppercase text-cyan-700">You</span>
+                  {currentUser.name}
+                </p>
+                <div className="mt-1 h-1.5 w-24 sm:w-32 overflow-hidden rounded-full bg-cyan-100">
                   <div className="h-full rounded-full bg-cyan-500" style={{ width: `${currentUser.progressPercent}%` }} />
                 </div>
               </div>
-              <span className="rounded-full bg-cyan-100 px-2 py-0.5 font-mono text-xs text-cyan-700">LVL {currentUser.level}</span>
-              <span className="w-24 text-right font-mono text-sm font-semibold text-cyan-800">{formatXp(currentUser.xp)}</span>
-              {typeof currentUser.dailyDelta === 'number' ? (
-                <span className="rounded-full bg-cyan-100 px-2 py-0.5 text-xs font-semibold text-cyan-700">
-                  +{currentUser.dailyDelta} today
-                </span>
-              ) : null}
+              <div className="flex items-center gap-2 w-full sm:w-auto justify-end mt-2 sm:mt-0 ml-8 sm:ml-0">
+                <span className="rounded-full bg-cyan-100 px-2 py-0.5 font-mono text-xs text-cyan-700">LVL {currentUser.level}</span>
+                <span className="w-20 sm:w-24 text-right font-mono text-sm font-semibold text-cyan-800">{formatXp(currentUser.xp)}</span>
+                {typeof currentUser.dailyDelta === 'number' ? (
+                  <span className="hidden sm:inline rounded-full bg-cyan-100 px-2 py-0.5 text-xs font-semibold text-cyan-700">
+                    +{currentUser.dailyDelta} today
+                  </span>
+                ) : null}
+              </div>
             </div>
           </div>
         ) : null}

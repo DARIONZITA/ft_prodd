@@ -21,6 +21,11 @@ const COLUMN_COLOR_BY_TYPE_ID: Record<ColumnTypeId, string> = {
 };
 
 const DEFAULT_COLUMNS: Column[] = [
+   { id: 'col-2', name: 'To Do', columnTypeId: 'todo', color: COLUMN_COLOR_BY_TYPE_ID.todo, order: 2 },
+  { id: 'col-1', name: 'Backlog', columnTypeId: 'backlog', color: COLUMN_COLOR_BY_TYPE_ID.backlog, order: 1 },
+  { id: 'col-3', name: 'In Progress', columnTypeId: 'in_progress', color: COLUMN_COLOR_BY_TYPE_ID.in_progress, order: 3 },
+  { id: 'col-4', name: 'Code Review', columnTypeId: 'code_review', color: COLUMN_COLOR_BY_TYPE_ID.code_review, order: 4 },
+  { id: 'col-5', name: 'Done', columnTypeId: 'done', color: COLUMN_COLOR_BY_TYPE_ID.done, order: 5 },
  ];
 
 const sortColumns = (columnList: Column[]) =>
@@ -29,7 +34,95 @@ const sortColumns = (columnList: Column[]) =>
 const SORTED_DEFAULT_COLUMNS = sortColumns(DEFAULT_COLUMNS);
 
 const INITIAL_TASKS: Task[] = [
- 
+ {
+    id: 'TASK-101',
+    title: 'Research authentication providers for OAuth',
+    description: 'Evaluate OAuth providers',
+    columnId: 'col-1',
+    priority: 'Medium',
+    order: 2,
+    assignees: [{ id: '1', name: 'Gama', avatar: 'https://ui-avatars.com/api/?name=Gama&background=4f46e5&color=fff', initials: 'GA' }],
+    labels: [{ id: 'l1', name: 'Research', color: 'text-indigo-600', bgColor: 'bg-indigo-50', borderColor: 'border-indigo-100' }],
+    createdBy: { id: '1', name: 'Gama', avatar: 'https://ui-avatars.com/api/?name=Gama', initials: 'GA' },
+    createdAt: '2026-02-15',
+  },
+  {
+    id: 'TASK-102',
+    title: 'Define DB schema for user profiles',
+    description: 'Create database schema',
+    columnId: 'col-1',
+    priority: 'Low',
+    order: 1,
+    dueDate: '2026-02-22',
+    assignees: [{ id: '1', name: 'Gama', avatar: 'https://ui-avatars.com/api/?name=Gama', initials: 'GA' }],
+    labels: [{ id: 'l2', name: 'Database', color: 'text-yellow-700', bgColor: 'bg-yellow-50', borderColor: 'border-yellow-100' }],
+    createdBy: { id: '1', name: 'Gama', avatar: 'https://ui-avatars.com/api/?name=Gama', initials: 'GA' },
+    createdAt: '2026-02-15',
+  },
+  {
+    id: 'TASK-103',
+    title: 'Setup CI/CD pipeline',
+    description: 'Configure deployment',
+    columnId: 'col-1',
+    priority: 'High',
+    order: 3,
+    assignees: [],
+    labels: [{ id: 'l3', name: 'DevOps', color: 'text-green-600', bgColor: 'bg-green-50', borderColor: 'border-green-100' }],
+    createdBy: { id: '1', name: 'Gama', avatar: 'https://ui-avatars.com/api/?name=Gama', initials: 'GA' },
+    createdAt: '2026-02-15',
+  },
+  {
+    id: 'TASK-104',
+    title: 'Implement authentication routes',
+    description: 'Create auth endpoints',
+    columnId: 'col-2',
+    priority: 'High',
+    order: 1,
+    dueDate: '2026-02-20',
+    assignees: [{ id: '2', name: 'Jose M', avatar: 'https://ui-avatars.com/api/?name=Jose+M&background=0891b2&color=fff', initials: 'JM' }],
+    labels: [{ id: 'l4', name: 'Backend', color: 'text-cyan-700', bgColor: 'bg-cyan-50', borderColor: 'border-cyan-100' }],
+    createdBy: { id: '1', name: 'Gama', avatar: 'https://ui-avatars.com/api/?name=Gama', initials: 'GA' },
+    createdAt: '2026-02-15',
+  },
+  {
+    id: 'TASK-092',
+    title: 'Implement WebSocket connection for real-time chat',
+    description: 'Setup Socket.IO',
+    columnId: 'col-3',
+    priority: 'High',
+    order: 1,
+    dueDate: '2026-02-20',
+    assignees: [{ id: '3', name: 'Andre C', avatar: 'https://ui-avatars.com/api/?name=Andre+C&background=0e7490&color=fff', initials: 'AC' }, { id: '2', name: 'Jose M', avatar: 'https://ui-avatars.com/api/?name=Jose+M&background=0891b2&color=fff', initials: 'JM' }],
+    labels: [{ id: 'l4', name: 'Backend', color: 'text-cyan-700', bgColor: 'bg-cyan-50', borderColor: 'border-cyan-100' }, { id: 'l5', name: 'Feature', color: 'text-cyan-700', bgColor: 'bg-cyan-50', borderColor: 'border-cyan-100' }],
+    createdBy: { id: '1', name: 'Gama', avatar: 'https://ui-avatars.com/api/?name=Gama', initials: 'GA' },
+    createdAt: '2026-02-15',
+  },
+  {
+    id: 'TASK-105',
+    title: 'Review client authentication flow',
+    description: 'Code review for auth',
+    columnId: 'col-4',
+    priority: 'Medium',
+    order: 1,
+    dueDate: '2026-02-21',
+    assignees: [{ id: '4', name: 'Ana S', avatar: 'https://ui-avatars.com/api/?name=Ana+S&background=4f46e5&color=fff', initials: 'AS' }],
+    labels: [],
+    createdBy: { id: '1', name: 'Gama', avatar: 'https://ui-avatars.com/api/?name=Gama', initials: 'GA' },
+    createdAt: '2026-02-15',
+  },
+  {
+    id: 'TASK-106',
+    title: 'Deplo staging environment',
+    description: 'Production deployment',
+    columnId: 'col-5',
+    priority: 'High',
+    order: 1,
+    dueDate: '2026-02-18',
+    assignees: [{ id: '3', name: 'Andre C', avatar: 'https://ui-avatars.com/api/?name=Andre+C&background=0e7490&color=fff', initials: 'AC' }],
+    labels: [{ id: 'l3', name: 'DevOps', color: 'text-green-600', bgColor: 'bg-green-50', borderColor: 'border-green-100' }],
+    createdBy: { id: '1', name: 'Gama', avatar: 'https://ui-avatars.com/api/?name=Gama', initials: 'GA' },
+    createdAt: '2026-02-15',
+  },
 ];
 
 const getPriorityColor = (priority: string) => {
@@ -677,17 +770,20 @@ export default function KanbanBoardPage() {
         ]}
         onDragEnd={handleDragEnd}>
         {columns.length === 0 ? (
-          <div className="flex-1 flex items-center justify-center px-8 pb-8">
-            <div className="w-full max-w-md rounded-2xl border border-dashed border-slate-300 bg-white/80 px-6 py-8 text-center shadow-sm">
-              <p className="font-display text-xl font-bold text-slate-900">No columns yet</p>
-              <p className="mt-2 font-body text-sm text-slate-500">Create your first column to start organizing tasks.</p>
-              <button
-                onClick={handleAddColumn}
-                className="mt-5 inline-flex items-center justify-center rounded-xl border border-cyan-600 bg-cyan-600 px-4 py-2 text-sm font-semibold text-white shadow-[0_10px_24px_rgba(8,145,178,0.24)] hover:bg-cyan-700"
-              >
-                + Add column
-              </button>
+          <div className="flex-1 flex flex-col items-center justify-center p-8 text-center min-h-0">
+            <div className="w-20 h-20 rounded-2xl bg-white border border-slate-200 shadow-sm flex items-center justify-center mb-6 text-slate-300">
+               <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><path d="M8 3v18"/><path d="M16 3v18"/></svg>
             </div>
+            <h2 className="font-display text-2xl font-bold text-slate-900">Your board is empty</h2>
+            <p className="font-body text-slate-500 mt-2 mb-8 max-w-md">
+              Get started by creating your first column. You can organize columns however it works best for your team's workflow.
+            </p>
+            <button
+              onClick={handleAddColumn}
+              className="inline-flex items-center gap-2 rounded-xl bg-cyan-600 px-6 py-3 font-body text-sm font-bold text-white shadow-[0_10px_24px_rgba(8,145,178,0.24)] transition-all hover:bg-cyan-700 hover:-translate-y-0.5 hover:shadow-[0_14px_28px_rgba(8,145,178,0.34)]"
+            >
+              <Plus className="w-5 h-5" /> Add First Column
+            </button>
           </div>
         ) : viewMode === 'board' ? (
           <div className="flex-1 overflow-x-auto overflow-y-hidden px-8 pb-8">

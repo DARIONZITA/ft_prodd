@@ -106,10 +106,12 @@ export default function NotificationsDropdown({
           </div>
 
           {isEmpty ? (
-            <div className="px-6 py-8 text-center">
-              <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 font-mono text-xs font-bold text-slate-400">0</div>
-              <p className="font-display text-sm font-bold text-slate-900">No notifications</p>
-              <p className="mt-1 font-body text-xs text-slate-500">We will let you know when something arrives.</p>
+            <div className="py-12 px-6 text-center">
+              <span className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-full bg-slate-50 text-slate-300">
+                <Bell size={24} />
+              </span>
+              <p className="font-display text-sm font-bold text-slate-800">You're all caught up</p>
+              <p className="font-body mt-1 text-xs text-slate-500">No new notifications right now.</p>
             </div>
           ) : (
             <div className="max-h-[360px] overflow-y-auto divide-y divide-slate-100">

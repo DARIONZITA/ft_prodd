@@ -103,16 +103,16 @@ export default function CreateTaskModal({ onClose, onCreateTask, columns, initia
   };
 
   return (
-    <>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
       {/* Overlay */}
-      <div onClick={onClose} className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-10" />
+      <div onClick={onClose} className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" />
 
       {/* Modal */}
-      <div className="fixed right-0 top-0 bottom-0 w-[560px] bg-white shadow-2xl z-20 flex flex-col border-l border-slate-200 overflow-hidden">
+      <div className="relative w-full max-w-[560px] max-h-[90vh] bg-white shadow-[0_20px_60px_-15px_rgba(0,0,0,0.2)] flex flex-col rounded-3xl border border-slate-200 overflow-hidden">
         {/* Header */}
         <div className="px-6 pt-5 pb-4 border-b border-slate-100 flex items-start justify-between flex-shrink-0">
           <div>
-            <h2 className="font-bold text-lg text-slate-900">Create Task</h2>
+            <h2 className="font-display font-bold text-xl text-slate-900">Create Task</h2>
             <div className="flex items-center gap-2 mt-1">
               <span className="font-mono text-[11px] text-slate-400">Adding to column:</span>
               <span className="flex items-center gap-1.5 bg-slate-100 text-slate-600 px-2 py-0.5 rounded text-xs font-mono border border-slate-200">
@@ -141,7 +141,7 @@ export default function CreateTaskModal({ onClose, onCreateTask, columns, initia
               placeholder="e.g. Implement login endpoint"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full text-sm border border-slate-300 rounded-lg px-3 py-2.5 outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 text-slate-900 placeholder-slate-400 font-medium transition-all"
+              className="w-full font-body text-sm border font-medium border-slate-300 rounded-lg px-3 py-2.5 outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 text-slate-900 placeholder-slate-400 transition-all"
             />
           </div>
 
@@ -155,7 +155,7 @@ export default function CreateTaskModal({ onClose, onCreateTask, columns, initia
               rows={3}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="w-full text-sm border border-slate-200 rounded-lg px-3 py-2.5 outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 text-slate-700 placeholder-slate-400 resize-none leading-relaxed transition-all"
+              className="w-full font-body text-sm border border-slate-200 rounded-lg px-3 py-2.5 outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 text-slate-700 placeholder-slate-400 resize-none leading-relaxed transition-all"
             />
           </div>
 
@@ -291,18 +291,18 @@ export default function CreateTaskModal({ onClose, onCreateTask, columns, initia
         <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-slate-100 flex-shrink-0 bg-slate-50">
           <button
             onClick={onClose}
-            className="px-4 py-2 text-sm font-medium text-slate-600 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
+            className="px-4 py-2 font-body text-sm font-bold text-slate-600 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
           >
             Cancel
           </button>
           <button
             onClick={handleCreateTask}
-            className="px-4 py-2 text-sm font-medium text-white bg-cyan-600 rounded-lg hover:bg-cyan-700 transition-colors"
+            className="px-4 py-2 font-body text-sm font-bold text-white bg-cyan-600 rounded-lg transition-all hover:-translate-y-0.5 hover:bg-cyan-700 shadow-[0_4px_14px_rgba(8,145,178,0.2)] hover:shadow-[0_6px_20px_rgba(8,145,178,0.3)]"
           >
             Create Task
           </button>
         </div>
       </div>
-    </>
+    </div>
   );
 }

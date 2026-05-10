@@ -1,5 +1,5 @@
  import { useMemo, useState } from 'react'
-import { CheckCheck, ChevronLeft, ChevronRight, Settings } from 'lucide-react'
+import { Bell, CheckCheck, ChevronLeft, ChevronRight, Settings } from 'lucide-react'
 
 type NotificationType = 'task' | 'mention' | 'badge' | 'friend'
 
@@ -125,67 +125,81 @@ export default function NotificationsPage() {
         </div>
 
         <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-          {(['today', 'yesterday', 'older'] as const).map(group => {
-            const rows = filtered.filter(item => item.group === group)
-            if (rows.length === 0) {
-              return null
-            }
+          {filtered.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-20 px-6 text-center">
+              <span className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-slate-50 text-slate-300 mb-4">
+                <Bell size={28} />
+              </span>
+              <h3 className="font-display text-lg font-bold text-slate-900">No notifications found</h3>
+              <p className="font-body text-slate-500 mt-2 max-w-sm text-sm">
+                You're all caught up! There are no notifications matching your current filter.
+              </p>
+            </div>
+          ) : (
+            (['today', 'yesterday', 'older'] as const).map(group => {
+              const rows = filtered.filter(item => item.group === group)
+              if (rows.length === 0) {
+                return null
+              }
 
-            return (
-              <div key={group}>
-                <div className="border-b border-slate-100 bg-slate-50 px-5 py-2">
-                  <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-slate-400">{groupLabels[group]}</p>
+              return (
+                <div key={group}>
+                  <div className="border-b border-slate-100 bg-slate-50 px-5 py-2">
+                    <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-slate-400">{groupLabels[group]}</p>
+                  </div>
+
+                  {rows.map(row => (
+                    <button
+                      key={row.id}
+                      type="button"
+                      onClick={() => markRead(row.id)}
+                      className={`group flex w-full gap-4 border-b border-slate-100 px-5 py-4 text-left last:border-b-0 ${
+                        row.unread ? 'bg-cyan-50/60 hover:bg-cyan-50' : 'hover:bg-slate-50'
+                      }`}
+                    >
+                      <span className={`mt-0.5 flex h-9 w-9 items-center justify-center rounded-full text-xs font-bold ${typeChip[row.type]}`}>
+                        {row.type.slice(0, 1).toUpperCase()}
+                      </span>
+
+                      <span className="min-w-0 flex-1">
+                        <span className={`block text-sm leading-snug ${row.unread ? 'text-slate-800' : 'text-slate-500'}`}>{row.title}</span>
+                        {row.detail && <span className="mt-1 block text-xs italic text-slate-500">{row.detail}</span>}
+                        <span className="mt-1.5 block font-mono text-[10px] text-slate-400">{row.meta}</span>
+                      </span>
+
+                      <span className="flex items-start gap-2 pt-1">
+                        {row.unread && <span className="h-2.5 w-2.5 rounded-full bg-cyan-500" />}
+                      </span>
+                    </button>
+                  ))}
                 </div>
-
-                {rows.map(row => (
-                  <button
-                    key={row.id}
-                    type="button"
-                    onClick={() => markRead(row.id)}
-                    className={`group flex w-full gap-4 border-b border-slate-100 px-5 py-4 text-left last:border-b-0 ${
-                      row.unread ? 'bg-cyan-50/60 hover:bg-cyan-50' : 'hover:bg-slate-50'
-                    }`}
-                  >
-                    <span className={`mt-0.5 flex h-9 w-9 items-center justify-center rounded-full text-xs font-bold ${typeChip[row.type]}`}>
-                      {row.type.slice(0, 1).toUpperCase()}
-                    </span>
-
-                    <span className="min-w-0 flex-1">
-                      <span className={`block text-sm leading-snug ${row.unread ? 'text-slate-800' : 'text-slate-500'}`}>{row.title}</span>
-                      {row.detail && <span className="mt-1 block text-xs italic text-slate-500">{row.detail}</span>}
-                      <span className="mt-1.5 block font-mono text-[10px] text-slate-400">{row.meta}</span>
-                    </span>
-
-                    <span className="flex items-start gap-2 pt-1">
-                      {row.unread && <span className="h-2.5 w-2.5 rounded-full bg-cyan-500" />}
-                    </span>
-                  </button>
-                ))}
-              </div>
-            )
-          })}
+              )
+            })
+          )}
         </div>
 
-        <div className="mt-5 flex items-center justify-between">
-          <p className="font-mono text-sm text-slate-500">
-            Showing <span className="font-semibold text-slate-700">1–{Math.min(12, filtered.length)}</span> of{' '}
-            <span className="font-semibold text-slate-700">{filtered.length}</span>
-          </p>
-          <div className="flex items-center gap-1">
-            <button type="button" className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-400">
-              <ChevronLeft size={14} />
-            </button>
-            <button type="button" className="flex h-8 w-8 items-center justify-center rounded-lg bg-cyan-600 text-sm font-bold text-white">
-              1
-            </button>
-            <button type="button" className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-sm font-medium text-slate-600">
-              2
-            </button>
-            <button type="button" className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-400">
-              <ChevronRight size={14} />
-            </button>
+        {filtered.length > 0 && (
+          <div className="mt-5 flex items-center justify-between">
+            <p className="font-mono text-sm text-slate-500">
+              Showing <span className="font-semibold text-slate-700">1–{Math.min(12, filtered.length)}</span> of{' '}
+              <span className="font-semibold text-slate-700">{filtered.length}</span>
+            </p>
+            <div className="flex items-center gap-1">
+              <button type="button" className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-400">
+                <ChevronLeft size={14} />
+              </button>
+              <button type="button" className="flex h-8 w-8 items-center justify-center rounded-lg bg-cyan-600 text-sm font-bold text-white">
+                1
+              </button>
+              <button type="button" className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-sm font-medium text-slate-600">
+                2
+              </button>
+              <button type="button" className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-400">
+                <ChevronRight size={14} />
+              </button>
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   )
