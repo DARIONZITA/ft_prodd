@@ -31,6 +31,7 @@ model User {
     id        Int      @id @default(autoincrement())
     nickname      String   @unique
     email     String   @unique
+    totalXp   Int      @default(0)
     passwordHash String
     avatarUrl String
     createdAt DateTime @default(now())

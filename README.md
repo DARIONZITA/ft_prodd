@@ -566,7 +566,7 @@ erDiagram
 
 | Table             | Description                          | Key Fields                                                    |
 | ----------------- | ------------------------------------ | ------------------------------------------------------------- |
-| `User`            | Platform users                       | `id`, `nickname`, `email`, `passwordHash`, `createdAt`       |
+| `User`            | Platform users                       | `id`, `nickname`, `email`, `passwordHash`, `totalXp`, `createdAt`       |
 | `Workspace`       | Collaborative workspace              | `id`, `name`, `description`, `totalTask`, `createdAt`        |
 | `WorkspaceMember` | Links users to workspaces with roles | `id`, `workspaceId`, `userId`, `role`                        |
 
