@@ -175,26 +175,25 @@ function TaskCard({ task, onClick, index, isBacklogTask, isCompletedBacklog }: {
   const [element, setElement] = useState<Element | null>(null);
   const moveMouse = useRef({ x: 0, y: 0 });
   const [animationLeft, setAnimationLeaft] = useState<boolean>(true);
-  const dummyRef = useRef<HTMLDivElement | null>(null);
 
   const { isDragging } = useSortable({
     id: task.id,
     element,
     handle: element,
     index,
-    disabled: isBacklogTask,
+    disabled: isCompletedBacklog,
     data: { type: 'TASK', taskId: task.id, fromColumnId: task.columnId, taskIndex: index }
   });
 
   const { ref: beforeRef, isDropTarget: isBeforeDropTarget } = useDroppable({
     id: `${task.id}::before`,
-    disabled: isBacklogTask,
+    disabled: isCompletedBacklog,
     data: { type: 'TASK_INSERT', taskId: task.id, fromColumnId: task.columnId, side: 'before', taskIndex: index }
   });
 
   const { ref: afterRef, isDropTarget: isAfterDropTarget } = useDroppable({
     id: `${task.id}::after`,
-    disabled: isBacklogTask,
+    disabled: isCompletedBacklog,
     data: { type: 'TASK_INSERT', taskId: task.id, fromColumnId: task.columnId, side: 'after', taskIndex: index }
   });
 
@@ -239,10 +238,7 @@ function TaskCard({ task, onClick, index, isBacklogTask, isCompletedBacklog }: {
                     : 'bg-white border-slate-200 hover:shadow-md hover:-translate-y-0.5 cursor-pointer hover:border-slate-300'
               }`}
             >
-              {/* Hidden ref for backlog tasks so drag handle points to nothing */}
-              <div ref={dummyRef} className="hidden" />
-
-              {!isBacklogTask && (
+              {!isCompletedBacklog && (
                 <>
                   <div ref={beforeRef} className="absolute -top-2 left-0 right-0 h-1/2 z-10" />
                   {isBeforeDropTarget && !isDragging && (
@@ -342,7 +338,6 @@ function ColumnCard({ column, tasks, isBacklog, onAddTask, onTaskClick, index }:
 
   const { ref: dropRef } = useDroppable({
     id: column.id,
-    disabled: isBacklog,
   });
 
    return (
@@ -647,14 +642,10 @@ export default function KanbanBoardPage({ onOpenSettings, onOpenMembers }: Kanba
       return;
     }
 
-   if (type === 'TASK') {
+  if (type === 'TASK') {
   setTasks((prevTasks) => {
     const activeTask = prevTasks.find((t) => t.id === activeId);
     if (!activeTask) return prevTasks;
-
-    // BLOCK: backlog tasks cannot be dragged to other columns
-    const sourceCol = columns.find((c) => c.id === activeTask.columnId);
-    if (sourceCol?.columnTypeId === 'backlog') return prevTasks;
 
     const sourceColumnId = String(
       event.operation.source.data?.fromColumnId ?? activeTask.columnId
@@ -667,9 +658,17 @@ export default function KanbanBoardPage({ onOpenSettings, onOpenMembers }: Kanba
           ? String(overData.fromColumnId)
           : overId;
 
-    // BLOCK: cannot drop into backlog column
+    const sourceCol = columns.find((c) => c.id === sourceColumnId);
     const targetCol = columns.find((c) => c.id === targetColumnId);
-    if (targetCol?.columnTypeId === 'backlog') return prevTasks;
+
+    const isSourceBacklog = sourceCol?.columnTypeId === 'backlog';
+    const isTargetBacklog = targetCol?.columnTypeId === 'backlog';
+
+    // BLOCK: backlog tasks cannot be dragged to other columns
+    if (isSourceBacklog && !isTargetBacklog) return prevTasks;
+
+    // BLOCK: cannot drop other tasks into backlog column
+    if (!isSourceBacklog && isTargetBacklog) return prevTasks;
 
     // 1. remover o ativo globalmente
     const withoutActive = prevTasks.filter((t) => t.id !== activeId);
