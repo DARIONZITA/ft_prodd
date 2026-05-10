@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { X, MessageSquare, ChevronDown, Calendar, User2, Link2 } from 'lucide-react';
+import { X, MessageSquare, ChevronDown, Calendar, User2, Link2, Circle } from 'lucide-react';
 import type { ChecklistItem, Column, ColumnTypeId, Task, TaskComment, TaskPriority } from './Types';
 
 const COLUMN_TYPE_COLORS: Record<ColumnTypeId, { dot: string; bg: string; border: string; text: string }> = {
@@ -116,8 +116,12 @@ export default function TaskDetailPanel({ task, columns, onClose, onUpdateTask }
 
   const selectedColumn = columns.find((column) => column.id === editingColumnId) ?? columns[0];
   const colorConfig = COLUMN_TYPE_COLORS[selectedColumn?.columnTypeId ?? 'custom'];
-  const priorityEmoji = editingPriority === 'High' ? '🔴' : editingPriority === 'Medium' ? '🟡' : '🟢';
-
+  const PriorityIcon = () => {
+    if (editingPriority === 'High') return <Circle className="w-3 h-3 fill-red-500 text-red-500" />;
+    if (editingPriority === 'Medium') return <Circle className="w-3 h-3 fill-amber-500 text-amber-500" />;
+    return <Circle className="w-3 h-3 fill-green-500 text-green-500" />;
+  };
+  /* */
   return (
     <>
       {/* Overlay */}
@@ -202,7 +206,7 @@ export default function TaskDetailPanel({ task, columns, onClose, onUpdateTask }
                       const idx = priorities.indexOf(editingPriority);
                       setEditingPriority(priorities[(idx + 1) % priorities.length]);
                     }}>
-                      <span className="text-sm">{priorityEmoji}</span>
+                      <span className="text-sm"><PriorityIcon /></span>
                       <span className="text-sm font-medium text-slate-700 group-hover:text-cyan-700 transition-colors">{editingPriority}</span>
                       <ChevronDown className="w-3.5 h-3.5 text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity" />
                     </div>

@@ -188,8 +188,7 @@ export default function DashboardPagePlaceholder() {
   const [friendsOpen, setFriendsOpen] = useState(false)
   const [createOrganizationOpen, setCreateOrganizationOpen] = useState(false)
   const [user, setUser] = useState<User>(MOCK_USER)
-  const [leaderboardPeriod, setLeaderboardPeriod] = useState<LeaderboardPeriod>('week')
-  const [showLevelUpToast, setShowLevelUpToast] = useState(false)
+ const [showLevelUpToast, setShowLevelUpToast] = useState(false)
 
   // Friends state — in real app this comes from API
   const [friends, setFriends] = useState<Friend[]>(MOCK_FRIENDS)
@@ -253,12 +252,13 @@ export default function DashboardPagePlaceholder() {
   }
 
   // If user is not authenticated, force redirect to signin. Runs on location changes
-  useEffect(() => {
+  /*useEffect(() => {
     const token = localStorage.getItem('token')
     if (!token) {
       navigate('/signin', { replace: true })
     }
   }, [location, navigate])
+  */
 
   // ── Friends modal handlers ───────────────────────────────────────────────
   const handleAccept = (id: string | number) => {
@@ -313,9 +313,7 @@ export default function DashboardPagePlaceholder() {
     if (activeView === 'leaderboard') {
       return (
         <LeaderboardPage
-          entries={leaderboardPeriod === 'week' ? WEEKLY_LEADERBOARD : ALL_TIME_LEADERBOARD}
-          period={leaderboardPeriod}
-          onPeriodChange={setLeaderboardPeriod}
+          entries={ALL_TIME_LEADERBOARD}
           onOpenBadges={() => handleNavigate('badges')}
         />
       )

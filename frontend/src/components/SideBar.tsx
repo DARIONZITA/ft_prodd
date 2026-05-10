@@ -184,7 +184,7 @@ export default function Sidebar({ user, activeView, onNavigate, xpSummary, onLog
 
       {/* My Projects */}
       <p className="px-4 pt-3 pb-1.5 font-mono text-[10px] font-medium uppercase tracking-widest text-slate-400">
-        My Projects
+        My Workspaces
       </p>
 
       <div className="flex-1 overflow-y-auto px-2 flex flex-col gap-0.5" role="list">

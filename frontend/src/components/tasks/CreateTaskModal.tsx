@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { X, Link2 } from 'lucide-react';
+import { X, Link2, Circle } from 'lucide-react';
 import type { Column, Task, TaskPriority } from './Types';
 
 const AVAILABLE_LABELS = [
@@ -199,7 +199,7 @@ export default function CreateTaskModal({ onClose, onCreateTask, columns, initia
                         : 'border-slate-200 text-slate-500 hover:bg-slate-50'
                     }`}
                   >
-                    {p === 'High' ? '🔴' : p === 'Medium' ? '🟡' : '🟢'} {p}
+                    {p === 'High' ? <Circle className="w-3 h-3 fill-red-500 text-red-500" /> : p === 'Medium' ? <Circle className="w-3 h-3 fill-amber-500 text-amber-500" /> : <Circle className="w-3 h-3 fill-green-500 text-green-500" />} {p}
                   </button>
                 ))}
               </div>
@@ -208,19 +208,6 @@ export default function CreateTaskModal({ onClose, onCreateTask, columns, initia
 
           {/* Column & Due Date */}
           <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block font-mono text-[11px] uppercase tracking-wider text-slate-400 mb-2">Column</label>
-              <select
-                value={columnId}
-                onChange={(e) => setColumnId(e.target.value)}
-                className="w-full text-sm border border-slate-200 rounded-lg px-3 py-2 outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 text-slate-700 appearance-none bg-white pr-8 transition-all cursor-pointer"
-              >
-                {columns.map((column) => (
-                  <option key={column.id} value={column.id}>{column.name}</option>
-                ))}
-              </select>
-            </div>
-
             <div>
               <label className="block font-mono text-[11px] uppercase tracking-wider text-slate-400 mb-2">Due Date</label>
               <input
