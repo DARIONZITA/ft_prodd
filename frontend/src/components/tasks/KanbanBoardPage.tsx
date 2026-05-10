@@ -180,7 +180,7 @@ function TaskCard({ task, onClick, index, isBacklogTask, isCompletedBacklog }: {
   const { isDragging } = useSortable({
     id: task.id,
     element,
-    handle: isBacklogTask ? dummyRef : element,
+    handle: element,
     index,
     disabled: isBacklogTask,
     data: { type: 'TASK', taskId: task.id, fromColumnId: task.columnId, taskIndex: index }
@@ -417,7 +417,12 @@ function ColumnCard({ column, tasks, isBacklog, onAddTask, onTaskClick, index }:
   );
 }
 
-export default function KanbanBoardPage() {
+interface KanbanBoardPageProps {
+  onOpenSettings?: () => void
+  onOpenMembers?: () => void
+}
+
+export default function KanbanBoardPage({ onOpenSettings, onOpenMembers }: KanbanBoardPageProps) {
   const [columns, setColumns] = useState<Column[]>(() => SORTED_DEFAULT_COLUMNS);
   const [tasks, setTasks] = useState<Task[]>(() => sortTasks(INITIAL_TASKS));
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
@@ -436,14 +441,6 @@ export default function KanbanBoardPage() {
   const completedTodayCount = useMemo(() => {
     return tasks.filter((task) => doneColumnIds.has(task.columnId) && task.completedAt === todayIso).length;
   }, [tasks, doneColumnIds, todayIso]);
-
-  const todayLabel = useMemo(() => {
-    return new Intl.DateTimeFormat('pt-BR', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-    }).format(new Date());
-  }, []);
 
   const filteredTasks = useMemo(() => {
     if (!searchQuery) return tasks;
@@ -758,7 +755,9 @@ export default function KanbanBoardPage() {
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
         completedTodayCount={completedTodayCount}
-        todayLabel={todayLabel}
+        workspaceCreatedAt="15 Feb 2026"
+        onOpenSettings={onOpenSettings}
+        onOpenMembers={onOpenMembers}
       />
 
       <DragDropProvider

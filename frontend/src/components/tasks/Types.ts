@@ -53,7 +53,6 @@ export interface Task {
   assignees: Assignee[];
   labels: Label[];
   createdBy: Assignee;
-  sprint: string;
   createdAt: string;
   linkedBacklogId?: string;
   isCompleted?: boolean;

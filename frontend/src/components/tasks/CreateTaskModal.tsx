@@ -94,7 +94,6 @@ export default function CreateTaskModal({ onClose, onCreateTask, columns, initia
       assignees: selectedAssignees,
       labels: selectedLabels,
       createdBy: AVAILABLE_ASSIGNEES[0],
-      sprint: 'Sprint 1',
       createdAt: new Date().toISOString().split('T')[0],
       linkedBacklogId: requiresBacklogLink ? linkedBacklogId : undefined,
     };

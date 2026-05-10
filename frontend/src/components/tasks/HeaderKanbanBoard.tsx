@@ -1,4 +1,4 @@
-import { Plus, Search, Filter, ArrowUpDown } from 'lucide-react';
+import { Plus, Search, Filter, ArrowUpDown, Settings } from 'lucide-react';
 
 interface PropsHeaderkanbanBoard {
   onModalCreate: () => void
@@ -7,7 +7,9 @@ interface PropsHeaderkanbanBoard {
   searchQuery: string
   setSearchQuery: (query: string) => void
   completedTodayCount: number
-  todayLabel: string
+  workspaceCreatedAt: string
+  onOpenSettings?: () => void
+  onOpenMembers?: () => void
 }
 
 export function HeaderKanbanBoard({
@@ -17,7 +19,9 @@ export function HeaderKanbanBoard({
   searchQuery,
   setSearchQuery,
   completedTodayCount,
-  todayLabel,
+  workspaceCreatedAt,
+  onOpenSettings,
+  onOpenMembers,
 }: PropsHeaderkanbanBoard) {
     const userMode: 'Admin' | 'Member' | 'Viewer' = 'Admin';
 
@@ -53,13 +57,30 @@ export function HeaderKanbanBoard({
         </nav>
 
         <div className="flex items-center justify-between w-full md:w-auto gap-4">
-          <div className="flex items-center text-slate-400 hidden sm:flex">
+          {/* Members avatars - clickable to open members page */}
+          <button 
+            onClick={onOpenMembers}
+            className="flex items-center text-slate-400 hidden sm:flex hover:opacity-80 transition-opacity cursor-pointer"
+            title="Manage members"
+          >
             <div className="flex -space-x-2 mr-3">
               <img src="https://ui-avatars.com/api/?name=Jose+M&background=0891b2&color=fff" className="w-8 h-8 rounded-full border-2 border-white ring-1 ring-slate-100" />
               <img src="https://ui-avatars.com/api/?name=Ana+S&background=4f46e5&color=fff" className="w-8 h-8 rounded-full border-2 border-white ring-1 ring-slate-100" />
               <div className="w-8 h-8 rounded-full border-2 border-white bg-slate-100 text-slate-500 text-xs font-bold flex items-center justify-center ring-1 ring-slate-100">+2</div>
             </div>
-          </div>
+          </button>
+          
+          <div className="h-6 w-px bg-slate-200"></div>
+          
+          {/* Settings button */}
+          <button
+            onClick={onOpenSettings}
+            className="p-2 rounded-lg text-slate-500 hover:text-cyan-700 hover:bg-cyan-50 transition-colors duration-150"
+            title="Settings"
+          >
+            <Settings className="w-5 h-5" />
+          </button>
+          
           <div className="h-6 w-px bg-slate-200"></div>
           <button
             onClick={onModalCreate}
@@ -78,7 +99,7 @@ export function HeaderKanbanBoard({
                     {completedTodayCount} tasks completed today
                   </span>
                   <span className="bg-slate-100 text-slate-500 text-xs font-mono px-2 py-0.5 rounded-full border border-slate-200">
-                    {todayLabel}
+                    Created {workspaceCreatedAt}
                   </span>
                 </div>
                 <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">

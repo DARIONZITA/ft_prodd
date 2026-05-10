@@ -125,7 +125,7 @@ export default function TaskDetailPanel({ task, columns, onClose, onUpdateTask }
   return (
     <>
       {/* Overlay */}
-      <div onClick={onClose} className="fixed inset-0 bg-slate-900/30 backdrop-blur-[2px] z-10" />
+      <div onClick={onClose} className="fixed inset-0 bg-slate-900/30 backdrop-blur-[2px] z-20" />
 
       {/* Panel */}
       <div className="fixed left-1/2 top-1/2 w-[min(1120px,calc(100vw-2rem))] h-[min(760px,calc(100vh-2rem))] -translate-x-1/2 -translate-y-1/2 bg-white text-slate-900 shadow-2xl z-20 flex flex-col border border-slate-200 rounded-2xl overflow-hidden">
@@ -217,10 +217,7 @@ export default function TaskDetailPanel({ task, columns, onClose, onUpdateTask }
                     <div className="text-sm text-slate-700">{selectedColumn?.name ?? 'Column'}</div>
                   </div>
 
-                  <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
-                    <div className="text-[11px] uppercase tracking-wider text-slate-400 mb-2">Sprint</div>
-                    <div className="font-mono text-xs text-slate-700">{task.sprint}</div>
-                  </div>
+                  
                 </div>
 
                 {task.labels.length > 0 && (
