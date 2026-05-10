@@ -27,46 +27,7 @@ interface MemberRow {
 
 //mockdata
 const initialMembers: MemberRow[] = [
-  {
-    id: '1',
-    name: 'John Doe',
-    username: '@johndoe',
-    initials: 'JD',
-    role: 'Owner',
-    joinedDate: 'Jan 12, 2025',
-    editable: false,
-    accent: 'bg-indigo-500',
-  },
-  {
-    id: '2',
-    name: 'Ana Silva',
-    username: '@ana.silva',
-    initials: 'AS',
-    role: 'Admin',
-    joinedDate: 'Jan 14, 2025',
-    editable: true,
-    accent: 'bg-cyan-500',
-  },
-  {
-    id: '3',
-    name: 'Carlos Manuel',
-    username: '@carlosm',
-    initials: 'CM',
-    role: 'Member',
-    joinedDate: 'Feb 02, 2025',
-    editable: true,
-    accent: 'bg-teal-500',
-  },
-  {
-    id: '4',
-    name: 'Guest User',
-    username: '@guest.01',
-    initials: 'G',
-    role: 'Guest',
-    joinedDate: 'Feb 10, 2025',
-    editable: true,
-    accent: 'bg-slate-300 text-slate-600',
-  },
+
 ]
 
 const roleStyles: Record<MemberRole, string> = {
@@ -113,6 +74,9 @@ export default function OrganizationMembersPage({ workspace, onBackToSettings }:
     setInviteOpen(false)
   }
 
+  const isEmpty = members.length === 0
+  const isFilteredEmpty = !isEmpty && filteredMembers.length === 0
+
   return (
     <div className="flex-1 h-full overflow-y-auto bg-slate-100 text-slate-900">
       <div className="mx-auto max-w-[1380px] px-6 py-8 lg:px-8">
@@ -155,46 +119,71 @@ export default function OrganizationMembersPage({ workspace, onBackToSettings }:
           </div>
         </div>
 
-        <section className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
-          <div className="grid grid-cols-[2fr_1.2fr_1.2fr_0.8fr] border-b border-slate-200 bg-slate-50 px-8 py-4 text-xs font-bold uppercase tracking-[0.25em] text-slate-500">
-            <span>User</span>
-            <span>Role</span>
-            <span>Joined Date</span>
-            <span className="text-right">Actions</span>
-          </div>
-
-          {filteredMembers.map(member => (
-            <div key={member.id} className="grid grid-cols-[2fr_1.2fr_1.2fr_0.8fr] items-center border-b border-slate-100 px-8 py-5 last:border-b-0">
-              <div className="flex items-center gap-4">
-                <span className={`flex h-12 w-12 items-center justify-center rounded-full text-lg font-bold text-white ${member.accent}`}>
-                  {member.initials}
-                </span>
-                <span>
-                  <span className="block text-2xl font-semibold text-slate-900">{member.name}</span>
-                  <span className="block text-xl text-slate-500">{member.username}</span>
-                </span>
-              </div>
-
-              <div>
-                <span className={`inline-flex rounded-full border px-3 py-1 text-sm font-semibold ${roleStyles[member.role]}`}>
-                  {member.role}
-                </span>
-              </div>
-
-              <p className="text-xl text-slate-500">{member.joinedDate}</p>
-
-              <div className="flex justify-end">
-                {member.editable ? (
-                  <button type="button" className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600">
-                    <EllipsisVertical size={20} />
-                  </button>
-                ) : (
-                  <span className="text-base italic text-slate-400">Cannot edit owner</span>
-                )}
-              </div>
+        {isEmpty || isFilteredEmpty ? (
+          <div className="rounded-3xl border border-dashed border-slate-300 bg-white px-10 py-14 text-center shadow-sm">
+            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 font-mono text-xs font-bold text-slate-400">
+              0
             </div>
-          ))}
-        </section>
+            <h2 className="font-display text-2xl font-bold text-slate-900">
+              {isEmpty ? 'No members yet' : 'No members found'}
+            </h2>
+            <p className="mt-2 font-body text-sm text-slate-500">
+              {isEmpty
+                ? 'Invite your first teammate to get started.'
+                : 'Try another search term or clear the filter.'}
+            </p>
+            {isEmpty && (
+              <button
+                type="button"
+                onClick={() => setInviteOpen(true)}
+                className="mt-5 inline-flex items-center gap-2 rounded-2xl bg-cyan-600 px-5 py-2.5 text-sm font-semibold text-white shadow-[0_10px_24px_rgba(8,145,178,0.24)] hover:bg-cyan-700"
+              >
+                <Plus size={16} /> Invite Member
+              </button>
+            )}
+          </div>
+        ) : (
+          <section className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
+            <div className="grid grid-cols-[2fr_1.2fr_1.2fr_0.8fr] border-b border-slate-200 bg-slate-50 px-8 py-4 font-mono text-[10px] uppercase tracking-[0.25em] text-slate-500">
+              <span>User</span>
+              <span>Role</span>
+              <span>Joined Date</span>
+              <span className="text-right">Actions</span>
+            </div>
+
+            {filteredMembers.map(member => (
+              <div key={member.id} className="grid grid-cols-[2fr_1.2fr_1.2fr_0.8fr] items-center border-b border-slate-100 px-8 py-5 last:border-b-0">
+                <div className="flex items-center gap-4">
+                  <span className={`flex h-12 w-12 items-center justify-center rounded-full font-display text-lg font-bold text-white ${member.accent}`}>
+                    {member.initials}
+                  </span>
+                  <span>
+                    <span className="block font-display text-lg font-bold text-slate-900">{member.name}</span>
+                    <span className="block font-body text-sm text-slate-500">{member.username}</span>
+                  </span>
+                </div>
+
+                <div>
+                  <span className={`inline-flex rounded-full border px-3 py-1 font-mono text-[10px] font-bold uppercase tracking-wider ${roleStyles[member.role]}`}>
+                    {member.role}
+                  </span>
+                </div>
+
+                <p className="font-body text-sm text-slate-500">{member.joinedDate}</p>
+
+                <div className="flex justify-end">
+                  {member.editable ? (
+                    <button type="button" className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600">
+                      <EllipsisVertical size={20} />
+                    </button>
+                  ) : (
+                    <span className="font-body text-sm italic text-slate-400">Cannot edit owner</span>
+                  )}
+                </div>
+              </div>
+            ))}
+          </section>
+        )}
       </div>
 
       <InviteMembersModal

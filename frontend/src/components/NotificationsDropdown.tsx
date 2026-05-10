@@ -42,6 +42,7 @@ export default function NotificationsDropdown({
   const [notifications, setNotifications] = useState<NotificationItem[]>(INITIAL_NOTIFICATIONS)
   const wrapperRef = useRef<HTMLDivElement | null>(null)
   const unreadCount = useMemo(() => notifications.filter(item => item.unread).length, [notifications])
+  const isEmpty = notifications.length === 0
 
   useEffect(() => {
     const onPointerDown = (event: MouseEvent) => {
@@ -91,45 +92,65 @@ export default function NotificationsDropdown({
           <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
             <div className="flex items-center gap-2">
               <h3 className="font-display text-base font-bold text-slate-900">Notifications</h3>
-              {unreadCount > 0 && <span className="rounded-full bg-cyan-100 px-1.5 py-0.5 font-mono text-[10px] font-bold text-cyan-700">{unreadCount} new</span>}
+              {!isEmpty && unreadCount > 0 && (
+                <span className="rounded-full bg-cyan-100 px-1.5 py-0.5 font-mono text-[10px] font-bold text-cyan-700">{unreadCount} new</span>
+              )}
             </div>
-            <button onClick={onMarkAllRead} className="text-xs font-medium text-cyan-600 hover:text-cyan-800">
-              Mark all read
-            </button>
+            {isEmpty ? (
+              <span className="font-mono text-[10px] uppercase tracking-wider text-slate-400">All caught up</span>
+            ) : (
+              <button onClick={onMarkAllRead} className="text-xs font-medium text-cyan-600 hover:text-cyan-800">
+                Mark all read
+              </button>
+            )}
           </div>
 
-          <div className="max-h-[360px] overflow-y-auto divide-y divide-slate-100">
-            {notifications.map(item => (
-              <button
-                key={item.id}
-                type="button"
-                onClick={() => onMarkRead(item.id)}
-                className={`flex w-full gap-3 px-4 py-3 text-left transition-colors ${item.unread ? 'bg-cyan-50/60 hover:bg-cyan-50' : 'hover:bg-slate-50'}`}
-              >
-                <span className={`mt-0.5 flex h-8 w-8 items-center justify-center rounded-full text-[10px] font-bold uppercase ${TYPE_BADGE[item.type]}`}>
-                  {item.type.slice(0, 1)}
-                </span>
-                <span className="min-w-0 flex-1">
-                  <span className={`block text-sm leading-snug ${item.unread ? 'text-slate-800' : 'text-slate-500'}`}>{item.text}</span>
-                  <span className="mt-0.5 block font-mono text-[10px] text-slate-400">{item.meta}</span>
-                </span>
-                {item.unread && <span className="mt-1 h-2 w-2 rounded-full bg-cyan-500" />}
-              </button>
-            ))}
-          </div>
+          {isEmpty ? (
+            <div className="px-6 py-8 text-center">
+              <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 font-mono text-xs font-bold text-slate-400">0</div>
+              <p className="font-display text-sm font-bold text-slate-900">No notifications</p>
+              <p className="mt-1 font-body text-xs text-slate-500">We will let you know when something arrives.</p>
+            </div>
+          ) : (
+            <div className="max-h-[360px] overflow-y-auto divide-y divide-slate-100">
+              {notifications.map(item => (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => onMarkRead(item.id)}
+                  className={`flex w-full gap-3 px-4 py-3 text-left transition-colors ${item.unread ? 'bg-cyan-50/60 hover:bg-cyan-50' : 'hover:bg-slate-50'}`}
+                >
+                  <span className={`mt-0.5 flex h-8 w-8 items-center justify-center rounded-full text-[10px] font-bold uppercase ${TYPE_BADGE[item.type]}`}>
+                    {item.type.slice(0, 1)}
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className={`block text-sm leading-snug ${item.unread ? 'text-slate-800' : 'text-slate-500'}`}>{item.text}</span>
+                    <span className="mt-0.5 block font-mono text-[10px] text-slate-400">{item.meta}</span>
+                  </span>
+                  {item.unread && <span className="mt-1 h-2 w-2 rounded-full bg-cyan-500" />}
+                </button>
+              ))}
+            </div>
+          )}
 
           <div className="flex items-center justify-between border-t border-slate-100 px-4 py-2.5">
-            <span className="font-mono text-[10px] text-slate-400">Showing last {Math.min(10, notifications.length)}</span>
-            <button
-              type="button"
-              onClick={() => {
-                setOpen(false)
-                onViewAll()
-              }}
-              className="text-xs font-medium text-cyan-600 hover:text-cyan-800"
-            >
-              View all
-            </button>
+            {isEmpty ? (
+              <span className="font-mono text-[10px] uppercase tracking-wider text-slate-400">You are up to date</span>
+            ) : (
+              <span className="font-mono text-[10px] text-slate-400">Showing last {Math.min(10, notifications.length)}</span>
+            )}
+            {!isEmpty && (
+              <button
+                type="button"
+                onClick={() => {
+                  setOpen(false)
+                  onViewAll()
+                }}
+                className="text-xs font-medium text-cyan-600 hover:text-cyan-800"
+              >
+                View all
+              </button>
+            )}
           </div>
         </div>
       )}

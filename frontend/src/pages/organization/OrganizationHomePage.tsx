@@ -88,13 +88,13 @@ export default function OrganizationHomePage({ workspace, onOpenSettings, onOpen
       <div className="relative mx-auto max-w-[1240px] px-6 py-8 lg:px-8 lg:py-9">
         <header className="mb-7 flex items-start justify-between gap-4">
           <div>
-            <h1 className="text-4xl font-black tracking-tight text-slate-900 lg:text-[2.7rem]">{workspace.name}</h1>
-            <p className="mt-2 text-base text-slate-500 lg:text-xl">Welcome back, Jose. Here is what&apos;s happening in your workspace.</p>
+            <h1 className="font-display text-4xl font-extrabold tracking-tight text-slate-900 lg:text-[2.7rem]">{workspace.name}</h1>
+            <p className="mt-2 text-base font-body text-slate-500 lg:text-xl">Welcome back, Jose. Here is what&apos;s happening in your workspace.</p>
           </div>
 
           <div className="inline-flex items-center gap-3 rounded-full border border-slate-200/80 bg-white/90 px-5 py-2.5 text-slate-500 shadow-[0_6px_16px_rgba(15,23,42,0.06)]">
             <CalendarDays size={16} className="text-indigo-300" />
-            <span className="text-sm font-semibold text-slate-700">Feb 18, 2026</span>
+            <span className="font-mono text-xs text-slate-500">Feb 18, 2026</span>
             <span className="text-slate-300">|</span>
             <button
               type="button"
@@ -108,30 +108,30 @@ export default function OrganizationHomePage({ workspace, onOpenSettings, onOpen
 
         <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           <article className="rounded-2xl border border-slate-200/90 bg-white/85 p-5 shadow-[0_8px_22px_rgba(15,23,42,0.04)] backdrop-blur-sm">
-            <p className="text-xs font-bold uppercase tracking-[0.08em] text-slate-500">Total Tasks</p>
+            <p className="font-mono text-xs font-bold uppercase tracking-[0.08em] text-slate-500">Total Tasks</p>
             <div className="mt-3 flex items-end gap-2.5">
-              <span className="text-4xl font-black text-slate-900">{taskCount}</span>
+              <span className="font-display text-4xl font-bold text-slate-900">{taskCount}</span>
             </div>
           </article>
 
           <article className="rounded-2xl border border-slate-200/90 bg-white/85 p-5 shadow-[0_8px_22px_rgba(15,23,42,0.04)] backdrop-blur-sm">
-            <p className="text-xs font-bold uppercase tracking-[0.08em] text-slate-500">Pending</p>
+            <p className="font-mono text-xs font-bold uppercase tracking-[0.08em] text-slate-500">Pending</p>
             <div className="mt-3 flex items-end gap-2.5">
-              <span className="text-4xl font-black text-slate-900">{pendingCount}</span>
+              <span className="font-display text-4xl font-bold text-slate-900">{pendingCount}</span>
             </div>
           </article>
 
           <article className="rounded-2xl border border-slate-200/90 bg-white/85 p-5 shadow-[0_8px_22px_rgba(15,23,42,0.04)] backdrop-blur-sm">
-            <p className="text-xs font-bold uppercase tracking-[0.08em] text-slate-500">Completed This Week</p>
+            <p className="font-mono text-xs font-bold uppercase tracking-[0.08em] text-slate-500">Completed This Week</p>
             <div className="mt-3 flex items-end gap-2.5">
-              <span className="text-4xl font-black text-slate-900">{completedThisWeek}</span>
+              <span className="font-display text-4xl font-bold text-slate-900">{completedThisWeek}</span>
             </div>
           </article>
 
           <article className="rounded-2xl border border-slate-200/90 bg-white/85 p-5 shadow-[0_8px_22px_rgba(15,23,42,0.04)] backdrop-blur-sm">
-            <p className="text-xs font-bold uppercase tracking-[0.08em] text-slate-500">Team Members</p>
+            <p className="font-mono text-xs font-bold uppercase tracking-[0.08em] text-slate-500">Team Members</p>
             <div className="mt-3 flex items-end gap-2.5">
-              <span className="text-4xl font-black text-slate-900">{memberCount}</span>
+              <span className="font-display text-4xl font-bold text-slate-900">{memberCount}</span>
             </div>
           </article>
         </section>
@@ -139,7 +139,7 @@ export default function OrganizationHomePage({ workspace, onOpenSettings, onOpen
         <section className="mt-10 grid gap-6 xl:grid-cols-[1.85fr_0.95fr]">
           <article>
             <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-3xl font-black text-slate-900">Recent Activity</h2>
+              <h2 className="font-display text-2xl font-bold text-slate-900">Recent Activity</h2>
               <button onClick={onOpenBoard} className="inline-flex items-center gap-2 rounded-xl border border-cyan-600 bg-cyan-600 px-4 py-2 text-sm font-bold text-white shadow-[0_10px_24px_rgba(8,145,178,0.28)] transition-all duration-150 hover:-translate-y-0.5 hover:bg-cyan-700 hover:shadow-[0_14px_28px_rgba(8,145,178,0.34)]">
                 View Board <span aria-hidden="true">→</span>
               </button>
@@ -161,9 +161,9 @@ export default function OrganizationHomePage({ workspace, onOpenSettings, onOpen
                   </div>
 
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-lg font-semibold text-slate-900">{activity.title}</p>
-                    <div className="mt-1 flex items-center gap-2 text-sm text-slate-500">
-                      <span className="rounded-md bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">{activity.tag}</span>
+                    <p className="truncate font-display text-lg font-bold text-slate-900">{activity.title}</p>
+                    <div className="mt-1 flex items-center gap-2 font-mono text-xs text-slate-400">
+                      <span className="rounded-md bg-slate-100 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-slate-500">{activity.tag}</span>
                       <Dot size={16} />
                       <span>{activity.meta}</span>
                     </div>
@@ -186,8 +186,8 @@ export default function OrganizationHomePage({ workspace, onOpenSettings, onOpen
 
           <aside>
             <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-3xl font-black text-slate-900">Team</h2>
-              <button type="button" onClick={onOpenMembers} className="text-lg font-bold text-cyan-600 hover:text-cyan-700">
+              <h2 className="font-display text-2xl font-bold text-slate-900">Team</h2>
+              <button type="button" onClick={onOpenMembers} className="font-body text-sm font-semibold text-cyan-600 hover:text-cyan-700">
                 Manage →
               </button>
             </div>
@@ -200,8 +200,8 @@ export default function OrganizationHomePage({ workspace, onOpenSettings, onOpen
                   </span>
 
                   <div className="flex-1">
-                    <p className="text-lg font-semibold text-slate-900">{member.name}</p>
-                    <p className="text-sm text-slate-500">{member.role}</p>
+                    <p className="font-display text-sm font-bold text-slate-900">{member.name}</p>
+                    <p className="font-mono text-xs text-slate-500">{member.role}</p>
                   </div>
 
                   <span className={`h-3 w-3 rounded-full ${member.online ? 'bg-emerald-500' : 'bg-slate-300'}`} />
