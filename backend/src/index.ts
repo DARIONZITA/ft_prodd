@@ -38,4 +38,4 @@ app.use(errorHandler);
 // Porta
 const	PORT = env.PORT;
 
-app.listen(PORT, () => { console.log(`🚀 Servidor rodando em http://localhost:${PORT}`); });
+app.listen(PORT, () => { console.log(`🚀 Server running on http://localhost:${PORT}`); });
