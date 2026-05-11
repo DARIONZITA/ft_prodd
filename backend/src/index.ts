@@ -6,6 +6,7 @@ import helmet from 'helmet';
 import morgan from 'morgan';
 import { PrismaClient } from '@prisma/client';
 import authRoutes from './routes/auth';
+import oauthRoutes from './routes/oauth';
 import { errorHandler } from './middleware/errorHandler';
 
 export const	prisma = new PrismaClient( { datasources: { db: { url: env.DATABASE_URL }, } } );
@@ -31,6 +32,7 @@ app.get('/api/health', (_req: Request, res: Response) => {
 });
 
 app.use('/api/auth', authRoutes);
+app.use('/api/auth/42', oauthRoutes); // Rota para OAuth 42
 
 // ← Middleware global de erro (deve ser o ÚLTIMO!)
 app.use(errorHandler);
@@ -38,4 +40,4 @@ app.use(errorHandler);
 // Porta
 const	PORT = env.PORT;
 
-app.listen(PORT, () => { console.log(`🚀 Servidor rodando em http://localhost:${PORT}`); });
+app.listen(PORT, () => { console.log(`🚀 Server running on http://localhost:${PORT}`); });

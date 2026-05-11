@@ -1,14 +1,5 @@
 import { z } from 'zod';
 
-/**
- * Schema de registo - validação rigorosa de tudo que vem do frontend
- * Zod faz a ponte entre runtime (segurança) e compile-time (TypeScript)
- */
- 
- //Em JS/TS ':' tem significado diferente, dependendo se é um obj ou uma estrutura/classe
- //Em objs { } significa chave : valor
- //Em Classes/Structs { } significa var : tipo
- 
 const	username_length = { min : 3, max : 42 };
  
 export const	emailSchema = z.object(
@@ -99,7 +90,30 @@ export const	signinSchema = z.object(
 
 });
 
+//---------------------------------OAuth Schemas---------------------------------------
 
+export const	OauthCallbackSchema = z.object(
+{
+	code:  z.string().min(1, 'Missing code on query received from Intra API'),
+	state: z.string().min(1, 'Missing state on query received from Intra API'),
+	error: z.string().optional(),
+});
+
+export const	IntraUserSchema = z.object(
+{
+	id: z.number("Non-Numeric user ID from 42 API"),
+	email: z.string().email("Invalid email from 42 API"),
+	login: z.string().min(1, "Empty login from 42 API"),
+	image: z.object(
+	{
+		link: z.string().url("Invalid avatar URL from 42 API"),
+	}).optional()
+});
+
+export const	TokenResponseSchema = z.object(
+{
+	access_token: z.string("Missing access_token in response from 42 API"),
+});
 
 /*
 export type	RegisterInput = z.infer<typeof registerSchema>;

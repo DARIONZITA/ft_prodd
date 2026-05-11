@@ -5,6 +5,7 @@ import SignUpPage from './pages/SignUpPage'
 import LoadingPage from './pages/LoadingPage'
 import DashboardPagePlaceholder from './pages/DashboardPagePlaceholder'
 import ProtectedRoute from './components/ProtectedRoute'
+import OAuthCallbackPage from "./pages/OauthCallbackPage"
 
 function App() {
   return (
@@ -14,6 +15,7 @@ function App() {
         <Route path="/signin" element={<SignInPage />} />
         <Route path="/signup" element={<SignUpPage />} />
         <Route path="/loading" element={<LoadingPage />} />
+        <Route path="/oauth/callback" element={<OAuthCallbackPage />} />
         <Route
           path="/dashboard"
           element={

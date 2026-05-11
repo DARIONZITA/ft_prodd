@@ -23,10 +23,12 @@ enum NotificationType {
 
 model User {
     id        Int      @id @default(autoincrement())
-    nickname      String   @unique
+    nickname      String
     email     String   @unique
     passwordHash String
     avatarUrl String
+    fortyTwoId Int?     @unique
+
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 
