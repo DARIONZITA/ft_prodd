@@ -7,7 +7,7 @@ export const	authenticate = async ( req : Request, res : Response, next : NextFu
 	const	authHeader = req.headers.authorization;
 
 	if (!authHeader?.startsWith( 'Bearer ' ))
-		return (next(new ApiError(401, "Token Não fornecido")));
+		return (next(new ApiError(401, "Invalid token format")));
 
 	const	token = authHeader.split(' ')[1];
 
@@ -17,7 +17,7 @@ export const	authenticate = async ( req : Request, res : Response, next : NextFu
 		const	user = await prisma.user.findUnique( { where: { id: payload.id } } );
 
 		if (!user)
-			return (next(new ApiError(401, 'Utilizador não encontrado')));
+			return (next(new ApiError(401, 'User not found')));
 		req.user = user;
 		next();
 	}

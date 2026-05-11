@@ -1,0 +1,244 @@
+import { useState } from 'react'
+import { Bell, Menu, X, Plus, Search, LayoutDashboard, LayoutList, CheckCheck, HelpCircle, LogOut, Grid2x2, FileText, ArrowLeftRight } from 'lucide-react'
+
+interface Workspace {
+  id: string | number
+  name: string
+  taskCount?: number
+}
+
+interface User {
+  name: string
+  avatarUrl?: string | null
+  workspaces: Workspace[]
+}
+
+interface SidebarProps {
+  user: User
+  activeView: string
+  onNavigate: (view: string, payload?: string | number) => void
+  onLogout?: () => void
+  onCreateWorkspace?: () => void
+  className?: string
+}
+
+const WORKSPACE_ICONS = [Grid2x2, FileText, ArrowLeftRight]
+
+export default function Sidebar({ user, activeView, onNavigate, onLogout = () => {}, onCreateWorkspace = () => {}, className = '' }: SidebarProps) {
+  const [searchQuery, setSearchQuery] = useState('')
+  const [isOpen, setIsOpen] = useState(true)
+
+  const filteredWorkspaces = user.workspaces.filter(ws => ws.name.toLowerCase().includes(searchQuery.toLowerCase()))
+
+  const initials = user.name?.trim()[0]?.toUpperCase() ?? '?'
+
+  const navItems = [
+    { id: 'dashboard',  label: 'Dashboard',  Icon: LayoutDashboard },
+    { id: 'all-boards', label: 'All Boards', Icon: LayoutList },
+    { id: 'completed',  label: 'Completed',  Icon: CheckCheck },
+  ]
+
+  const Avatar = () => user.avatarUrl ? (
+    <img src={user.avatarUrl} alt={user.name} className="w-8 h-8 rounded-full object-cover flex-shrink-0" />
+  ) : (
+    <div className="w-8 h-8 rounded-full bg-cyan-600 text-white text-xs font-bold flex items-center justify-center flex-shrink-0 font-display">
+      {initials}
+    </div>
+  )
+
+  // ── Collapsed ─────────────────────────────────────────────────────────────
+  if (!isOpen) {
+    return (
+      <aside className={`flex flex-col items-center w-14 min-w-14 h-screen bg-white border-r border-slate-200 py-4 gap-3 ${className}`}>
+        <button
+          aria-label="Open sidebar"
+          onClick={() => setIsOpen(true)}
+          className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors duration-150"
+        >
+          <Menu size={18} />
+        </button>
+
+        <button onClick={() => onNavigate('profile')} aria-label="View profile" className="mt-1">
+          <Avatar />
+        </button>
+
+        <button
+          onClick={() => onNavigate('notifications')}
+          aria-label="Notifications"
+          className={`p-2 rounded-lg transition-colors duration-150 ${
+            activeView === 'notifications' ? 'bg-cyan-50 text-cyan-700' : 'text-slate-400 hover:bg-slate-100 hover:text-slate-700'
+          }`}
+        >
+          <Bell size={16} />
+        </button>
+
+        <div className="flex flex-col items-center gap-1 mt-1">
+          {navItems.map(({ id, Icon }) => (
+            <button
+              key={id}
+              onClick={() => onNavigate(id)}
+              className={`p-2 rounded-lg transition-colors duration-150 ${
+                activeView === id ? 'bg-cyan-50 text-cyan-700' : 'text-slate-400 hover:bg-slate-100 hover:text-slate-700'
+              }`}
+            >
+              <Icon size={16} />
+            </button>
+          ))}
+        </div>
+      </aside>
+    )
+  }
+
+  // ── Expanded ──────────────────────────────────────────────────────────────
+  return (
+    <aside className={`flex flex-col w-60 min-w-60 h-screen bg-white border-r border-slate-200 ${className}`}>
+
+      {/* Top bar */}
+      <div className="flex items-center gap-2 px-4 pt-4 pb-3">
+        <button
+          onClick={() => onNavigate('profile')}
+          aria-label="View profile"
+          className={`flex items-center gap-2 flex-1 min-w-0 text-left rounded-lg transition-colors duration-150 p-1 -ml-1 ${
+            activeView === 'profile' ? 'bg-cyan-50' : 'hover:bg-slate-100'
+          }`}
+        >
+          <Avatar />
+          <span className="flex-1 min-w-0 truncate font-display font-semibold text-sm text-slate-900">
+            {user.name}
+          </span>
+        </button>
+
+        <button
+          aria-label="Notifications"
+          onClick={() => onNavigate('notifications')}
+          className={`p-1.5 rounded-lg transition-colors duration-150 ${
+            activeView === 'notifications'
+              ? 'bg-cyan-50 text-cyan-700'
+              : 'text-slate-400 hover:text-slate-700 hover:bg-slate-100'
+          }`}
+        >
+          <Bell size={18} />
+        </button>
+
+        <button
+          aria-label="Close sidebar"
+          onClick={() => setIsOpen(false)}
+          className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors duration-150"
+        >
+          <X size={18} />
+        </button>
+      </div>
+
+      {/* Add Board */}
+      <div className="px-3 mb-3">
+        <button className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg font-display font-bold text-sm cursor-pointer transition-colors duration-150">
+          <Plus size={14} strokeWidth={2.5} />
+          Add Board
+        </button>
+      </div>
+
+      {/* Search */}
+      <div className="px-3 mb-2">
+        <div className="relative">
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none flex">
+            <Search size={14} />
+          </span>
+          <input
+            type="text"
+            placeholder="Search"
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            aria-label="Search workspaces"
+            className="w-full pl-8 pr-16 py-2 border border-slate-200 rounded-lg font-body text-sm text-slate-900 bg-slate-50 outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/15 placeholder:text-slate-400 transition-colors duration-150"
+          />
+          <span className="absolute right-2.5 top-1/2 -translate-y-1/2 font-mono text-[10px] text-slate-400 bg-slate-200 rounded px-1.5 py-0.5 pointer-events-none">
+            Ctrl+K
+          </span>
+        </div>
+      </div>
+
+      {/* Navigation */}
+      <nav className="px-2 flex flex-col gap-0.5 mb-1" aria-label="Main navigation">
+        {navItems.map(({ id, label, Icon }) => (
+          <button
+            key={id}
+            onClick={() => onNavigate(id)}
+            aria-current={activeView === id ? 'page' : undefined}
+            className={`flex items-center gap-2.5 px-3 py-2 rounded-lg font-body text-sm font-medium w-full text-left transition-colors duration-150 ${
+              activeView === id
+                ? 'bg-cyan-50 text-cyan-700 font-semibold'
+                : 'text-slate-500 hover:bg-slate-100 hover:text-slate-800'
+            }`}
+          >
+            <Icon size={16} />
+            {label}
+          </button>
+        ))}
+      </nav>
+
+      {/* My Projects */}
+      <p className="px-4 pt-3 pb-1.5 font-mono text-[10px] font-medium uppercase tracking-widest text-slate-400">
+        My Projects
+      </p>
+
+      <div className="flex-1 overflow-y-auto px-2 flex flex-col gap-0.5" role="list">
+        {filteredWorkspaces.length === 0 ? (
+          <p className="px-3 py-3 font-body text-xs text-slate-400 text-center">
+            {searchQuery ? 'No projects found' : 'No workspaces yet'}
+          </p>
+        ) : (
+          filteredWorkspaces.map((ws, idx) => {
+            const WsIcon = WORKSPACE_ICONS[idx % WORKSPACE_ICONS.length]
+            const isActive = activeView === `workspace-${ws.id}`
+            return (
+              <button
+                key={ws.id}
+                role="listitem"
+                onClick={() => onNavigate('workspace', ws.id)}
+                title={ws.name}
+                className={`flex items-center gap-2.5 px-3 py-2 rounded-lg font-body text-sm font-medium w-full text-left transition-colors duration-150 ${
+                  isActive
+                    ? 'bg-cyan-50 text-cyan-700 font-semibold'
+                    : 'text-slate-500 hover:bg-slate-100 hover:text-slate-800'
+                }`}
+              >
+                <WsIcon size={14} className="flex-shrink-0" />
+                <span className="flex-1 truncate">{ws.name}</span>
+                {ws.taskCount != null && (
+                  <span className={`text-xs font-semibold rounded-full px-2 py-0.5 flex-shrink-0 ${
+                    isActive ? 'bg-cyan-100 text-cyan-700' : 'bg-slate-100 text-slate-400'
+                  }`}>
+                    {ws.taskCount}
+                  </span>
+                )}
+              </button>
+            )
+          })
+        )}
+      </div>
+
+      {/* Footer */}
+      <div className="border-t border-slate-200 px-2 py-2.5 flex flex-col gap-0.5">
+        <button
+          onClick={onCreateWorkspace}
+          className="flex items-center gap-2.5 px-3 py-2 rounded-lg font-body text-sm font-medium text-slate-500 hover:bg-slate-100 hover:text-slate-800 w-full text-left transition-colors duration-150"
+        >
+          <Plus size={14} />
+          Create Workspace
+        </button>
+        <button className="flex items-center gap-2.5 px-3 py-2 rounded-lg font-body text-sm font-medium text-slate-500 hover:bg-slate-100 hover:text-slate-800 w-full text-left transition-colors duration-150">
+          <HelpCircle size={14} />
+          Help &amp; resources
+        </button>
+        <button
+          onClick={onLogout}
+          className="flex items-center gap-2.5 px-3 py-2 rounded-lg font-body text-sm font-medium text-red-500 hover:bg-red-50 hover:text-red-600 w-full text-left transition-colors duration-150"
+        >
+          <LogOut size={14} />
+          Logout
+        </button>
+      </div>
+
+    </aside>
+  )
+}

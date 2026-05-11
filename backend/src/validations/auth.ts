@@ -15,16 +15,20 @@ export const	emailSchema = z.object(
 {
 	email: z
 		.string()
+		.trim()
 		.min(1, 'Email cannot be empty')
 		.email('Invalid Email')
 		.max(256, 'Email too long')
 
 });
 
+//------------------------------------Signup Schemas------------------------------------
+
 export const	signupUsernameSchema = z.object(
 {
 	username: z
 		.string()
+		.trim()
 		.min(1, 'Username cannot be empty')
 		.min(username_length.min, `Username must be at least ${username_length.min} characters`)
 		.max(username_length.max, `Username too long, it can have up to ${username_length.max} characters`)
@@ -36,17 +40,7 @@ export const	signupUsernameSchema = z.object(
  		*/
 });
 
-export const	signinUsernameSchema = z.object(
-{
-	username: z
-		.string()
-		.min(1, 'Username cannot be empty')
-		.max(username_length.max, `Username too long, it can have up to ${username_length.max} characters`)
-		.regex(/^[a-zA-Z0-9_-]+$/, "Username can only contain alphanumeric characters and '_', '-'")
-
-});
-
-export const	passwordSchema = z.object(
+export const	signupPasswordSchema = z.object(
 {
 	password: z
 		.string()
@@ -66,23 +60,46 @@ export const	passwordSchema = z.object(
 
  	email: emailSchema.shape.email,
 
-	password: passwordSchema.shape.password,
+	password: signupPasswordSchema.shape.password,
 
 	avatarUrl: z
 		.string()
+		.trim()
 		.url("Invalid URL")
 		.optional()
 		.or( z.literal('') ),
  
- });
+});
+
+//------------------------------------Signin Schemas------------------------------------
+
+export const	signinUsernameSchema = z.object(
+{
+	username: z
+		.string()
+		.trim()
+		.min(1, 'Username cannot be empty')
+		.max(username_length.max, `Username too long, it can have up to ${username_length.max} characters`)
+
+});
+
+export const	signinPasswordSchema = z.object(
+{
+	password: z
+		.string()
+		.min(1, 'Password cannot be empty')
+		.max(128, "Password too long, it can have up to 128 characters")
+});
  
 export const	signinSchema = z.object(
 {
 	identifier: signinUsernameSchema.shape.username.or( emailSchema.shape.email ),
 
-	password: passwordSchema.shape.password,
+	password: signinPasswordSchema.shape.password,
 
 });
+
+
 
 /*
 export type	RegisterInput = z.infer<typeof registerSchema>;

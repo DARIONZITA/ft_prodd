@@ -20,8 +20,9 @@ RUN npm install
 FROM base AS development
 COPY --from=dev-deps /app/node_modules ./node_modules
 COPY . .
+RUN npx prisma generate
 EXPOSE 3001
-CMD ["npm", "run", "dev"]
+CMD ["sh", "-c", "npx prisma migrate deploy && npm run dev"]
 
 # Stage 5: Builder
 FROM base AS builder
@@ -38,6 +39,7 @@ COPY package*.json ./
 COPY prisma ./prisma
 RUN npx prisma generate
 EXPOSE 3001
+EXPOSE 5555
 CMD ["node", "dist/index.js"]
 
 # Default to development

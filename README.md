@@ -1,356 +1,326 @@
 *This project has been created as part of the 42 curriculum by efinda, dnzita, cgama, jbofengo.*
 
-# ft_prodd - Task Manager Kanban
+# Description
 
-Task management system that combines the visual experience of Notion with the organizational structure of Kanban, specifically developed to meet the needs of 42 School students.
+**ft_prodd(...)** is a full-stack web application designed to improve how developers collaborate on group projects, with a strong focus on the workflow commonly experienced by **42 students**.
 
-## Quick Start
+The name reflects both its purpose and its roots: the `ft_` prefix follows the traditional naming convention used across 42 projects, *prodd* comes from *productivity*, and the trailing `d` references Unix daemons — symbolizing a system that continuously runs in the background, tracking progress and activity. The `(...)` notation is inspired by function syntax, reinforcing the project’s programming-oriented identity.
 
-To start the entire project with a single command:
+The main goal of **ft_prodd(...)** is to provide a centralized platform where users can **organize, track, and improve their project workflow**, reducing common issues such as poor coordination, lack of visibility, and last-minute surprises during evaluation.
 
-```bash
-./scripts/setup.sh
-```
+While the platform is inspired by and tailored to the needs of 42 students, **it is open to any user** who wants to manage collaborative projects in a structured and efficient way.
 
-This command will:
-- Check if Docker is running
-- Create `config/.env` file from `config/.env.example`
-- Build all Docker images
-- Start all services (frontend, backend, databases)
-- Verify the health of all services
+The application combines task management, collaboration tools, and real-time features into a single environment. It allows multiple users to interact simultaneously, manage shared workspaces, and monitor project progress as it evolves.
+
+### Key Features
+
+- **Task Management System**  
+  Create, assign, and track tasks within project workspaces, ensuring clear visibility of what has been completed and what remains.
+
+- **Real-Time Collaboration**  
+  Live updates and interactions between users using WebSocket-based communication, enabling synchronized teamwork.
+
+- **User Interaction System**  
+  Profiles, friendships, and integrated chat allow team members to communicate and coordinate directly within the platform.
+
+- **Project Knowledge Sharing**  
+  Access to template projects and curated references from other students to better understand project requirements and best practices.
+
+- **Testing Awareness**  
+  Encourage early testing and validation during development to avoid unexpected issues during project evaluation.
+
+- **Gamification System**  
+  Users are rewarded for completing tasks, introducing a lightweight motivational layer to improve engagement and productivity.
+
+- **Multi-user Environment**  
+  Designed to support concurrent users working on shared projects without conflicts or data inconsistency.
+
+
+
+
+
+# Instructions
+
+This section explains how to **set up, configure, and run** the project locally.
+
+The project is fully containerized using **Docker** and managed through a **Makefile**, which provides a simplified interface for all commands.
+
+---
 
 ## Prerequisites
 
-- **Docker** (version 20.10+)
-- **Docker Compose** (version 2.0+)
-- **Git**
+Before running the project, make sure you have the following installed:
 
-### OAuth Credentials Configuration
+* **Docker**
+* **Docker Compose**
+* **Make**
 
-Before running the project for the first time, you need to configure the 42 Intra OAuth credentials:
+> All services run inside containers, so no manual installation of Node.js, PostgreSQL, or other dependencies is required on the host machine.
 
-1. Access: https://profile.intra.42.fr/oauth/applications
-2. Create a new OAuth application
-3. Configure the callback URL: `http://localhost:3001/api/auth/42/callback`
-4. Copy the `Client ID` and `Client Secret`
-5. Edit the `config/.env` file and add your credentials:
-   ```
-   INTRA_42_CLIENT_ID=your_client_id
-   INTRA_42_CLIENT_SECRET=your_client_secret
-   ```
+---
 
-## Project Architecture
+## Project Setup
 
-The project uses a simple and efficient **monolithic architecture**:
-
-```
-ft_prodd/
-├── backend/                   # Unified backend (Express + Socket.IO)
-│   ├── src/
-│   │   ├── routes/           # API routes
-│   │   ├── controllers/      # Control logic
-│   │   ├── services/         # Business rules
-│   │   ├── models/           # Data models
-│   │   ├── middlewares/      # Middlewares (auth, validation)
-│   │   ├── config/           # Configurations
-│   │   └── utils/            # Utilities
-│   └── prisma/               # Database schema
-├── frontend/                  # React Application
-├── config/                    # Nginx, Database configs
-├── scripts/                   # Automation scripts
-└── config/docker-compose.yaml # Container orchestration
-```
-
-### Services and Ports
-
-| Service | Port | Description |
-|---------|-------|-----------|
-| Frontend | 3000 | React Interface |
-| Backend | 3001 | REST API + WebSocket (Socket.IO) |
-| PostgreSQL | 5432 | Main database |
-| Redis | 6379 | Cache and sessions |
-| Nginx | 80 | Reverse proxy (optional) |
-
-## Available Commands
-
-### Initialization and Setup
+Clone the repository and navigate to the project root:
 
 ```bash
-# Complete initial setup
-./scripts/setup.sh
-
-# Development mode (with visible logs)
-./scripts/dev.sh
-
-# Run database migrations
-./scripts/migrate.sh
-
-# Check service health
-./scripts/health-check.sh
+git clone <repository_url> ft_prodd
+cd ft_prodd
 ```
 
-### Container Management
+---
 
-```bash
-# Start all services in background
-make up
-# or
-docker compose -f config/docker-compose.yaml --env-file config/.env up -d
+## Environment Configuration
 
-# Stop all services
-make down
-# or
-docker compose -f config/docker-compose.yaml --env-file config/.env down
+The project uses environment variables for configuration.
 
-# View logs of a specific service
-make logs-backend    # Backend logs
-make logs-frontend   # Frontend logs
-# or
-docker compose -f config/docker-compose.yaml --env-file config/.env logs -f [service-name]
+A `.env.example` file is provided as a **template**, containing all the required environment variable names. The values in this file are placeholders and must be configured before running the project.
 
-# View status of all containers
-make ps
-# or
-docker compose -f config/docker-compose.yaml --env-file config/.env ps
+Since the `.env` file is ignored by Git, it will not be present when cloning the repository.
 
-# Restart all services
-make restart
-```
+You have two options:
 
-### Cleanup and Reset
+### Option 1: Manual Setup
 
-```bash
-# Clean everything (containers, volumes, images)
-make clean
-# or
-./scripts/clean.sh
-
-# Only stop and remove containers
-make down
-
-# Complete database reset (LOSES DATA)
-make reset-db
-
-# Complete project reset (LOSES EVERYTHING)
-make reset-all
-
-# Only stop and remove containers
-docker compose -f config/docker-compose.yaml --env-file config/.env down
-
-# Stop and remove volumes (LOSES DATA)
-docker compose -f config/docker-compose.yaml --env-file config/.env down -v
-```
-
-## Development Structure
-
-### Environment Variables
-
-The `config/.env.example` file contains all necessary variables. Copy it to `config/.env` and configure:
+Create a `.env` file inside the `config/` directory and define all variables based on `.env.example`:
 
 ```bash
 cp config/.env.example config/.env
 ```
 
-Main variables you should configure:
-- `INTRA_42_CLIENT_ID` - 42 OAuth Client ID
-- `INTRA_42_CLIENT_SECRET` - 42 OAuth Client Secret  
-- `JWT_SECRET` - Secret key for JWT (minimum 32 characters)
-- `JWT_REFRESH_SECRET` - Key for refresh tokens
-- `POSTGRES_PASSWORD` - PostgreSQL password
-- `REDIS_PASSWORD` - Redis password
-
-### Hot Reload
-
-All services are configured with **hot reload** in development mode:
-- Backend: Nodemon detects changes in `.ts` and restarts automatically
-- Frontend: Vite HMR (Hot Module Replacement)
-
-## Tests
-
-```bash
-# Run backend tests
-make test-backend
-
-# Run frontend tests
-make test-frontend
-
-# Run all tests
-make test-all
-
-# Run tests with coverage
-make test-coverage
-```
-
-### Health Checks
-
-The backend has a health check endpoint:
-
-- Backend: http://localhost:3001/health
-- Frontend: http://localhost:3000
-
-Use the verification script:
-```bash
-make health
-# or
-./scripts/health-check.sh
-```
-
-### Logs
-
-```bash
-# View logs of all services
-make logs
-
-# View last 100 lines of logs
-docker compose -f config/docker-compose.yaml --env-file config/.env logs --tail=100
-
-# View logs of specific services
-make logs-backend    # Backend
-make logs-frontend   # Frontend
-make logs-db         # PostgreSQL
-make logs-redis      # Redis
-
-# View logs of specific services
-docker compose -f config/docker-compose.yaml --env-file config/.env logs -f backend frontend
-```
-
-## Troubleshooting
-
-### Container won't start
-
-```bash
-# View logs of problematic container
-docker compose -f config/docker-compose.yaml --env-file config/.env logs [service-name]
-
-# Forced rebuild
-docker compose -f config/docker-compose.yaml --env-file config/.env build --no-cache [service-name]
-docker compose -f config/docker-compose.yaml --env-file config/.env up -d [service-name]
-```
-
-### Port already in use
-
-```bash
-# Check what is using the port
-lsof -i :3000  # or the problematic port
-```
-
-### Database problems
-
-```bash
-# Complete database reset (LOSES DATA)
-make reset-db
-
-# Only run migrations again
-make migrate
-# or
-./scripts/migrate.sh
-
-# Open Prisma Studio to visualize data
-make prisma-studio
-
-# Access PostgreSQL shell
-make db-shell
-
-# Complete database reset (LOSES DATA)
-docker compose -f config/docker-compose.yaml --env-file config/.env down -v
-./scripts/setup.sh
-
-# Only run migrations again
-./scripts/migrate.sh
-```
-
-## Security
-
-- Never commit the `config/.env` file (already in `.gitignore`)
-- Change all default passwords in production
-- Use HTTPS in production (nginx configuration included)
-- Review and update dependencies regularly
-- Redis and PostgreSQL with strong passwords
-- Rate limiting configured to protect against abuse
-
-## Useful Commands (Summary)
-
-```bash
-# Start project
-make setup          # First time (complete setup)
-make up             # Start services
-make dev            # Development mode with logs
-
-# Development
-make logs-backend   # View backend logs
-make shell-backend  # Access backend shell
-make test-backend   # Run tests
-make prisma-studio  # GUI to visualize database
-
-# Maintenance
-make health         # Check service health
-make restart        # Restart everything
-make clean          # Clean everything
-
-# Information
-make help           # View all commands
-make info           # View service URLs
-```
-
-## Important URLs
-
-| Service | URL | Description |
-|---------|-----|-----------|
-| **Frontend** | http://localhost:3000 | User interface |
-| **Backend API** | http://localhost:3001 | REST API |
-| **Health Check** | http://localhost:3001/health | Backend status |
-| **PostgreSQL** | localhost:5432 | Database |
-| **Redis** | localhost:6379 | Cache and sessions |
+Then edit the file and replace all placeholder values with your desired configuration.
 
 ---
 
+### Option 2: Automatic Setup (Recommended)
+
+The `.env` file can be automatically generated during the initial project setup process.
+
+If no `.env` file exists, it will be created from `.env.example`.
+
+---
+
+You can review or modify the environment variables at any time:
+
+```bash
+config/.env
+```
+
+---
+
+## Running the Project
+
+To perform the initial setup and start all services:
+
+```bash
+make setup
+```
+
+This command will:
+
+* Generate a `.env` file if it does not exist
+* Prepare the environment
+* Build all services
+* Start the containers
+
+---
+
+To start the project:
+
+```bash
+make up
+```
+
+To stop all services:
+
+```bash
+make down
+```
+
+---
+
+## Development Workflow
+
+The Makefile provides commands to simplify development and debugging.
+
+### General Commands
+
+```bash
+make help
+make ps
+make logs
+make health
+```
+
+---
+
+### Development Mode
+
+```bash
+make dev
+```
+
+Runs the project with visible logs for easier debugging.
+
+---
+
+### Logs per Service
+
+```bash
+make logs-backend
+make logs-frontend
+make logs-db
+make logs-redis
+```
+
+---
+
+### Database Management
+
+```bash
+make db-shell
+make migrate
+make prisma-migrate
+make prisma-generate
+make prisma-studio
+```
+
+---
+
+### Testing
+
+```bash
+make test-all
+make test-backend
+make test-frontend
+make test-coverage
+```
+
+---
+
+### Maintenance & Reset
+
+```bash
+make restart
+make rebuild
+make clean
+```
+
+⚠️ Destructive commands:
+
+```bash
+make reset-db
+make reset-all
+```
+
+---
+
+## Project Structure (Overview)
+
+```bash
+backend/
+frontend/
+config/
+scripts/
+Makefile
+```
+
+* **config/docker-compose.yaml** → Defines all services
+* **scripts/** → Helper scripts used by the Makefile
+
+---
+
+## Notes
+
+* The project is designed to run with a **single command** (`make setup`) as required by the subject.
+* All services run inside Docker containers.
+* The Makefile abstracts Docker commands to provide a simpler and consistent workflow.
+
+---
+
+## Future Extensions
+
+This section is designed to be incrementally updated as new features are added, such as:
+
+* New services
+* Additional environment variables
+* New Makefile commands
+* Deployment instructions
+
+
+
+
+
+# Resources
+
+In this section, you have access to the main resources that helped us develop this project:
+
+## Example
+
+- [Module ngx_http_autoindex_module](https://nginx.org/en/docs/http/ngx_http_autoindex_module.html) — nginx\.org
+    **Directives**: *autoindex*
+
+- [Module ngx_http_index_module](https://nginx.org/en/docs/http/ngx_http_index_module.html) — nginx\.org
+
+  ### AI Usage
+  - Helped identify relevant directives from the nginx documentation needed to fulfill the project requirements
+  - Used to validate the addition of new directives allowing users to define resource limits or rely on default values, helping mitigate or reduce the impact of slowloris-style DDoS attacks
+
+## Frontend
+
+## Backend
+
+## Database
+
+
+
+
+
 # Team Information
 
-#### *efinda* - Project Manager & Frontend Developer
-  - **Project Management:**
-    - Facilitate sprint planning and retrospective sessions.
-    - Monitor project timeline and milestone completion.
-    - Coordinate team communication and remove obstacles.
-    - Identify and mitigate potential project risks.
-  - **Frontend Development:**
-    - Build user interfaces with React.
-    - Create responsive, mobile-friendly layouts.
-    - Develop reusable UI components.
+This section outlines the roles and core responsibilities of each team member within the project.
 
-#### *dnzita* - Product Owner & Developer
-  - **Product Ownership:**
-    - Manage and prioritize the feature backlog.
-    - Define what gets built and in what order.
-    - Review and approve completed deliverables.
-    - Serve as primary contact during evaluations.
-  - **Development:**
-    - Connect frontend and backend systems.
-    - Build gamification features and UI.
+---
 
-#### *cgama* - Technical Lead & Developer
-  - **Technical Leadership:**
-    - Design the overall system architecture.
-    - Select frameworks, libraries, and tools.
-    - Establish coding standards and practices.
-    - Conduct critical code quality reviews.
-  - **Development:**
-    - Build technically challenging features.
-    - Handle complex system integrations.
-    - Set up deployment infrastructure.
+## *efinda* — Project Manager & Frontend Developer
 
-#### *jbofengo* - Pure Backend Developer
-  - **Backend Development:**
-    - Develop server-side features and APIs.
-    - Review teammates' code for quality.
-    - Test backend implementations thoroughly.
-    - Maintain clear technical documentation.
+* Oversees project planning, coordination, and progress tracking
+* Ensures team communication and alignment
+* Contributes to frontend development and user interface implementation
+
+---
+
+## *dnzita* — Product Owner & Developer
+
+* Defines product vision and feature priorities
+* Manages and validates the project backlog
+* Contributes to both frontend and backend development
+
+---
+
+## *cgama* — Technical Lead & Backend Developer
+
+* Designs system architecture and technical decisions
+* Defines development standards and best practices
+* Leads backend development and infrastructure setup
+
+---
+
+## *jbofengo* — Backend Developer
+
+* Implements backend features and APIs
+* Ensures code quality and reliability on the server side
+* Supports testing and backend maintenance
+
+---
+
 
 
 
 
 # Project Management
 
-### How We Organize Our Work
+## How We Organize Our Work
 
 We follow the **Agile Kanban methodology** to manage our workflow efficiently. Our process works like this:
 
@@ -364,7 +334,7 @@ At the project's start, we break down all required work into small, manageable t
 
 This cadence keeps everyone accountable and ensures continuous progress without overwhelming any single team member.
 
-### Project Management Tools
+## Project Management Tools
 
 We use **Trello** as our Kanban board platform. The board is shared among all team members, providing complete visibility into the project's state.
 
@@ -377,18 +347,18 @@ Our Trello board structure:
 
 Team members move their assigned cards across columns as they progress, giving everyone real-time visibility into what's being worked on, what's blocked, and what's completed.
 
-### Communication Channels
+## Communication Channels
 
 We use a **two-channel communication strategy** to balance urgency and organization:
 
-#### **WhatsApp Group - Quick Communication**
+### **WhatsApp Group - Quick Communication**
 Used for time-sensitive messages and urgent coordination. Since most team members check WhatsApp frequently throughout the day, it's our go-to for:
 - Urgent blockers or issues
 - Last-minute meeting changes
 - Quick yes/no questions
 - General team coordination
 
-#### **Slack Workspace - Structured Work Discussion**
+### **Slack Workspace - Structured Work Discussion**
 Our primary platform for organized, topic-specific communication. The workspace is divided into focused channels:
 
 - **#avisos** - Team-wide announcements and important updates
@@ -403,118 +373,101 @@ This dual-channel approach ensures we never miss urgent issues (WhatsApp) while 
 
 
 
+
+
 # Technical Stack
 
-The technology stack was carefully selected to maximize the productivity of the 4-person team, minimize the learning curve, and ensure agile development within the 4-month deadline.
+The technology stack was selected to ensure efficient development within a 4-person team, while meeting all subject requirements and supporting a scalable, real-time, multi-user application.
 
-## Core Technologies
+---
 
-| Component | Chosen Technology | Technical Justification for Our Case | Estimated Time to Learn Basics (for Beginners) |
-|------------|---------------------|------------------------------------------|--------------------------------------------------------|
-| **Main Language** | JavaScript (with optional TypeScript) | Everything in the same language avoids learning multiple syntaxes, facilitating collaboration in a team of 4. Integrates frontend/backend effortlessly, supports multi-user and real-time natively. Aligns with the subject (e.g.: React/Express as valid frameworks). Simple for Docker deployment. | 1-2 weeks (if zero JS; if basic, 2-3 days). Focus on variables, functions and async for Node. |
-| **Frontend Framework** | React with Vite | React is listed as framework in document (architectural ecosystem), Vite is fast starter (build in seconds vs. hours in others). Easy integration with Socket.IO for real-time (chat/games) and Tailwind for responsive. Earns points in "frontend framework" (1-2 pts). For 4 months, avoids Angular/Vue overhead. | 2-4 weeks (fundamentals: components, state, hooks). 1-2 hour courses accelerate, but practice takes time. |
-| **Styling/CSS Solution** | Tailwind CSS | Styling solution recommended in subject (fast for responsive/accessible on devices). Integrates directly into React (inline classes), no separate CSS, saving time in small team. Supports custom design system (minor module, 1 pt). | 1-2 days (basic utility classes). Mental shift from traditional CSS takes 24 hours, but 90 min tutorials suffice. |
-| **Backend Framework** | Node.js with Express | Express is listed backend framework, lightweight and minimalist for secure APIs (rate limiting, GET/POST endpoints etc. for public API, 2 pts). Integrates with Socket.IO for real-time and Prisma for DB. For multi-user, handles concurrency without crashes. Simple for 4 months vs. NestJS (more complex). | Node: 1-3 weeks (runtime basics). Express: 3-5 days (routes, middleware). If they know JS, 1 day. |
-| **Real-Time/Communication** | Socket.IO | Technology similar to WebSockets listed for real-time features (2 pts) and user interaction (chat, 2 pts). Integrates in 1 line in Express and React, handling disconnections/broadcasts for multiplayer games. Essential for multi-user without polling. | 1-2 hours (basic events: emit/on). 30-80 min courses cover everything. |
-| **Database** | PostgreSQL | Relational DB with clear schema/relations (mandatory). Supports multi-user without race conditions, integrates with Prisma for validations. Robust for game stats/user data. Free and scalable for 4 months. | 2-4 weeks (basic queries: SELECT, JOIN). If they know SQL, 1 week. |
-| **ORM (Object-Relational Mapping)** | Prisma | Simple ORM minor (1 pt), with auto migrations and type-safety. Integrates with Node/Express in minutes, validates backend inputs (mandatory). Avoids raw SQL for beginner team, facilitating user management. | 1-2 hours (schema, queries). 60 min courses for basics. |
-| **Authentication** | JWT with bcrypt | JWT for secure sessions (standard user management, 2 pts; OAuth minor if added). Bcrypt for hashing passwords (salted, mandatory). Integrates with Express in simple middleware, supports future 2FA. Secure for multi-user. | JWT: 15-30 min (generate/validate tokens). Bcrypt: 30 min-1 hour (hash/compare). 4-15 min tutorials. |
-| **Containerization/Deployment** | Docker with Docker Compose | Mandatory solution to run single-command. Compose manages multi-containers (frontend/backend/DB) easily, integrates Nginx for HTTPS. For 4 months, avoids manual setups on different machines. | Docker: 1-2 days (images, containers). Compose: 1 day (basic YAML). 15-45 min tutorials + practice. |
-| **Reverse Proxy/HTTPS** | Nginx | For HTTPS everywhere (mandatory). Integrates as container in Compose, proxy to Express. Simple config for multi-user/performance. Avoids complex certs. | 1-2 days (basic config: server blocks). 1 hour courses for beginners. |
+## Frontend
 
-## Development Tools
+* **Framework:** React (with Vite)
+* **Styling:** Tailwind CSS
 
-- **Version Control:** Git + GitHub
-- **Project Management:** Trello (Kanban Board)
-- **Communication:** Slack + WhatsApp
-- **IDE:** VS Code (recommended)
-- **Testing:** Jest (backend), React Testing Library (frontend)
-- **Linting:** ESLint + Prettier
-- **CI/CD:** GitHub Actions (optional)
+React provides a component-based architecture suitable for building dynamic user interfaces, while Vite ensures fast development and build performance. Tailwind CSS enables rapid UI development with a consistent and maintainable design system.
 
-## Main Dependencies
+---
 
-### Backend Services
-```json
-{
-  "express": "^4.18.2",
-  "socket.io": "^4.6.1",
-  "prisma": "^5.7.0",
-  "@prisma/client": "^5.7.0",
-  "jsonwebtoken": "^9.0.2",
-  "bcrypt": "^5.1.1",
-  "passport": "^0.6.0",
-  "passport-oauth2": "^1.7.0",
-  "redis": "^4.6.10",
-  "cors": "^2.8.5",
-  "helmet": "^7.1.0",
-  "express-rate-limit": "^7.1.5"
-}
-```
+## Backend
 
-### Frontend
-```json
-{
-  "react": "^18.2.0",
-  "react-dom": "^18.2.0",
-  "vite": "^5.0.0",
-  "tailwindcss": "^3.3.0",
-  "socket.io-client": "^4.6.1",
-  "react-router-dom": "^6.20.0",
-  "axios": "^1.6.2"
-}
-```
+* **Runtime & Framework:** Node.js with Express
 
-## Architectural Decisions
+Express is a lightweight and flexible backend framework used to build RESTful APIs. It integrates easily with real-time communication layers and middleware for authentication, security, and request handling.
 
-### Why Monolith (instead of Microservices)?
-- **Simplicity:** Easier to develop and debug for a team of 4 people
-- **Performance:** Less communication overhead between services
-- **Rapid Development:** Faster deploy and iteration
-- **Less Complexity:** Only 1 backend codebase to manage
-- **Facilitates Collaboration:** Team can work on the same repository without integration conflicts
+---
 
-### Why TypeScript (Optional)?
-- **Type Safety:** Reduces bugs in production
-- **IntelliSense:** Better development experience
-- **Living Documentation:** Types serve as documentation
-- **Safe Refactoring:** Large changes with confidence
+## Database
 
-### Why Prisma ORM?
-- **Type-Safe Queries:** Native TypeScript
-- **Automatic Migrations:** Schema versioning
-- **Declarative Schema:** Easy to understand and maintain
-- **Built-in Validation:** Reduces boilerplate code
+* **System:** PostgreSQL
 
-## Compatibility Matrix
+PostgreSQL was chosen for its reliability, strong consistency, and support for relational data models. It is well-suited for multi-user environments and complex queries, ensuring data integrity across the application.
 
-| Subject Requirement | Technology Used | Status |
-|----------------------|---------------------|--------|
-| Frontend Framework | React + Vite | Yes |
-| Backend Framework | Express (Node.js) | Yes |
-| Database | PostgreSQL | Yes |
-| Real-time Features | Socket.IO | Yes |
-| User Management | JWT + bcrypt + Passport | Yes |
-| Standard Security | Helmet + CORS + Rate Limiting | Yes |
-| Docker Deployment | Docker Compose | Yes |
-| HTTPS | Nginx Reverse Proxy | Yes |
-| Multi-user Support | PostgreSQL + Redis Sessions | Yes |
-| Monolithic Architecture | Unified Express | Yes |
+---
+
+## Additional Technologies
+
+* **ORM:** Prisma
+* **Real-Time Communication:** Socket.IO
+* **Authentication:** JWT + bcrypt
+* **Containerization:** Docker + Docker Compose
+* **Reverse Proxy / HTTPS:** Nginx
+
+Prisma simplifies database interaction through type-safe queries and automated migrations. Socket.IO enables real-time features such as chat and live updates. JWT and bcrypt provide secure authentication mechanisms. Docker ensures consistent environments and allows the application to run with a single command. Nginx handles HTTPS and request routing.
+
+---
+
+## Justification of Technical Choices
+
+The stack is based on a unified **TypeScript ecosystem**, allowing both frontend and backend to share the same language. This reduces context switching and improves team collaboration.
+
+A **monolithic architecture** was chosen to simplify development, deployment, and debugging within the project’s time constraints. It minimizes system complexity while maintaining sufficient flexibility for all required features.
+
+The combination of **React, Express, and PostgreSQL** provides a balanced architecture capable of handling real-time interactions, structured data, and multi-user concurrency.
+
+---
+
+## Compatibility with Subject Requirements
+
+| Requirement        | Technology Used             |
+| ------------------ | --------------------------- |
+| Frontend Framework | React + Vite                |
+| Backend Framework  | Express (Node.js)           |
+| Database           | PostgreSQL                  |
+| Real-time Features | Socket.IO                   |
+| User Management    | JWT + bcrypt                |
+| Security           | Helmet, CORS, Rate Limiting |
+| Docker Deployment  | Docker Compose              |
+| HTTPS              | Nginx                       |
+| Multi-user Support | PostgreSQL                  |
+| Architecture       | Monolithic (Express)        |
+
+
+
+
 
 # Database Schema
 
-The database uses **PostgreSQL** with **Prisma ORM** and was designed to support Kanban-style task management, workspace collaboration, notifications, chat, and gamification.
+The application uses **PostgreSQL** with **Prisma ORM**.
+The schema is designed to support task management, workspace collaboration, real-time communication, and gamification features.
 
-## Structure overview
+---
 
-- **User** represents each platform user.
-- **Workspace** groups members, columns, labels, messages, and ranking data.
-- **Column** organizes tasks inside a workspace.
-- **Task** is the central entity in the Kanban workflow.
-- Junction tables such as **WorkspaceMember**, **TaskAssignment**, **TaskLabel**, and **UserBadge** handle many-to-many relationships.
-- Supporting entities such as **Comment**, **Notification**, **Reaction**, **ActivityLog**, **UserXP**, and **LeaderboardEntry** enable collaboration and gamification features.
+## Structure Overview
 
-## Visual representation
+The database is organized around the following core concepts:
+
+* **User**: Represents each platform user
+* **Workspace**: Groups users, tasks, and collaborative data
+* **Column**: Defines task organization within a workspace (Kanban structure)
+* **Task**: Central entity representing work items
+
+Additional tables handle relationships, communication, and gamification features.
+
+---
+
+## Visual Representation
 
 ```mermaid
 erDiagram
@@ -560,73 +513,361 @@ erDiagram
     Workspace ||--o{ LeaderboardEntry : contains
 ```
 
-## Tables and relationships
+---
 
-### Identity and collaboration core
+## Tables and Relationships
 
-| Table | Purpose | Key fields | Relationships |
-|--------|---------|------------|---------------|
-| `User` | Stores application users | `id: Int`, `nickname: String`, `email: String`, `passwordHash: String`, `avatarUrl: String`, `createdAt: DateTime` | 1:N with `WorkspaceMember`, `TaskAssignment`, `Notification`, `Comment`, `Reaction`, `ChatMessage`, `ActivityLog`, `LeaderboardEntry`; 1:N with `UserBadge` and `UserXP` |
-| `Workspace` | Represents each workspace | `id: Int`, `name: String`, `description: String`, `createdAt: DateTime` | 1:N with `WorkspaceMember`, `Column`, `Notification`, `ActivityLog`, `ChatMessage`, `Label`, `LeaderboardEntry` |
-| `WorkspaceMember` | Links users to workspaces with permissions | `id: Int`, `workspaceId: Int`, `userId: Int`, `role: WorkspaceRole` | N:1 with `User`; N:1 with `Workspace` |
+### Core Entities
 
-### Kanban structure
+| Table             | Description                          | Key Fields                                             |
+| ----------------- | ------------------------------------ | ------------------------------------------------------ |
+| `User`            | Platform users                       | `id`, `nickname`, `email`, `passwordHash`, `createdAt` |
+| `Workspace`       | Collaborative workspace              | `id`, `name`, `description`, `createdAt`               |
+| `WorkspaceMember` | Links users to workspaces with roles | `id`, `workspaceId`, `userId`, `role`                  |
 
-| Table | Purpose | Key fields | Relationships |
-|--------|---------|------------|---------------|
-| `Column` | Columns in the Kanban board | `id: Int`, `workspaceId: Int`, `name: String`, `order: Int` | N:1 with `Workspace`; 1:N with `Task` |
-| `Task` | Main task entity in the system | `id: Int`, `columnId: Int`, `title: String`, `description: String`, `orderInColumn: Int` | N:1 with `Column`; 1:N with `TaskAssignment`, `ChecklistItem`, `Notification`, `Comment`, `TaskLabel` |
-| `TaskAssignment` | Assigns tasks to users | `id: Int`, `taskId: Int`, `userId: Int` | N:1 with `Task`; N:1 with `User` |
-| `ChecklistItem` | Checklist items belonging to a task | `id: Int`, `taskId: Int`, `text: String`, `isCompleted: Boolean` | N:1 with `Task` |
-| `Label` | Reusable labels within a workspace | `id: Int`, `workspaceId: Int`, `name: String`, `color: String` | N:1 with `Workspace`; 1:N with `TaskLabel` |
-| `TaskLabel` | Junction between tasks and labels | `id: Int`, `taskId: Int`, `labelId: Int` | N:1 with `Task`; N:1 with `Label` |
+---
 
-### Communication and activity
+### Task Management (Kanban)
 
-| Table | Purpose | Key fields | Relationships |
-|--------|---------|------------|---------------|
-| `Comment` | Comments attached to tasks | `id: Int`, `taskId: Int`, `authorId: Int`, `content: String` | N:1 with `Task`; N:1 with `User`; 1:N with `CommentMention` and `Reaction` |
-| `CommentMention` | Stores user mentions inside comments | `id: Int`, `commentId: Int`, `userId: Int` | N:1 with `Comment`; N:1 with `User` |
-| `Notification` | System notifications | `id: Int`, `userId: Int`, `message: String`, `type: NotificationType`, `isRead: Boolean`, `relatedTaskId: Int?`, `relatedWorkspaceId: Int?` | N:1 with `User`; optional N:1 with `Task`; optional N:1 with `Workspace` |
-| `ChatMessage` | Internal workspace chat messages | `id: Int`, `workspaceId: Int`, `senderId: Int`, `content: String` | N:1 with `Workspace`; N:1 with `User`; 1:N with `Reaction` |
-| `Reaction` | Emoji reactions on messages or comments | `id: Int`, `emoji: String`, `userId: Int`, `messageId: Int?`, `commentId: Int?` | N:1 with `User`; optional N:1 with `ChatMessage`; optional N:1 with `Comment` |
-| `ActivityLog` | History of actions within a workspace | `id: Int`, `workspaceId: Int`, `userId: Int`, `action: String` | N:1 with `Workspace`; N:1 with `User` |
+| Table            | Description                      | Key Fields                                                |
+| ---------------- | -------------------------------- | --------------------------------------------------------- |
+| `Column`         | Task grouping inside a workspace | `id`, `workspaceId`, `name`, `order`                      |
+| `Task`           | Main task entity                 | `id`, `columnId`, `title`, `description`, `orderInColumn` |
+| `TaskAssignment` | Assigns tasks to users           | `taskId`, `userId`                                        |
+| `ChecklistItem`  | Task checklist items             | `id`, `taskId`, `text`, `isCompleted`                     |
+| `Label`          | Reusable labels                  | `id`, `workspaceId`, `name`, `color`                      |
+| `TaskLabel`      | Task-label relationship          | `taskId`, `labelId`                                       |
+
+---
+
+### Communication and Activity
+
+| Table            | Description               | Key Fields                                 |
+| ---------------- | ------------------------- | ------------------------------------------ |
+| `Comment`        | Task comments             | `id`, `taskId`, `authorId`, `content`      |
+| `CommentMention` | User mentions in comments | `id`, `commentId`, `userId`                |
+| `Notification`   | System notifications      | `id`, `userId`, `type`, `isRead`           |
+| `ChatMessage`    | Workspace chat messages   | `id`, `workspaceId`, `senderId`, `content` |
+| `Reaction`       | Emoji reactions           | `id`, `emoji`, `userId`                    |
+| `ActivityLog`    | User actions history      | `id`, `workspaceId`, `userId`, `action`    |
+
+---
 
 ### Gamification
 
-| Table | Purpose | Key fields | Relationships |
-|--------|---------|------------|---------------|
-| `Badge` | Badge catalog | `id: Int`, `name: String`, `description: String`, `iconUrl: String` | 1:N with `UserBadge` |
-| `UserBadge` | Badges earned by users | `id: Int`, `userId: Int`, `badgeId: Int` | N:1 with `User`; N:1 with `Badge` |
-| `UserXP` | Experience points per user | `id: Int`, `userId: Int`, `xp: Int` | N:1 with `User` |
-| `LeaderboardEntry` | Weekly ranking by workspace | `id: Int`, `userId: Int`, `workspaceId: Int`, `xpWeek: Int`, `rank: Int`, `weekYear: String` | N:1 with `User`; N:1 with `Workspace` |
+| Table              | Description            | Key Fields                                |
+| ------------------ | ---------------------- | ----------------------------------------- |
+| `Badge`            | Badge definitions      | `id`, `name`, `description`               |
+| `UserBadge`        | Badges earned by users | `userId`, `badgeId`                       |
+| `UserXP`           | User experience points | `userId`, `xp`                            |
+| `LeaderboardEntry` | Ranking per workspace  | `userId`, `workspaceId`, `xpWeek`, `rank` |
 
-## Main data types
+---
 
-- **`Int`**: identifiers, ordering, ranking, and XP values.
-- **`String`**: names, descriptions, text content, URLs, colors, and log actions.
-- **`Boolean`**: binary states such as `isCompleted` and `isRead`.
-- **`DateTime`**: timestamp auditing with `createdAt` and `updatedAt` in almost every table.
-- **Enums**:
-  - `WorkspaceRole`: `admin`, `member`, `guest`
-  - `NotificationType`: `mention`, `taskAssignment`, `comment`, `invite`
+## Data Types
 
-## Important modeling rules
+The schema uses the following main data types:
 
-- All main entities use an auto-increment `id` as the primary key.
-- `nickname` and `email` in `User` are unique.
-- The schema favors explicit relationships to simplify Prisma queries.
-- The fields `relatedTaskId`, `relatedWorkspaceId`, `messageId`, and `commentId` are optional so notifications and reactions can support different contexts.
-- Separate junction tables help scale permissions, assignments, and gamification without data duplication.
+* **Int**: identifiers, ordering, ranking, XP values
+* **String**: names, descriptions, content, URLs
+* **Boolean**: state flags (e.g., `isCompleted`, `isRead`)
+* **DateTime**: timestamps for entity creation and updates
+
+### Enums
+
+* `WorkspaceRole`: `admin`, `member`, `guest`
+* `NotificationType`: `mention`, `taskAssignment`, `comment`, `invite`
+
+---
+
+## Modeling Rules
+
+* All entities use an auto-increment `id` as the primary key
+* `email` and `nickname` in `User` are unique
+* Many-to-many relationships are handled through junction tables
+* Optional fields are used to support flexible relationships (e.g., notifications and reactions)
+
+
+
+
 
 # Features List
+
+This section lists all implemented features of the project, along with their description and responsible team members.
+
+---
+
+## Core Features
+
+| Feature                  | Description                                                                                                | Implemented By                                         |
+| ------------------------ | ---------------------------------------------------------------------------------------------------------- | ------------------------------------------------------ |
+| **User Authentication**  | Allows users to register, log in, and securely authenticate using JWT-based sessions and password hashing. | efinda (Frontend), jbofengo (Backend)                  |
+| **User Profiles**        | Provides user profile management, including personal information and avatar customization.                 |                                                        |
+| **Workspace Management** | Enables users to create and manage collaborative workspaces.                                               |                                                        |
+| **Workspace Membership** | Allows users to join workspaces with specific roles and permissions.                                       |                                                        |
+
+---
+
+## Task Management (Kanban System)
+
+| Feature                        | Description                                                               | Implemented By |
+| ------------------------------ | ------------------------------------------------------------------------- | -------------- |
+| **Kanban Board**               | Visual task management system using columns to represent workflow stages. |                |
+| **Task Creation & Management** | Create, update, delete, and organize tasks within columns.                |                |
+| **Task Assignment**            | Assign tasks to one or multiple users.                                    |                |
+| **Task Checklist**             | Add checklist items to tasks and track their completion.                  |                |
+| **Task Labels**                | Categorize tasks using labels for better organization.                    |                |
+
+---
+
+## Communication Features
+
+| Feature             | Description                                                                       | Implemented By |
+| ------------------- | --------------------------------------------------------------------------------- | -------------- |
+| **Task Comments**   | Users can comment on tasks for discussion and collaboration.                      |                |
+| **Mentions System** | Users can mention others in comments to notify them.                              |                |
+| **Workspace Chat**  | Real-time messaging system within workspaces.                                     |                |
+| **Reactions**       | Users can react to messages and comments using emojis.                            |                |
+| **Notifications**   | System-generated notifications for relevant events (mentions, assignments, etc.). |                |
+
+---
+
+## Gamification
+
+| Feature                    | Description                                          | Implemented By |
+| -------------------------- | ---------------------------------------------------- | -------------- |
+| **Experience Points (XP)** | Users earn XP based on completed tasks and activity. |                |
+| **Badges System**          | Users earn badges for achievements and milestones.   |                |
+| **Leaderboard**            | Displays rankings of users based on activity and XP. |                |
+
+---
+
+## System & Infrastructure
+
+| Feature                    | Description                                                               | Implemented By         |
+| -------------------------- | ------------------------------------------------------------------------- | ---------------------- |
+| **Real-Time Updates**      | Synchronizes application state across users using WebSockets (Socket.IO). |                        |
+| **Dockerized Environment** | Full application runs in containers with a single command.                | cgama                  |
+| **Secure API**             | Backend secured with middleware (JWT, rate limiting, CORS, Helmet).       | jbofengo               |
+| **Database Integration**   | Persistent data storage using PostgreSQL with Prisma ORM.                 | dnzita                 |
+
+---
+
+## Notes
+
+* This section is continuously updated as new features are implemented.
+* Each feature should be updated with the responsible team member(s) once completed.
+
 
 
 
 
 # Modules
 
+This section lists all selected modules for the project, including their type, point value, implementation details, and responsible team members.
+
+---
+
+## Modules Overview
+
+| Category                   | Module                                                                                                                    | Type                | Points |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------- | ------------------- | ------ |
+| Web                        | Use a framework for both the frontend and backend                                                                         | Major               | 2      |
+|                            | Implement real-time features using WebSockets or similar technology                                                       | Major               | 2      |
+|                            | Allow users to interact with other users                                                                                  | Major               | 2      |
+|                            | A public API to interact with the database with a secured API key, rate limiting, documentation, and at least 5 endpoints | Major               | 2      |
+|                            | Use an ORM for the database                                                                                               | Minor               | 1      |
+|                            | A complete notification system for all creation, update, and deletion actions                                             | Minor               | 1      |
+|                            | Real-time collaborative features                                                                                          | Minor               | 1      |
+|                            | Custom-made design system with reusable components, including a proper color palette, typography, and icons               | Minor               | 1      |
+| User Management            | Implement remote authentication with OAuth 2.0                                                                            | Minor               | 1      |
+|                            | Advanced permissions system                                                                                               | Major               | 2      |
+|                            | An organization system                                                                                                    | Major               | 2      |
+| Gaming and user experience | A gamification system to reward users for their actions                                                                   | Minor               | 1      |
+| Data and Analytics         | Advanced analytics dashboard with data visualization                                                                      | Major               | 2      |
+| **Total**                  | 19                                                                                                                        | 7 Maj. / 6 Min.     | 20     |
+
+---
+
+## Module Details
+
+### Use a framework for both the frontend and backend
+
+* **Justification:**
+  Using frameworks for both frontend and backend accelerates development by providing structured architectures, reusable components, and built-in solutions for common problems. This allows the team to focus on implementing features rather than low-level setup.
+
+* **Implementation:**
+  The project uses:
+
+  * **React (with Vite)** for the frontend, implementing a component-based architecture to build dynamic user interfaces
+  * **Express (Node.js)** for the backend, providing a structured API with routing, middleware, and request handling
+
+  The frontend communicates with the backend through HTTP APIs and real-time communication (Socket.IO), forming a complete client-server architecture.
+
+* **Team:**
+
+  * Frontend (React): efinda, dnzita
+  * Backend (Express): cgama, jbofengo
+
+---
+
+### Use an ORM for the database
+
+* **Justification:**
+  Using an ORM simplifies database interaction by abstracting raw SQL queries into a structured and type-safe API. This reduces the risk of errors, improves code maintainability, and allows faster development, especially in a team environment.
+
+* **Implementation:**
+  The project uses **Prisma ORM** to define the database schema and handle all database operations.
+
+  * The schema is declared using Prisma’s declarative syntax
+  * Migrations are managed through Prisma to keep the database structure consistent
+  * All database queries (CRUD operations) are performed through Prisma Client, ensuring type safety and validation
+
+* **Team:** dnzita
+
+---
+
+## Notes
+
+* Each module is updated as implementation progresses.
+
+
 
 
 
 # Individual Contributions
+
+This section provides a detailed breakdown of each team member’s contributions throughout the project, including implemented features, modules, and challenges encountered.
+
+---
+
+## efinda (Project Manager / Frontend Developer)
+
+### Contributions
+
+* Defined and presented the initial project idea
+* Led project organization and coordination:
+
+  * Created communication channels (WhatsApp, Slack workspace with structured channels and rules)
+  * Set up project management tools (Trello Kanban board for planning and tracking progress)
+  * Organized and led team meetings
+* Defined development workflow:
+
+  * Created commit message guidelines
+  * Established code-review rules
+  * Reviewed, validated, and merged code after approval
+* Frontend development:
+
+  * Implemented authentication interfaces
+  * Developed user profile and social pages
+* Documentation:
+
+  * Structured and wrote the project README.md
+  * Ensured documentation consistency and alignment with subject requirements
+
+### Implemented Features / Modules
+
+* User Authentication (Frontend)
+* User Profiles
+* Social / User Interaction Pages
+
+---
+
+### Challenges & Solutions
+
+* **Challenge:** Coordinating a team workflow and maintaining consistency across contributions
+* **Solution:** Defined clear guidelines (commit rules, code review process) and structured communication channels to ensure alignment
+* **Challenge:** Maintaining clear and structured documentation throughout the project
+* **Solution:** Designed an incremental README structure that is updated alongside development progress
+
+---
+
+## dnzita (Project Owner / Developer)
+
+### Contributions
+
+* Designed and conducted a user research form to gather requirements from students
+* Analyzed form results and contributed to module selection
+* Backend and frontend feature development:
+
+  * Implemented notifications system
+  * Developed workspace-related pages
+* Designed the database schema using Prisma
+
+### Implemented Features / Modules
+
+* Notifications System
+* Workspace Management
+* Database Schema Design
+
+---
+
+### Challenges & Solutions
+
+* **Challenge:** Translating user needs into concrete features and modules
+* **Solution:** Structured feedback collection through forms and mapped results to actionable module decisions
+
+---
+
+## cgama (Technical Leader / Backend Developer)
+
+### Contributions
+
+* Designed the overall technical architecture of the project
+* Selected the technology stack
+* Set up the entire development environment:
+
+  * Defined project structure
+  * Created Dockerfiles and Docker Compose configuration
+  * Implemented Makefile and automation scripts
+* Established infrastructure for scalable and consistent development
+
+### Implemented Features / Modules
+
+* Project Infrastructure (Docker, Makefile, Scripts)
+* System Architecture Design
+* Technical Stack Definition
+
+---
+
+### Challenges & Solutions
+
+* **Challenge:** Creating a development environment that is consistent across all team members
+* **Solution:** Containerized the entire application using Docker and centralized commands through the Makefile
+
+---
+
+## jbofengo (Backend Developer)
+
+### Contributions
+
+* Implemented backend authentication logic
+* Developed secure API endpoints for user authentication
+
+### Implemented Features / Modules
+
+* User Authentication (Backend)
+
+---
+
+### Challenges & Solutions
+
+* **Challenge:** Ensuring secure authentication and proper handling of user credentials
+* **Solution:** Implemented JWT-based authentication with password hashing using bcrypt
+
+---
+
+## Team Collaboration
+
+### Contributions
+
+* All team members participated in code reviews
+* Collaboratively validated implementations before merging into the main codebase
+
+---
+
+## Notes
+
+* This section is updated continuously as the project progresses.
+* Each team member is responsible for keeping their contributions accurate and up to date.
+* Contributions should reflect **actual implemented work**, not planned tasks.
