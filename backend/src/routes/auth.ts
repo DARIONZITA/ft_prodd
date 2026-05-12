@@ -4,10 +4,11 @@ import { hashPassword, comparePassword } from '../utils/password';
 import { generateToken } from '../utils/jwt';
 import { signupSchema, signinSchema } from '../validations/auth';
 import { ApiError } from '../utils/ApiError';
+import { oauthRouter } from './oauth/oauth.router';
 
-const	router = Router( );
+const	authRouter = Router( );
 
-router.post( '/signup', async ( req, res, next ) => {
+authRouter.post( '/signup', async ( req, res, next ) => {
 	console.log("Entrou em /signup");
 	const	result = signupSchema.safeParse(req.body);
 
@@ -40,7 +41,7 @@ router.post( '/signup', async ( req, res, next ) => {
 	}
 });
 
-router.post('/signin', async ( req, res, next: any ) => {
+authRouter.post('/signin', async ( req, res, next: any ) => {
 	console.log("Entrou em /signin");
 	const	result = signinSchema.safeParse( req.body );
 
@@ -77,4 +78,6 @@ router.post('/signin', async ( req, res, next: any ) => {
 	}
 });
 
-export default	router;
+authRouter.use( '/42', oauthRouter ); // Rota para OAuth 42
+
+export default	authRouter;

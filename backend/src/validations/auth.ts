@@ -115,6 +115,8 @@ export const	TokenResponseSchema = z.object(
 	access_token: z.string("Missing access_token in response from 42 API"),
 });
 
+export type	IntraUser = z.infer<typeof IntraUserSchema>;
+
 /*
 export type	RegisterInput = z.infer<typeof registerSchema>;
 export type	LoginInput = z.infer<typeof loginSchema>;
