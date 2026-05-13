@@ -5,7 +5,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import { PrismaClient } from '@prisma/client';
-import authRoutes from './routes/auth';
+import authRoutes from './routes/auth.router';
 import { errorHandler } from './middleware/errorHandler';
 
 export const	prisma = new PrismaClient( { datasources: { db: { url: env.DATABASE_URL }, } } );

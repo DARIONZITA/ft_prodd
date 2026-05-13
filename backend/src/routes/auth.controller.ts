@@ -1,16 +1,14 @@
-import { Router } from 'express';
 import { prisma } from '../index';
+import type { Request, Response, NextFunction } from 'express';
 import { hashPassword, comparePassword } from '../utils/password';
 import { generateToken } from '../utils/jwt';
 import { signupSchema, signinSchema } from '../validations/auth';
 import { ApiError } from '../utils/ApiError';
-import { oauthRouter } from './oauth/oauth.router';
 
-const	authRouter = Router( );
-
-authRouter.post( '/signup', async ( req, res, next ) => {
+export async function  signupController( req : Request, res : Response, next : NextFunction ) : Promise<void>
+{
 	console.log("Entrou em /signup");
-	const	result = signupSchema.safeParse(req.body);
+	const   result = signupSchema.safeParse(req.body);
 
 	if (!result.success)
 		return (next(new ApiError( 400, result.error.issues[0].message )));
@@ -39,9 +37,10 @@ authRouter.post( '/signup', async ( req, res, next ) => {
 		console.log("FALHOU AO TENTAR REGISTAR!!!");
 		next( err );
 	}
-});
+}
 
-authRouter.post('/signin', async ( req, res, next: any ) => {
+export async function   signinController( req : Request, res : Response, next : NextFunction ) : Promise<void>
+{
 	console.log("Entrou em /signin");
 	const	result = signinSchema.safeParse( req.body );
 
@@ -55,7 +54,7 @@ authRouter.post('/signin', async ( req, res, next: any ) => {
 		const	user = await prisma.user.findFirst(
 		{
 			where: { OR: [ { email: identifier }, { nickname: identifier } ] },
-			select: { id: true, nickname: true, email: true, passwordHash: true, avatarUrl: true }
+			select: { id: true, nickname: true, email: true, passwordHash: true, avatarUrl: true, fortyTwoId: true }
 		});
 
 		if (!user)
@@ -76,8 +75,4 @@ authRouter.post('/signin', async ( req, res, next: any ) => {
 		console.log("FALHOU AO TENTAR SIGNIN!!!");
 		next( err );
 	}
-});
-
-authRouter.use( '/42', oauthRouter ); // Rota para OAuth 42
-
-export default	authRouter;
+}

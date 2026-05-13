@@ -3,7 +3,7 @@ import { prisma } from '../../index';
 import { generateToken } from '../../utils/jwt';
 import { env } from '../../config/env';
 import { TokenResponseSchema, IntraUserSchema, IntraUser } from '../../validations/auth';
-import { OauthCallbackResult } from './oauth.types';
+import { OauthCallbackResult } from '../../types/auth.types';
 /**
  * Passo crítico do OAuth: troca o code (que vem no callback URL)
  * pelo access_token real. Isto acontece server-side — o client_secret
