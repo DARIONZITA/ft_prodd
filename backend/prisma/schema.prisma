@@ -30,6 +30,7 @@ enum FriendRequestStatus {
 model User {
     id        Int      @id @default(autoincrement())
     nickname      String   @unique
+    bio       String   @default("")
     email     String   @unique
     passwordHash String
     avatarUrl String
