@@ -3,6 +3,7 @@ import { z } from 'zod';
 const positiveId = z.coerce.number().int().positive();
 const workspaceName = z.string().min(1).max(255);
 const workspaceDescription = z.string().max(1000).optional();
+const workspaceDescriptionRequired = z.string().min(1).max(1000);
 
 // Params validations
 export const workspaceIdParamsSchema = z.object({
@@ -17,7 +18,7 @@ export const workspaceMemberParamsSchema = z.object({
 // Body validations
 export const createWorkspaceSchema = z.object({
 	name: workspaceName,
-	description: workspaceDescription
+	description: workspaceDescriptionRequired
 });
 
 export const updateWorkspaceSchema = z.object({

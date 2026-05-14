@@ -18,14 +18,21 @@ jest.mock('../lib/prisma', () => ({
 			findFirst: jest.fn(),
 			update: jest.fn(),
 			delete: jest.fn(),
-			count: jest.fn()
+			count: jest.fn(),
+			create: jest.fn()
 		},
 		workspace: {
 			findUnique: jest.fn(),
-			update: jest.fn()
+			update: jest.fn(),
+			create: jest.fn(),
+			delete: jest.fn()
+		},
+		user: {
+			findUnique: jest.fn()
 		},
 		activityLog: {
-			create: jest.fn()
+			create: jest.fn(),
+			deleteMany: jest.fn()
 		},
 		$transaction: jest.fn()
 	}
@@ -42,19 +49,35 @@ describe('Workspace routes - Advanced Permissions System', () => {
 	beforeEach(() => {
 		jest.clearAllMocks();
 
-		prismaMock.$transaction.mockImplementation(async (callback: any) => callback({
-			workspaceMember: {
-				update: prismaMock.workspaceMember.update,
-				delete: prismaMock.workspaceMember.delete,
-				count: prismaMock.workspaceMember.count
-			},
-			workspace: {
-				update: prismaMock.workspace.update
-			},
-			activityLog: {
-				create: prismaMock.activityLog.create
+		// Set up default transaction mock implementation
+		prismaMock.$transaction.mockImplementation(async (callback: any) => {
+			if (typeof callback === 'function') {
+				return await callback({
+					workspaceMember: {
+						findMany: prismaMock.workspaceMember.findMany,
+						findFirst: prismaMock.workspaceMember.findFirst,
+						update: prismaMock.workspaceMember.update,
+						delete: prismaMock.workspaceMember.delete,
+						count: prismaMock.workspaceMember.count,
+						create: prismaMock.workspaceMember.create
+					},
+					workspace: {
+						findUnique: prismaMock.workspace.findUnique,
+						update: prismaMock.workspace.update,
+						create: prismaMock.workspace.create,
+						delete: prismaMock.workspace.delete
+					},
+					user: {
+						findUnique: prismaMock.user.findUnique
+					},
+					activityLog: {
+						create: prismaMock.activityLog.create,
+						deleteMany: prismaMock.activityLog.deleteMany
+					}
+				});
 			}
-		}));
+			return null;
+		});
 	});
 
 	it('GET /api/workspaces returns workspaces where user is a member', async () => {
@@ -108,7 +131,7 @@ describe('Workspace routes - Advanced Permissions System', () => {
 			.send({ role: 'guest' });
 
 		expect(response.status).toBe(403);
-		expect(response.body.message).toContain('Apenas admins');
+		expect(response.body.message).toContain('Only admins');
 	});
 
 	it('PUT /api/workspaces/:id/members/:userId updates role with transaction when admin', async () => {
@@ -153,7 +176,7 @@ describe('Workspace routes - Advanced Permissions System', () => {
 			.set('x-user-id', '5');
 
 		expect(response.status).toBe(400);
-		expect(response.body.message).toContain('ultimo admin');
+		expect(response.body.message).toContain('last admin');
 	});
 
 	// NEW ENDPOINTS TESTS
@@ -355,7 +378,7 @@ describe('Workspace routes - Advanced Permissions System', () => {
 				.mockResolvedValueOnce({ role: 'admin' }) // Check requester is admin
 				.mockResolvedValueOnce(null); // Check user not already member
 
-			prismaMock.user.findUnique = jest.fn().mockResolvedValueOnce({
+			prismaMock.user.findUnique.mockResolvedValueOnce({
 				id: 7,
 				nickname: 'newuser',
 				email: 'new@example.com'
@@ -413,7 +436,7 @@ describe('Workspace routes - Advanced Permissions System', () => {
 				.mockResolvedValueOnce({ role: 'admin' })
 				.mockResolvedValueOnce(null);
 
-			prismaMock.user = { findUnique: jest.fn().mockResolvedValueOnce(null) };
+			prismaMock.user.findUnique.mockResolvedValueOnce(null);
 
 			const response = await request(app)
 				.post('/api/workspaces/1/members')
@@ -448,7 +471,7 @@ describe('Workspace routes - Advanced Permissions System', () => {
 				.mockResolvedValueOnce({ role: 'admin' })
 				.mockResolvedValueOnce(null);
 
-			prismaMock.user.findUnique = jest.fn().mockResolvedValueOnce({
+			prismaMock.user.findUnique.mockResolvedValueOnce({
 				id: 7,
 				nickname: 'newuser',
 				email: 'new@example.com'
@@ -483,8 +506,13 @@ describe('Workspace routes - Advanced Permissions System', () => {
 
 	describe('Transaction Safety', () => {
 		it('should ensure workspace creation is atomic', async () => {
-			const transactionCallback = jest.fn();
-			prismaMock.$transaction.mockImplementationOnce(transactionCallback);
+			const newWorkspace = {
+				id: 5,
+				name: 'Test Workspace',
+				description: 'Test'
+			};
+
+			prismaMock.$transaction.mockResolvedValueOnce(newWorkspace);
 
 			await request(app)
 				.post('/api/workspaces')
@@ -493,7 +521,7 @@ describe('Workspace routes - Advanced Permissions System', () => {
 					name: 'Test Workspace'
 				});
 
-			expect(transactionCallback).toHaveBeenCalled();
+			expect(prismaMock.$transaction).toHaveBeenCalled();
 		});
 
 		it('should ensure member addition is atomic', async () => {
@@ -501,10 +529,14 @@ describe('Workspace routes - Advanced Permissions System', () => {
 				.mockResolvedValueOnce({ role: 'admin' })
 				.mockResolvedValueOnce(null);
 
-			prismaMock.user = { findUnique: jest.fn().mockResolvedValueOnce({ id: 7 }) };
+			prismaMock.user.findUnique.mockResolvedValueOnce({ id: 7 });
 
-			const transactionCallback = jest.fn();
-			prismaMock.$transaction.mockImplementationOnce(transactionCallback);
+			prismaMock.$transaction.mockResolvedValueOnce({
+				id: 2,
+				workspaceId: 1,
+				userId: 7,
+				role: 'member'
+			});
 
 			await request(app)
 				.post('/api/workspaces/1/members')
@@ -514,7 +546,7 @@ describe('Workspace routes - Advanced Permissions System', () => {
 					role: 'member'
 				});
 
-			expect(transactionCallback).toHaveBeenCalled();
+			expect(prismaMock.$transaction).toHaveBeenCalled();
 		});
 
 		it('should ensure workspace deletion is atomic', async () => {
@@ -527,14 +559,13 @@ describe('Workspace routes - Advanced Permissions System', () => {
 				name: 'Test'
 			});
 
-			const transactionCallback = jest.fn();
-			prismaMock.$transaction.mockImplementationOnce(transactionCallback);
+			prismaMock.$transaction.mockResolvedValueOnce(null);
 
 			await request(app)
 				.delete('/api/workspaces/1')
 				.set('x-user-id', '5');
 
-			expect(transactionCallback).toHaveBeenCalled();
+			expect(prismaMock.$transaction).toHaveBeenCalled();
 		});
 	});
 });

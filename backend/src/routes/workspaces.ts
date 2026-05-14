@@ -76,7 +76,7 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
 			const workspace = await tx.workspace.create({
 				data: {
 					name,
-					description: description || ''
+					description
 				}
 			});
 
@@ -288,7 +288,7 @@ router.delete('/:id', async (req: Request, res: Response, next: NextFunction) =>
  * @swagger
  * /workspaces/{id}:
  *   get:
- *     summary: Get workspace details
+ *     summary: Get workspace details with members, activity logs, and task counts
  *     tags: [Workspaces]
  *     security:
  *       - BearerAuth: []
@@ -299,7 +299,7 @@ router.delete('/:id', async (req: Request, res: Response, next: NextFunction) =>
  *         schema: { type: integer }
  *     responses:
  *       200:
- *         description: Workspace details
+ *         description: Workspace details with members and activity logs
  *       404:
  *         description: Workspace not found
  *       403:
@@ -309,21 +309,64 @@ router.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
 	try {
 		const { id } = parseOrThrow(workspaceIdParamsSchema, req.params);
 		const membership = await getWorkspaceMembership(id, req.user!.id);
+
 		const workspace = await prisma.workspace.findUnique({
 			where: { id },
-			select: {
-				id: true,
-				name: true,
-				description: true,
-				createdAt: true,
-				updatedAt: true
+			include: {
+				members: {
+					include: {
+						user: {
+							select: {
+								id: true,
+								nickname: true,
+								email: true,
+								avatarUrl: true
+							}
+						}
+					},
+					orderBy: [{ role: 'asc' }, { userId: 'asc' }]
+				},
+				activityLogs: {
+					take: -4,
+					orderBy: { createdAt: 'desc' },
+					include: {
+						user: {
+							select: {
+								id: true,
+								nickname: true,
+								avatarUrl: true
+							}
+						}
+					}
+				},
+				columns: {
+					include: {
+						_count: {
+							select: { tasks: true }
+						}
+					}
+				}
 			}
 		});
 
 		if (!workspace)
 			throw new ApiError(404, 'Workspace not found');
 
-		res.json({ success: true, data: { ...workspace, role: membership.role } });
+		const totalTaskCount = workspace.columns.reduce((sum: number, col: any) => sum + col._count.tasks, 0);
+
+		const formattedData = {
+			id: workspace.id,
+			name: workspace.name,
+			description: workspace.description,
+			createdAt: workspace.createdAt,
+			updatedAt: workspace.updatedAt,
+			role: membership.role,
+			taskCount: totalTaskCount,
+			members: workspace.members,
+			activityLogs: workspace.activityLogs.reverse()
+		};
+
+		res.json({ success: true, data: formattedData });
 	} catch (err) {
 		next(err);
 	}
