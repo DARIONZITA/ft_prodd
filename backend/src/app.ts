@@ -4,6 +4,7 @@ import helmet from 'helmet';
 import morgan from 'morgan';
 import authRoutes from './routes/auth';
 import workspaceRoutes from './routes/workspaces';
+import badgeRoutes from './routes/badges';
 import { errorHandler } from './middleware/errorHandler';
 import { setupSwagger } from './swagger';
 
@@ -23,5 +24,6 @@ app.get('/api/health', (_req: Request, res: Response) => {
 
 app.use('/api/auth', authRoutes);
 app.use('/api/workspaces', workspaceRoutes);
+app.use('/api/badges', badgeRoutes);
 
 app.use(errorHandler);
