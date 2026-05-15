@@ -40,22 +40,26 @@ export async function   oauthCallback( req : Request, res : Response, next : Nex
     const   result = OauthCallbackSchema.safeParse(req.query);
 
     if (!result.success)
-        return (next( new ApiError(400, `Auth callback validation failed: ${result.error.issues[0].message}`) ));
+        return (res.redirect(`${env.FRONTEND_URL}/oauth/callback?error=Invalid%20callback%20parameters:%20${encodeURIComponent(result.error.issues[0].message)}`));
 
-    const   { code, state, error } = result.data;
+    const   data = result.data;
 
-    if (error)
-        return (next( new ApiError(400, `Authorization denied by user or OAuth error: ${error}`) ));
+    if ('error' in data)
+    {
+        const   message = `OAuth error from 42: ${data.error}` + (data.error_description ? ` - ${data.error_description}` : '');
 
-    const   codeVerifier = pkceStore.consume( state );
+        return (res.redirect(`${env.FRONTEND_URL}/oauth/callback?error=${encodeURIComponent(message)}`));
+    }
+
+    const   codeVerifier = pkceStore.consume( data.state );
 
     if (!codeVerifier)
-        return (next( new ApiError(400, 'Invalid or expired state parameter') ));
+        return (res.redirect(`${env.FRONTEND_URL}/oauth/callback?error=Invalid%20or%20expired%20state%20parameter`));
 
-    const   callbackResult = await handleOauthCallback( code, codeVerifier );
+    const   callbackResult = await handleOauthCallback( data.code, codeVerifier );
 
     if (!callbackResult.success || !callbackResult.token)
-        return (next( new ApiError( callbackResult.httpCode, callbackResult.message ) ));
+        return (res.redirect(`${env.FRONTEND_URL}/oauth/callback?error=${encodeURIComponent(callbackResult.message)}`));
 
     const   token = callbackResult.token; // assured by the service's return type
     const   redirectUrl = new URL( `${env.FRONTEND_URL}/oauth/callback` );

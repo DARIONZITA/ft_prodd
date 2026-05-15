@@ -92,12 +92,18 @@ export const	signinSchema = z.object(
 
 //---------------------------------OAuth Schemas---------------------------------------
 
-export const	OauthCallbackSchema = z.object(
-{
-	code:  z.string().min(1, 'Missing code on query received from Intra API'),
-	state: z.string().min(1, 'Missing state on query received from Intra API'),
-	error: z.string().optional(),
-});
+export const	OauthCallbackSchema = z.union(
+[
+	z.object({
+		code: z.string().min(1, 'Missing code on query received from Intra API'),
+		state: z.string().min(1, 'Missing state on query received from Intra API'),
+	}),
+
+	z.object({
+		error: z.string().min(1, 'Missing error on query received from Intra API'),
+		error_description: z.string().optional(),
+	}),
+]);
 
 export const	IntraUserSchema = z.object(
 {
