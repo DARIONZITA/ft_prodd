@@ -19,10 +19,10 @@ const options = {
 		components: {
 			securitySchemes: {
 				BearerAuth: {
-					type: 'http',
-					scheme: 'bearer',
-					bearerFormat: 'JWT',
-					description: 'JWT token in the Authorization header',
+				type: 'http',
+				scheme: 'bearer',
+				bearerFormat: 'JWT',
+				description: 'JWT token in the Authorization header',
 				},
 			},
 			schemas: {
@@ -33,6 +33,8 @@ const options = {
 						nickname: { type: 'string' },
 						email: { type: 'string' },
 						avatarUrl: { type: 'string' },
+						createdAt: { type: 'string', format: 'date-time' },
+						updatedAt: { type: 'string', format: 'date-time' },
 					},
 				},
 				Workspace: {
@@ -54,6 +56,65 @@ const options = {
 						iconUrl: { type: 'string', format: 'uri' },
 						createdAt: { type: 'string', format: 'date-time' },
 						updatedAt: { type: 'string', format: 'date-time' },
+				Pagination: {
+					type: 'object',
+					properties: {
+							skip: {
+							type: 'integer',
+							example: 0,
+						},
+							take: {
+							type: 'integer',
+							example:  42,
+						},
+							total: {
+							type: 'integer',
+							example: 150,
+						},
+					},
+				},
+				UserListResponse: {
+					type: 'object',
+					properties: {
+						success: {
+						type: 'boolean',
+						example: true,
+					},
+					data: {
+						type: 'object',
+						properties: {
+							users: {
+							type: 'array',
+							items: {
+								$ref: '#/components/schemas/User',
+								},
+							},
+							pagination: {
+									$ref: '#/components/schemas/Pagination',
+								},
+							},
+						},
+					},
+				},
+				UpdateUserProfileRequest: {
+					type: 'object',
+					properties: {
+						nickname: { type: 'string', minLength: 3, maxLength: 42 },
+						bio: { type: 'string', maxLength: 142 },
+					},
+					additionalProperties: false,
+				},
+				ErrorResponse: {
+					type: 'object',
+					properties: {
+						success: {
+							type: 'boolean',
+							example: false,
+						},
+						message: {
+							type: 'string',
+							example: 'Invalid query parameter',
+						},
 					},
 				},
 			},
