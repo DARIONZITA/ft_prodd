@@ -14,19 +14,12 @@ export default function SignInPage() {
     const [identifier, setIdentifier] = useState('')
     const [password,   setPassword]   = useState('')
     const [loading,    setLoading]    = useState(false)
-    const [oauthLoading, setOAuthLoading] = useState(false) // Added state for OAuth loading
     const [srvError,   setSrvError]   = useState<string | null>(null)
     const navigate = useNavigate()
 
-    // Added function to handle OAuth login
     const handleOAuthLogin = () => {
         setSrvError(null)
-        setOAuthLoading(true)
-        // Redireciona o browser para o backend — não é um fetch.
-        // O backend trata de tudo e redireciona de volta para /oauth/callback.
-        const base = import.meta.env.VITE_API_URL || 'http://localhost:3001'
-
-        window.location.href = `${base}/api/auth/42/login`
+        navigate('/loading?oauth=42', { replace: true })
     }
 
     const handleSubmit = async (e: React.SyntheticEvent<HTMLFormElement>) => {
@@ -76,14 +69,10 @@ export default function SignInPage() {
 
             <button
                 onClick={handleOAuthLogin}
-                disabled={oauthLoading}
-                className="w-full flex items-center justify-center gap-2.5 px-4 py-3 border border-slate-200 rounded-lg bg-white hover:bg-slate-100 disabled:bg-slate-50 disabled:cursor-not-allowed cursor-pointer font-display font-semibold text-[15px] text-slate-900 mb-5 transition-colors duration-150"
+                className="w-full flex items-center justify-center gap-2.5 px-4 py-3 border border-slate-200 rounded-lg bg-white hover:bg-slate-100 cursor-pointer font-display font-semibold text-[15px] text-slate-900 mb-5 transition-colors duration-150"
             >
-                {oauthLoading
-                    ? <span className="h-5 w-5 rounded-full border-2 border-slate-300 border-t-slate-700 animate-spin" />
-                    : <img src={logo42} alt="42" className="h-5" />
-                }
-                {oauthLoading ? 'Redirecting...' : 'Intra'}
+                <img src={logo42} alt="42" className="h-5" />
+                Intra
             </button>
 
             <Divider label="or continue with" />

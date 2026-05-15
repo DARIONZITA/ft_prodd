@@ -1,4 +1,16 @@
+import { useEffect } from 'react'
+
 export default function LoadingPage() {
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+
+    if (params.get('oauth') === '42')
+    {
+      const base = import.meta.env.VITE_API_URL || 'http://localhost:3001'
+      window.location.href = `${base}/api/auth/42/login`
+    }
+  }, [])
+
   return (
     <div className="font-body bg-slate-50 min-h-screen flex flex-col items-center justify-center overflow-hidden">
       <style>{`
