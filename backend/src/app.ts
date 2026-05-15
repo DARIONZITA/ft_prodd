@@ -5,6 +5,8 @@ import morgan from 'morgan';
 import authRoutes from './routes/auth';
 import workspaceRoutes from './routes/workspaces';
 import badgeRoutes from './routes/badges';
+import userRoutes from './routes/users';
+import friendRoutes from './routes/friends';
 import { errorHandler } from './middleware/errorHandler';
 import { setupSwagger } from './swagger';
 
@@ -26,4 +28,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/workspaces', workspaceRoutes);
 app.use('/api/badges', badgeRoutes);
 
+app.use(errorHandler);
+app.use('/api/users', userRoutes);
+app.use('/api/friends', friendRoutes);
 app.use(errorHandler);
