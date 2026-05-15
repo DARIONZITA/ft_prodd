@@ -40,7 +40,7 @@ export async function   oauthCallback( req : Request, res : Response, next : Nex
     const   result = OauthCallbackSchema.safeParse(req.query);
 
     if (!result.success)
-        return (next( new ApiError(400, result.error.issues[0].message) ));
+        return (next( new ApiError(400, `Auth callback validation failed: ${result.error.issues[0].message}`) ));
 
     const   { code, state, error } = result.data;
 
