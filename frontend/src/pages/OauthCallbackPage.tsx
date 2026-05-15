@@ -31,8 +31,8 @@ export default function OAuthCallbackPage() {
     if (error) {
         return (
             <div className="min-h-screen flex flex-col items-center justify-center gap-3">
-                <p className="text-red-500 font-semibold">{error}</p>
-                <p className="text-slate-400 text-sm">Redirecting to sign in...</p>
+                <p className="font-display font-semibold text-red-500">{error}</p>
+                <p className="font-body text-sm text-slate-400">Redirecting to sign in...</p>
             </div>
         )
     }
@@ -40,7 +40,7 @@ export default function OAuthCallbackPage() {
     return (
         <div className="min-h-screen flex flex-col items-center justify-center gap-3">
             <span className="h-8 w-8 rounded-full border-2 border-slate-200 border-t-cyan-600 animate-spin" />
-            <p className="text-slate-500 text-sm">Completing sign in...</p>
+            <p className="font-body text-sm text-slate-500">Completing sign in...</p>
         </div>
     )
 }
