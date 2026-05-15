@@ -1,15 +1,33 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 
 export default function LoadingPage() {
+  const [error, setError] = useState<string | null>(null)
+  const navigate = useNavigate()
+
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
+    const errorParam = params.get('error')
+    const errorDescription = params.get('error_description')
 
+    // If there's an error, display it
+    if (errorParam) {
+      setError(errorDescription || errorParam)
+      return
+    }
+
+    // If oauth=42, redirect to backend
     if (params.get('oauth') === '42')
     {
+      // Replace history so back button doesn't loop back to loading page
+      window.history.replaceState(null, '', window.location.pathname)
+      
       const base = import.meta.env.VITE_API_URL || 'http://localhost:3001'
       window.location.href = `${base}/api/auth/42/login`
     }
   }, [])
+
+  // The error will be rendered inline below the animation so users still see the loading UI
 
   return (
     <div className="font-body bg-slate-50 min-h-screen flex flex-col items-center justify-center overflow-hidden">
@@ -63,6 +81,18 @@ export default function LoadingPage() {
           </div>
 
         </div>
+        {/* Error message shown below the animation when present */}
+        {error && (
+          <div className="mt-6 text-center px-6">
+            <p className="font-body text-sm text-red-500">{error}</p>
+            <button
+              onClick={() => navigate('/signin', { replace: true })}
+              className="mt-4 px-4 py-2 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg font-display font-bold text-[14px] cursor-pointer transition-colors duration-150"
+            >
+              Back to Sign In
+            </button>
+          </div>
+        )}
       </div>
     </div>
   )
