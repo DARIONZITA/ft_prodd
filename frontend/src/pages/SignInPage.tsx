@@ -19,7 +19,7 @@ export default function SignInPage() {
 
     const handleOAuthLogin = () => {
         setSrvError(null)
-        navigate('/loading?oauth=42', { replace: true })
+        navigate('/loading?oauth=42&message=Redirecting to 42 Intra API...', { replace: true })
     }
 
     const handleSubmit = async (e: React.SyntheticEvent<HTMLFormElement>) => {
