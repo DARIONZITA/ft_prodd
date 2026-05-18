@@ -1,14 +1,30 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
-export default function LoadingPage() {
-  const [error, setError] = useState<string | null>(null)
+interface LoadingPageProps {
+  message?: string
+  error?: string
+  isSuccess?: boolean
+  successRedirect?: string
+  successDelay?: number
+}
+
+export default function LoadingPage(props: LoadingPageProps) {
+  const { message, error: errorProp, isSuccess, successRedirect = '/dashboard', successDelay = 2000 } = props
+  const [error, setError] = useState<string | null>(errorProp || null)
+  const [displayMessage, setDisplayMessage] = useState<string | null>(message || null)
   const navigate = useNavigate()
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
     const errorParam = params.get('error')
     const errorDescription = params.get('error_description')
+    const messageParam = params.get('message')
+
+    // If message is provided in URL, set it (for the redirecting state)
+    if (messageParam) {
+      setDisplayMessage(messageParam)
+    }
 
     // If there's an error, display it
     if (errorParam) {
@@ -26,6 +42,17 @@ export default function LoadingPage() {
       window.location.href = `${base}/api/auth/42/login`
     }
   }, [])
+
+  // Handle success redirect
+  useEffect(() => {
+    if (isSuccess) {
+      const timer = setTimeout(() => {
+        navigate(successRedirect, { replace: true })
+      }, successDelay)
+      return () => clearTimeout(timer)
+    }
+  }, [isSuccess, successRedirect, successDelay, navigate])
+
 
   // The error will be rendered inline below the animation so users still see the loading UI
 
@@ -81,16 +108,22 @@ export default function LoadingPage() {
           </div>
 
         </div>
-        {/* Error message shown below the animation when present */}
+        {/* Error message shown below the animation */}
         {error && (
-          <div className="mt-6 text-center px-6">
+          <div className="mt-48 text-center px-6">
             <p className="font-body text-sm text-red-500">{error}</p>
-            <button
-              onClick={() => navigate('/signin', { replace: true })}
-              className="mt-4 px-4 py-2 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg font-display font-bold text-[14px] cursor-pointer transition-colors duration-150"
-            >
-              Back to Sign In
-            </button>
+          </div>
+        )}
+        {/* Message shown when provided (redirecting, success, etc) */}
+        {displayMessage && !error && (
+          <div className="mt-48 text-center px-6">
+            <p className="font-body text-sm text-slate-600">{displayMessage}</p>
+          </div>
+        )}
+        {/* Success state without custom message */}
+        {isSuccess && !displayMessage && !error && (
+          <div className="mt-48 text-center px-6">
+            <p className="font-body text-sm text-green-600">Sign in successful! Redirecting...</p>
           </div>
         )}
       </div>
