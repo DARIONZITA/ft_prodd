@@ -1,13 +1,4 @@
 import { z } from 'zod';
-
-/**
- * Schema de registo - validação rigorosa de tudo que vem do frontend
- * Zod faz a ponte entre runtime (segurança) e compile-time (TypeScript)
- */
- 
- //Em JS/TS ':' tem significado diferente, dependendo se é um obj ou uma estrutura/classe
- //Em objs { } significa chave : valor
- //Em Classes/Structs { } significa var : tipo
  
 const	username_length = { min : 3, max : 42 };
  
