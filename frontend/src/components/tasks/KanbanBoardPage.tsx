@@ -219,8 +219,10 @@ function TaskCard({ task, onClick, index, isBacklogTask, isCompletedBacklog }: {
       }
       moveMouse.current = { x, y };
     };
-    manager.monitor.addEventListener("dragmove", listener);
-    return () => manager.monitor.removeEventListener("dragmove", listener);
+    if (manager) {
+      manager.monitor.addEventListener("dragmove", listener);
+      return () => manager.monitor.removeEventListener("dragmove", listener);
+    }
   }, [manager, isDragging, animationLeft]);
 
   return (<div

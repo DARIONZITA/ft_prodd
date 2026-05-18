@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { X, Building2 } from 'lucide-react'
+import { X } from 'lucide-react'
 
 interface CreateOrganizationModalProps {
   isOpen: boolean

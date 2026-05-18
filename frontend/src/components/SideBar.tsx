@@ -31,7 +31,7 @@ interface SidebarProps {
 
 const WORKSPACE_ICONS = [Grid2x2, FileText, ArrowLeftRight]
 
-export default function Sidebar({ user, activeView, onNavigate, xpSummary, onLogout = () => {}, onCreateWorkspace = () => {}, className = '', activeWorkspace = null }: SidebarProps) {
+export default function Sidebar({ user, activeView, onNavigate, onLogout = () => {}, onCreateWorkspace = () => {}, className = '', activeWorkspace = null }: SidebarProps) {
   const [searchQuery, setSearchQuery] = useState('')
   const [isOpen, setIsOpen] = useState(() => {
     const saved = localStorage.getItem('sidebar-open')

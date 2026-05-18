@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Lock, Sparkles, X, Clock, Target, Users, Zap, FolderOpen, MessageSquare, CheckCircle2, Flame, Trophy, Star, Layers, Calendar } from 'lucide-react';
+import { Lock, Sparkles, X } from 'lucide-react';
 import type { BadgeCategory, BadgeItem } from '../../components/gamification/Types';
 
 interface BadgesPageProps {
@@ -10,7 +10,7 @@ interface BadgesPageProps {
 
 
 export default function BadgesPage({ badges, onOpenLeaderboard, onShowLevelUp }: BadgesPageProps) {
-  const [selectedCategory, setSelectedCategory] = useState<'all' | BadgeCategory>('all');
+  const [selectedCategory] = useState<'all' | BadgeCategory>('all');
   const [selectedBadge, setSelectedBadge] = useState<BadgeItem | null>(null);
 
   const filteredBadges = useMemo(() => {

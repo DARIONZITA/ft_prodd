@@ -315,6 +315,8 @@ export default function DashboardPagePlaceholder() {
         <LeaderboardPage
           entries={ALL_TIME_LEADERBOARD}
           onOpenBadges={() => handleNavigate('badges')}
+          period="all-time"
+          onPeriodChange={() => {}}
         />
       )
     }

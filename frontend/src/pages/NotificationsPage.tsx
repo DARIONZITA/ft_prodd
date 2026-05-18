@@ -1,5 +1,5 @@
  import { useMemo, useState } from 'react'
-import { Bell, CheckCheck, ChevronLeft, ChevronRight, Settings } from 'lucide-react'
+import { Bell, CheckCheck, ChevronLeft, ChevronRight } from 'lucide-react'
 
 type NotificationType = 'task' | 'mention' | 'badge' | 'friend'
 
