@@ -46,7 +46,7 @@ export async function   oauthCallback( req : Request, res : Response, next : Nex
 
     if ('error' in data)
     {
-        const   message = `OAuth error from 42: ${data.error}` + (data.error_description ? ` - ${data.error_description}` : '');
+        const   message = data.error_description ? `${data.error_description}` : `OAuth Error: ${data.error}`;
 
         return (res.redirect(`${env.FRONTEND_URL}/oauth/callback?error=${encodeURIComponent(message)}`));
     }
