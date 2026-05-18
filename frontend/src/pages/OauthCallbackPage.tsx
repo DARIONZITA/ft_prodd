@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react'
 import { useNavigate }         from 'react-router-dom'
+import LoadingPage             from './LoadingPage'
 
 export default function OAuthCallbackPage() {
     const navigate = useNavigate()
-    const [error, setError] = useState<string | null>(null)
+    const [error, setError] = useState<string | undefined>(undefined)
+    const [isSuccess, setIsSuccess] = useState(false)
 
     useEffect(() => {
         const params = new URLSearchParams(window.location.search)
@@ -12,35 +14,32 @@ export default function OAuthCallbackPage() {
 
         if (err) {
             setError(err)
-            // Redireciona para signin após 3s a mostrar o erro
-            setTimeout(() => navigate('/signin', { replace: true }), 3000)
-            return
+            console.log("OAuth callback error:", err)
+            // Redirect to signin after 3 seconds
+            const timer = setTimeout(() => {
+                navigate('/signin', { replace: true })
+            }, 3000)
+            return () => clearTimeout(timer)
         }
 
         if (token) {
             localStorage.setItem('token', token)
-            navigate('/dashboard', { replace: true })
+            setIsSuccess(true)
             return
         }
 
         // Nem token nem erro — algo correu mal
-        setError('Unexpected response. Redirecting...')
-        setTimeout(() => navigate('/signin', { replace: true }), 3000)
+        setError('Unexpected response')
     }, [navigate])
 
-    if (error) {
-        return (
-            <div className="min-h-screen flex flex-col items-center justify-center gap-3">
-                <p className="font-display font-semibold text-red-500">{error}</p>
-                <p className="font-body text-sm text-slate-400">Redirecting to sign in...</p>
-            </div>
-        )
-    }
-
+    // Render LoadingPage with appropriate props
     return (
-        <div className="min-h-screen flex flex-col items-center justify-center gap-3">
-            <span className="h-8 w-8 rounded-full border-2 border-slate-200 border-t-cyan-600 animate-spin" />
-            <p className="font-body text-sm text-slate-500">Completing sign in...</p>
-        </div>
+        <LoadingPage
+            error={error}
+            message={!error && isSuccess ? 'Sign in successful! Redirecting...' : !error ? 'Completing sign in...' : undefined}
+            isSuccess={isSuccess}
+            successRedirect="/dashboard"
+            successDelay={1500}
+        />
     )
 }
