@@ -1,9 +1,9 @@
 import type { Request, Response, NextFunction } from 'express';
-import { pkceStore } from '../../middleware/pkce.store';
+import { pkceStore } from '../../../middleware/pkce.store';
 import { handleOauthCallback } from './oauth.service';
-import { OauthCallbackSchema } from '../../validations/auth';
-import { ApiError } from '../../utils/ApiError';
-import { env } from '../../config/env';
+import { OauthCallbackSchema } from '../../../validations/auth';
+import { ApiError } from '../../../utils/ApiError';
+import { env } from '../../../config/env';
 
 /**
  * GET /auth/oauth/login

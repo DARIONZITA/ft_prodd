@@ -1,9 +1,9 @@
-import { prisma } from '../index';
+import { prisma } from '../../index';
 import type { Request, Response, NextFunction } from 'express';
-import { hashPassword, comparePassword } from '../utils/password';
-import { generateToken } from '../utils/jwt';
-import { signupSchema, signinSchema } from '../validations/auth';
-import { ApiError } from '../utils/ApiError';
+import { hashPassword, comparePassword } from '../../utils/password';
+import { generateToken } from '../../utils/jwt';
+import { signupSchema, signinSchema } from '../../validations/auth';
+import { ApiError } from '../../utils/ApiError';
 
 export async function  signupController( req : Request, res : Response, next : NextFunction ) : Promise<void>
 {
