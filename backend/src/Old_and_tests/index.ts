@@ -5,6 +5,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
+import { env } from './config/env';
 
 // Load environment variables
 dotenv.config();
@@ -18,7 +19,7 @@ const app: Application = express();
 const server = http.createServer(app);
 const io = new SocketIOServer(server, {
   cors: {
-    origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
+    origin: env.FRONTEND_URL,
     methods: ['GET', 'POST'],
     credentials: true,
   },
@@ -33,7 +34,7 @@ app.use(helmet());
 
 // CORS
 app.use(cors({
-  origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
+  origin: env.FRONTEND_URL,
   credentials: true,
 }));
 
@@ -106,7 +107,8 @@ io.on('connection', (socket) => {
 // SERVER START
 // ===========================
 
-const PORT = process.env.PORT || 3001;
+const PORT = env.PORT;
+
 if (require.main === module) {
   server.listen(PORT, () => {
     log(`
@@ -120,7 +122,7 @@ if (require.main === module) {
   ║   Cache:       Redis                                   ║
   ║   WebSocket:   Socket.IO                               ║
   ║                                                        ║
-  ║   Health:      http://localhost:${PORT}/health${' '.repeat(16)}║
+  ║   Health:      http://0.0.0.0:${PORT}/health${' '.repeat(16)}║
   ║                                                        ║
   ╚════════════════════════════════════════════════════════╝
     `);

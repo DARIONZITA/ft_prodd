@@ -1,13 +1,6 @@
 import { z } from 'zod';
 
 const envSchema = z.object({
-
-  PORT: z
-    .string()
-    .default('3000')
-    .refine( ( val ) => !isNaN( Number(val) ), { message: 'PORT must be a valid number' } )
-    .transform( ( val ) => Number( val ) ),
-
   DATABASE_URL: z.string().url(),
 
   JWT_SECRET: z.string().min(32, 'JWT_SECRET must be at least 32 characters long'),
@@ -22,6 +15,18 @@ const envSchema = z.object({
 
   FRONTEND_URL: z.string().url('FRONTEND_URL must be a valid URL').nonempty('FRONTEND_URL is required'),
 
+  BACKEND_URL: z.string().url('BACKEND_URL must be a valid URL').nonempty('BACKEND_URL is required'),
+
+}).transform((env) => {
+  const backendUrl = new URL(env.BACKEND_URL);
+
+  if (!backendUrl.port)
+    throw new Error('BACKEND_URL must include an explicit port');
+
+  return {
+    ...env,
+    PORT: Number(backendUrl.port),
+  };
 });
 
 export const	env = envSchema.parse(process.env);
