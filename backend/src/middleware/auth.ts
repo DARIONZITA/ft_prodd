@@ -6,7 +6,7 @@ import { ApiError } from '../utils/ApiError';
 export const	authenticate = async ( req : Request, res : Response, next : NextFunction ) => {
 	const	authHeader = req.headers.authorization;
 
-	if (!authHeader?.startsWith( 'Bearer ' ))
+	if (!authHeader || typeof authHeader !== "string" || !authHeader.startsWith( 'Bearer ' ))
 		return (next(new ApiError(401, "Invalid token format")));
 
 	const	token = authHeader.split(' ')[1];
