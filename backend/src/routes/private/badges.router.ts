@@ -1,14 +1,14 @@
-import { Router, Request, Response, NextFunction } from 'express';
-import { authenticate } from '../middleware/auth';
-import { prisma } from '../lib/prisma';
-import { ApiError } from '../utils/ApiError';
+import { Router, Request, Response, NextFunction }	from 'express';
+import { authenticate }								from '../../middleware/auth';
+import { prisma }									from '../../lib/prisma';
+import { ApiError }									from '../../utils/ApiError';
 import {
 	badgeIdParamsSchema,
 	badgeUserParamsSchema,
 	createBadgeSchema,
 	updateBadgeSchema,
 	assignBadgeSchema
-} from '../validations/badge';
+}													from '../../validations/badge';
 
 const router = Router();
 

@@ -1,7 +1,7 @@
 import express from 'express';
 import request from 'supertest';
-import workspaceRoutes from './workspaces';
-import { errorHandler } from '../middleware/errorHandler';
+import workspaceRoutes from './workspaces.router';
+import { errorHandler } from '../../middleware/errorHandler';
 
 jest.mock('../middleware/auth', () => ({
 	authenticate: (req: any, _res: any, next: any) => {

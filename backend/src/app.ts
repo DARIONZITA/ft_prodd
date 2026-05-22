@@ -3,12 +3,13 @@ import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import authRoutes from './routes/auth/auth.router';
-import workspaceRoutes from './routes/workspaces';
-import badgeRoutes from './routes/badges';
-import userRoutes from './routes/users';
-import friendRoutes from './routes/friends';
+import workspaceRoutes from './routes/private/workspaces.router';
+import badgeRoutes from './routes/private/badges.router';
+import userRoutes from './routes/private/users.router';
+import friendRoutes from './routes/private/friends.router';
 import { errorHandler } from './middleware/errorHandler';
 import { setupSwagger } from './swagger';
+import publicAPIRouter from './routes/public/api.router';
 
 export const app = express();
 
@@ -25,6 +26,7 @@ app.get('/api/health', (_req: Request, res: Response) => {
 });
 
 app.use('/api/auth', authRoutes);
+app.use('/api/public', publicAPIRouter);
 app.use('/api/workspaces', workspaceRoutes);
 app.use('/api/badges', badgeRoutes);
 

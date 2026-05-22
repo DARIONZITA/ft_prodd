@@ -14,8 +14,9 @@ function    extractRequestId( req : Request ) : string
 
 //Limite geral da API
 
-export const    apiRateLimit = rateLimit({
-    windowMS:           15000 * 60,
+export const    apiRateLimit = ratelimit(
+{
+    windowMs:           15000 * 60,
     max:                100,
     standardHeaders:    true, // Devolve headers `RateLimit-*`
     legacyHeaders:      false, // Desativa os headers `X-RateLimit-*`
@@ -28,8 +29,9 @@ export const    apiRateLimit = rateLimit({
 
 //Limite mais restrito para criações (POST)
 
-export const    apiWriteRateLimit = rateLimit({
-    windowMS:           60000, // 1 minuto = 60 mil milissegundos
+export const    apiWriteRateLimit = ratelimit(
+{
+    windowMs:           60000, // 1 minuto = 60 mil milissegundos
     max:                20,
     standardHeaders:    true,
     legacyHeaders:      false,

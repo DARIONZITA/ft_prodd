@@ -1,9 +1,9 @@
-import { Router, Request, Response, NextFunction } from 'express';
-import { authenticate } from '../middleware/auth';
-import { prisma } from '../lib/prisma';
-import { ApiError } from '../utils/ApiError';
-import { parseOrThrow, parseQueryInt, idSchema } from '../validations/utils';
-import { updateUserProfileSchema } from '../validations/user';
+import { Router, Request, Response, NextFunction }	from 'express';
+import { authenticate }								from '../../middleware/auth';
+import { prisma }									from '../../lib/prisma';
+import { ApiError }									from '../../utils/ApiError';
+import { parseOrThrow, parseQueryInt, idSchema }	from '../../validations/utils';
+import { updateUserProfileSchema }					from '../../validations/user';
 
 const router = Router();
 router.use(authenticate);

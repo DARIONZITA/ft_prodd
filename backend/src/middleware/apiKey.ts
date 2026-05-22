@@ -1,6 +1,5 @@
 import type { Request, Response, NextFunction } from 'express';
-import crypto                                   from 'crypto';
-import { prisma }                               from '../index';
+import { prisma }                               from '../lib/prisma';
 import { hashApiKey }                           from '../utils/encryption';
 import { ApiError }                             from '../utils/ApiError';
 
@@ -20,6 +19,6 @@ export async function   apiKeyAuth( req : Request, _res : Response, next : NextF
     if (!apiKey)
         return (next( new ApiError( 401, "Invalid API key" ) ));
 
-    req.apiUser = apiKey.user;
+    req.user = apiKey.user;
     next();
 }
