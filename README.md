@@ -664,73 +664,235 @@ This section lists all implemented features of the project, along with their des
 
 # Modules
 
-This section lists all selected modules for the project, including their type, point value, implementation details, and responsible team members.
+## Organization System Module
 
----
+This module provides complete workspace management capabilities, allowing users to create, edit, and delete workspaces, as well as manage workspace members with role-based access control.
 
-## Modules Overview
+### Overview
 
-| Category                   | Module                                                                                                                    | Type                | Points |
-| -------------------------- | ------------------------------------------------------------------------------------------------------------------------- | ------------------- | ------ |
-| Web                        | Use a framework for both the frontend and backend                                                                         | Major               | 2      |
-|                            | Implement real-time features using WebSockets or similar technology                                                       | Major               | 2      |
-|                            | Allow users to interact with other users                                                                                  | Major               | 2      |
-|                            | A public API to interact with the database with a secured API key, rate limiting, documentation, and at least 5 endpoints | Major               | 2      |
-|                            | Use an ORM for the database                                                                                               | Minor               | 1      |
-|                            | A complete notification system for all creation, update, and deletion actions                                             | Minor               | 1      |
-|                            | Real-time collaborative features                                                                                          | Minor               | 1      |
-|                            | Custom-made design system with reusable components, including a proper color palette, typography, and icons               | Minor               | 1      |
-| User Management            | Implement remote authentication with OAuth 2.0                                                                            | Minor               | 1      |
-|                            | Advanced permissions system                                                                                               | Major               | 2      |
-|                            | An organization system                                                                                                    | Major               | 2      |
-| Gaming and user experience | A gamification system to reward users for their actions                                                                   | Minor               | 1      |
-| Data and Analytics         | Advanced analytics dashboard with data visualization                                                                      | Major               | 2      |
-| **Total**                  | 19                                                                                                                        | 7 Maj. / 6 Min.     | 20     |
+The Organization System is the core module for managing organizational units within the application. It enables:
+- **Workspace Creation**: Users can create new workspaces and automatically become administrators
+- **Workspace Management**: Admins can update workspace details and delete workspaces
+- **Member Management**: Admins can add and remove members, assign roles
+- **Role-Based Access Control (RBAC)**: Three roles with specific permissions (`admin`, `member`, `guest`)
 
----
+### Implemented API Routes
 
-## Module Details
+#### Workspace CRUD Operations
 
-### Use a framework for both the frontend and backend
+- **`POST /api/workspaces`** - Create Workspace
+  - Request: `{ name: string, description?: string }`
+  - Response: `201 Created` - New workspace data
+  - Creates a new workspace and automatically adds the creator as admin
+  - Uses transaction to ensure atomicity
+  
+- **`GET /api/workspaces`** - List User Workspaces
+  - Returns all workspaces where the authenticated user is a member
+  - Includes user's role in each workspace
+  
+- **`GET /api/workspaces/:id`** - Get Workspace Details
+  - Returns workspace details with user's role
+  - Only accessible to workspace members
+  
+- **`PUT /api/workspaces/:id`** - Update Workspace
+  - Request: `{ name?: string, description?: string }`
+  - Admin-only operation
+  - Updates workspace details atomically with activity logging
+  
+- **`DELETE /api/workspaces/:id`** - Delete Workspace
+  - Admin-only operation
+  - Deletes workspace and all related data (members, activity logs) atomically
+  - Prevents cascading delete errors through careful transaction management
 
-* **Justification:**
-  Using frameworks for both frontend and backend accelerates development by providing structured architectures, reusable components, and built-in solutions for common problems. This allows the team to focus on implementing features rather than low-level setup.
+#### Member Management
 
-* **Implementation:**
-  The project uses:
+- **`POST /api/workspaces/:id/members`** - Add Member
+  - Request: `{ userId: number, role?: "admin" | "member" | "guest" }`
+  - Admin-only operation
+  - Validates user exists and is not already a member
+  - Adds member atomically with activity logging
+  - Defaults to "member" role if not specified
+  
+- **`GET /api/workspaces/:id/members`** - List Members
+  - Returns all members of a workspace
+  - Accessible to any workspace member
+  
+- **`GET /api/workspaces/:id/members/:userId`** - Get Member Details
+  - `admin` and `member`: Can view any member
+  - `guest`: Can only view their own profile
+  
+- **`PUT /api/workspaces/:id/members/:userId`** - Update Member Role
+  - Admin-only operation
+  - Prevents removing the last admin of a workspace
+  - Updates role atomically with activity logging
+  
+- **`DELETE /api/workspaces/:id/members/:userId`** - Remove Member
+  - Admin-only operation
+  - Prevents removing the last admin of a workspace
+  - Removes member atomically with activity logging
 
-  * **React (with Vite)** for the frontend, implementing a component-based architecture to build dynamic user interfaces
-  * **Express (Node.js)** for the backend, providing a structured API with routing, middleware, and request handling
+### Role-Based Access Control (RBAC)
 
-  The frontend communicates with the backend through HTTP APIs and real-time communication (Socket.IO), forming a complete client-server architecture.
+The module implements three roles with specific permissions:
 
-* **Team:**
+| Role | Create Workspace | Update Workspace | Delete Workspace | Add Members | Remove Members | View Members | View Own Profile |
+|------|-----------------|-----------------|-----------------|------------|----------------|-------------|-----------------|
+| **admin** | Yes* | Yes | Yes | Yes | Yes | Yes | Yes |
+| **member** | Yes* | No | No | No | No | Yes | Yes |
+| **guest** | Yes* | No | No | No | No | Yes | Yes (only own) |
 
-  * Frontend (React): efinda, dnzita
-  * Backend (Express): cgama, jbofengo
+*Authenticated users can create workspaces (automatically becoming admin)
 
----
+### Input Validation
 
-### Use an ORM for the database
+All inputs are validated server-side using Zod schemas:
 
-* **Justification:**
-  Using an ORM simplifies database interaction by abstracting raw SQL queries into a structured and type-safe API. This reduces the risk of errors, improves code maintainability, and allows faster development, especially in a team environment.
+```typescript
+// Workspace creation/update
+createWorkspaceSchema: {
+  name: string (1-255 characters)
+  description?: string (0-1000 characters)
+}
 
-* **Implementation:**
-  The project uses **Prisma ORM** to define the database schema and handle all database operations.
+// Member addition
+addWorkspaceMemberSchema: {
+  userId: positive integer
+  role?: "admin" | "member" | "guest" (defaults to "member")
+}
 
-  * The schema is declared using Prisma’s declarative syntax
-  * Migrations are managed through Prisma to keep the database structure consistent
-  * All database queries (CRUD operations) are performed through Prisma Client, ensuring type safety and validation
+// All ID parameters (workspaceId, userId)
+  must be positive integers
+```
 
-* **Team:** dnzita
+Validation errors return HTTP `400` with descriptive messages.
 
----
+### Transaction Safety
 
-## Notes
+Multiple operations are wrapped in Prisma transactions to ensure data consistency:
 
-* Each module is updated as implementation progresses.
+- **Workspace Creation**: Creates workspace + adds creator as admin + logs activity atomically
+- **Workspace Deletion**: Deletes activity logs + removes members + deletes workspace atomically
+- **Member Addition**: Creates membership + updates workspace timestamp + logs activity atomically
+- **Member Removal**: Deletes membership + updates workspace timestamp + logs activity atomically + prevents last-admin removal
 
+Transaction safety prevents:
+- Partial writes under concurrent requests
+- Data corruption from failed operations
+- Inconsistent state between related records
+
+### Data Protection
+
+- **Last Admin Protection**: Cannot remove or demote the last admin of a workspace
+- **User Existence Validation**: Cannot add non-existent users to workspace
+- **Duplicate Prevention**: Cannot add users who are already workspace members
+- **Permission Enforcement**: Operations respect user roles (RBAC)
+
+### Activity Logging
+
+All workspace and member operations are logged for auditing:
+- Workspace creation, updates, and deletion
+- Member additions and removals
+- Member role changes
+- Timestamps and user IDs recorded for all operations
+
+### Testing
+
+Comprehensive test suite covering:
+
+- Workspace CRUD operations (create, read, update, delete)
+- Member management (add, remove, update roles)
+- RBAC enforcement (admin-only operations)
+- Last admin protection
+- Input validation and error handling
+- Transaction safety and atomicity
+- Guest user restrictions
+- Permission enforcement across all operations
+
+Run tests:
+```bash
+npm test -- workspaces.test.ts
+npm test -- --coverage
+```
+
+### Error Handling
+
+The module returns appropriate HTTP status codes:
+
+| Status | Scenario |
+|--------|----------|
+| 201 | Workspace or member created successfully |
+| 200 | Operation successful |
+| 400 | Invalid input or validation error |
+| 403 | Permission denied (RBAC) or workspace membership required |
+| 404 | Resource not found (workspace, user, or member) |
+
+### Implementation Details
+
+**File Locations:**
+- Routes: [backend/src/routes/workspaces.ts](backend/src/routes/workspaces.ts)
+- Validations: [backend/src/validations/workspace.ts](backend/src/validations/workspace.ts)
+- RBAC Middleware: [backend/src/middleware/rbac.ts](backend/src/middleware/rbac.ts)
+- Tests: [backend/src/routes/workspaces.test.ts](backend/src/routes/workspaces.test.ts)
+- Database Schema: [backend/prisma/schema.prisma](backend/prisma/schema.prisma)
+
+**Dependencies:**
+- Express.js - Web framework
+- Prisma - ORM with transaction support
+- Zod - Input validation
+- TypeScript - Type safety
+
+## Advanced Permissions System
+
+This module enforces workspace-level RBAC (Role-Based Access Control) using the roles defined in Prisma: `admin`, `member`, and `guest`.
+
+### Implemented API routes
+
+- `GET /api/workspaces`
+  - Returns only workspaces where the authenticated user is a member.
+  - Includes the user role in each workspace record.
+
+- `GET /api/workspaces/:id`
+  - Returns workspace details only if the authenticated user belongs to that workspace.
+
+- `GET /api/workspaces/:id/members`
+  - Returns workspace members and their roles if requester belongs to workspace.
+
+- `GET /api/workspaces/:id/members/:userId`
+  - `admin` and `member`: can view any member in the workspace.
+  - `guest`: can view only their own membership profile.
+
+- `PUT /api/workspaces/:id/members/:userId`
+  - Admin-only route for role updates (`admin`, `member`, `guest`).
+  - Prevents removing/demoting the last admin of a workspace.
+
+- `DELETE /api/workspaces/:id/members/:userId`
+  - Admin-only route to remove a member from workspace.
+  - Prevents removing the last admin of a workspace.
+
+### Server-side validation
+
+- All route params (`:id`, `:userId`) are validated as positive integers with Zod.
+- Body payload for role updates is validated against allowed enum values.
+- Invalid input returns HTTP `400` with validation details.
+
+### Transaction safety (Prisma)
+
+Operations with multiple writes are executed inside `prisma.$transaction(...)`:
+
+- Member role updates (`PUT`) update membership + workspace timestamp + activity log atomically.
+- Member removal (`DELETE`) deletes membership + updates workspace timestamp + activity log atomically.
+
+This prevents partial writes and data corruption under concurrent usage.
+
+### Tests
+
+Automated tests cover:
+
+- Listing user workspaces.
+- Input validation failures.
+- Role-based restrictions (`guest` and non-admin behavior).
+- Successful admin role update with transaction execution.
+- Protection against removing the last workspace admin.
 
 
 

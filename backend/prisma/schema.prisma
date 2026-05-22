@@ -21,9 +21,16 @@ enum NotificationType {
     invite
 }
 
+enum FriendRequestStatus {
+    pending
+    accepted
+    rejected
+}
+
 model User {
     id        Int      @id @default(autoincrement())
-    nickname      String
+    nickname  String   //@unique
+    bio       String   @default("")
     email     String   @unique
     passwordHash String
     avatarUrl String
@@ -44,7 +51,9 @@ model User {
     activityLogs          ActivityLog[]
     chatMessages        ChatMessage[]
     LeaderboardEntries   LeaderboardEntry[]
-
+    sentFriendRequests   FriendRequest[] @relation("sender")
+    receivedFriendRequests FriendRequest[] @relation("receiver")
+ 
     // Relação com ApiKey adicionda por jbofengo por causa do módulo da API pública
     apiKeys             ApiKey[]
 }
@@ -109,6 +118,8 @@ model Task {
     title           String
     description     String
     orderInColumn   Int
+    isDone          Boolean  @default(false)
+    dateCompleted   DateTime?
     createdAt       DateTime @default(now())
     updatedAt       DateTime @updatedAt
 
@@ -304,4 +315,18 @@ model LeaderboardEntry {
 
     user User @relation(fields: [userId], references: [id])
     workspace Workspace @relation(fields: [workspaceId], references: [id])
+}
+
+model FriendRequest {
+    id        Int      @id @default(autoincrement())
+    senderId  Int
+    receiverId Int
+    status    FriendRequestStatus @default(pending)
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    sender   User @relation("sender", fields: [senderId], references: [id], onDelete: Cascade)
+    receiver User @relation("receiver", fields: [receiverId], references: [id], onDelete: Cascade)
+
+    @@unique([senderId, receiverId])
 }

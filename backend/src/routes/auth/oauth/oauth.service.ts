@@ -1,5 +1,4 @@
-import { User } from '@prisma/client';
-import { prisma } from '../../../index';
+import { prisma } from '../../../lib/prisma';
 import { generateToken } from '../../../utils/jwt';
 import { env } from '../../../config/env';
 import { TokenResponseSchema, IntraUserSchema, IntraUser } from '../../../validations/auth';

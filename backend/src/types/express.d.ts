@@ -8,7 +8,7 @@ declare global
 	{
 		interface	Request
 		{
-			user? : User;
+			user? : Prisma.User;
 			apiUser? : { id : number, email : string, nickname : string };
 		}
 	}

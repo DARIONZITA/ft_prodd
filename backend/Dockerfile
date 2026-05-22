@@ -1,9 +1,9 @@
 # Stage 1: Base
-FROM node:18-alpine AS base
+FROM node:18-bullseye AS base
 WORKDIR /app
-RUN apk add --no-cache curl
+RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
 #openssl
-RUN apk add --no-cache openssl
+RUN apt-get update && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
 
 # Stage 2: Dependencies
 FROM base AS deps
@@ -13,7 +13,7 @@ RUN npm install --only=production && npm cache clean --force
 # Stage 3: Development Dependencies
 FROM base AS dev-deps
 COPY package*.json ./
-RUN apk add --no-cache python3 make g++
+RUN apt-get update && apt-get install -y python3 make g++ && rm -rf /var/lib/apt/lists/*
 RUN npm install
 
 # Stage 4: Development
@@ -22,6 +22,7 @@ COPY --from=dev-deps /app/node_modules ./node_modules
 COPY . .
 RUN npx prisma generate
 EXPOSE 3001
+EXPOSE 5555
 CMD ["sh", "-c", "npx prisma migrate deploy && npm run dev"]
 
 # Stage 5: Builder
