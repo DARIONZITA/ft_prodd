@@ -8,7 +8,8 @@ declare global
 	{
 		interface	Request
 		{
-			user?: User;
+			user? : User;
+			apiUser? : { id : number, email : string, nickname : string };
 		}
 	}
 }

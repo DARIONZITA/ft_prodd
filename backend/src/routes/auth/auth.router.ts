@@ -1,7 +1,7 @@
 import { Router }                               from 'express';
 import type { Request, Response, NextFunction } from 'express';
 import { prisma }                               from '../../index';
-import { hashPassword, comparePassword }        from '../../utils/password';
+import { hashPassword, comparePassword }        from '../../utils/encryption';
 import { generateToken }                        from '../../utils/jwt';
 import { ApiError }                             from '../../utils/ApiError';
 import { signupSchema, signinSchema }           from '../../validations/auth';
