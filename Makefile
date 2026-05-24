@@ -24,8 +24,19 @@ help: ## Mostra esta mensagem de ajuda
 # SETUP E INICIALIZAÇÃO
 # ===========================
 
-setup: ## Setup inicial completo do projeto
+setup: ## Setup inicial completo do projeto (inclui geração de certificados TLS)
+	@make certs
 	@./scripts/setup.sh
+
+certs: ## Gerar certificados TLS self-signed para desenvolvimento
+	@echo " A gerar certificados TLS self-signed..."
+	@mkdir -p ./config/certs
+	@openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+		-keyout ./config/certs/nginx-selfsigned.key \
+		-out ./config/certs/nginx-selfsigned.crt \
+		-subj "/C=PT/ST=Lisboa/L=Lisboa/O=ft_prodd/CN=localhost" \
+		-addext "subjectAltName=DNS:localhost,IP:127.0.0.1" 2>/dev/null
+	@echo " Certificados gerados em ./config/certs/"
 
 up: ## Iniciar todos os serviços em background
 	@$(DOCKER) up -d
@@ -81,6 +92,9 @@ logs-db: ## Ver logs do PostgreSQL
 
 logs-redis: ## Ver logs do Redis
 	@$(DOCKER) logs -f redis
+
+logs-nginx: ## Ver logs do Nginx (proxy)
+	@$(DOCKER) logs -f nginx
 
 # ===========================
 # SHELL/ACESSO AOS CONTAINERS
@@ -140,7 +154,7 @@ install-frontend: ## Instalar dependências do frontend
 	@$(DOCKER) exec frontend npm install
 
 install-all: ## Instalar dependências de todos os serviços
-	@echo "📦 Instalando dependências..."
+	@echo " Instalando dependências..."
 	@make install-backend
 	@make install-frontend
 
@@ -149,7 +163,7 @@ install-all: ## Instalar dependências de todos os serviços
 # ===========================
 
 reset-db: ## Reset completo do banco de dados (PERDE DADOS)
-	@echo "⚠️  ATENÇÃO: Isso irá deletar todos os dados!"
+	@echo "  ATENÇÃO: Isso irá deletar todos os dados!"
 	@read -p "Tem certeza? [y/N]: " confirm && [ "$$confirm" = "y" ] || exit 1
 	@$(DOCKER) down -v
 	@$(DOCKER) up -d postgres redis
@@ -157,7 +171,7 @@ reset-db: ## Reset completo do banco de dados (PERDE DADOS)
 	@make prisma-migrate
 
 reset-all: ## Reset completo do projeto (PERDE TUDO)
-	@echo "⚠️  ATENÇÃO: Isso irá deletar containers, volumes e dados!"
+	@echo "  ATENÇÃO: Isso irá deletar containers, volumes e dados!"
 	@read -p "Tem certeza? [y/N]: " confirm && [ "$$confirm" = "y" ] || exit 1
 	@make clean
 	@make setup
@@ -171,11 +185,16 @@ info: ## Mostrar informações do projeto
 	@echo "║                  $(NAME) - Informações                ║"
 	@echo "╚════════════════════════════════════════════════════════╝"
 	@echo ""
-	@echo "Frontend:    http://localhost:3000"
-	@echo "Backend:     http://localhost:3001"
-	@echo "Health:      http://localhost:3001/api/health"
-	@echo "PostgreSQL:  localhost:5432"
-	@echo "Redis:       localhost:6379"
+	@echo "  Frontend:    https://localhost"
+	@echo "  Backend API: https://localhost/api"
+	@echo "  Health:      https://localhost/api/health"
+	@echo "  Swagger:     https://localhost/api/docs"
+	@echo ""
+	@echo "  (acesso interno — apenas dentro da rede Docker)"
+	@echo "  PostgreSQL:  postgres:5432"
+	@echo "  Redis:       redis:6379"
+	@echo ""
+	@echo "  Certificado self-signed: aceite no browser em 'Avançado > Continuar'"
 	@echo ""
 	@echo "Para ver todos os comandos disponíveis, execute: make help"
 	@echo ""

@@ -12,8 +12,10 @@ import { setupSwagger } from './swagger';
 
 export const app = express();
 
+app.set('trust proxy', 1);
+
 app.use(helmet());
-app.use(cors({ origin: 'http://localhost:3000', credentials: true }));
+app.use(cors({ origin: process.env.CORS_ORIGIN || 'https://localhost', credentials: true }));
 app.use(morgan('combined'));
 app.use(express.json({ limit: '10mb' }));
 

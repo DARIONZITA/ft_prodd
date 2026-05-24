@@ -56,6 +56,8 @@ const options = {
 						iconUrl: { type: 'string', format: 'uri' },
 						createdAt: { type: 'string', format: 'date-time' },
 						updatedAt: { type: 'string', format: 'date-time' },
+					},
+				},
 				Pagination: {
 					type: 'object',
 					properties: {
