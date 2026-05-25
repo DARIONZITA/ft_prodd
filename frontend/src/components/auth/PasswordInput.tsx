@@ -1,9 +1,9 @@
 import { forwardRef, useState } from 'react'
-import { Eye, EyeOff } from 'lucide-react'
+import { Eye, EyeOff }          from 'lucide-react'
 
 interface PasswordInputProps {
-  placeholder: string
-  value: string
+  placeholder:  string
+  value:        string
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void
   onInput?: () => void
 }

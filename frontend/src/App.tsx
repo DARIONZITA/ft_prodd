@@ -1,11 +1,11 @@
-import { Routes, Route, Navigate } from "react-router-dom"
-import LandingPage from './pages/LandingPage'
-import SignInPage from './pages/SignInPage'
-import SignUpPage from './pages/SignUpPage'
-import LoadingPage from './pages/LoadingPage'
-import DashboardPagePlaceholder from './pages/DashboardPagePlaceholder'
-import ProtectedRoute from './components/ProtectedRoute'
-import OAuthCallbackPage from "./pages/OauthCallbackPage"
+import { Routes, Route, Navigate }  from "react-router-dom"
+import SignInPage                   from './pages/auth/SignInPage'
+import SignUpPage                   from './pages/auth/SignUpPage'
+import LoadingPage                  from './pages/LoadingPage'
+import LandingPage                  from './pages/LandingPage'
+import ProtectedRoute               from './components/ProtectedRoute'
+import OAuthCallbackPage            from "./pages/OauthCallbackPage"
+import DashboardPagePlaceholder     from './pages/DashboardPagePlaceholder'
 
 function App() {
   return (

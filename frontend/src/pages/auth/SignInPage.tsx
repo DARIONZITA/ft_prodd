@@ -1,21 +1,18 @@
-import { useState }        from 'react'
-import Layout              from '../components/auth/Layout'
-import Divider             from '../components/auth/Divider'
-import LegalText           from '../components/auth/LegalText'
-import FooterLink          from '../components/auth/FooterLink'
-import PasswordInput       from '../components/auth/PasswordInput'
-import { signInSchema, parseSchema } from '../utils/authValidation'
-import { useNavigate }     from 'react-router-dom'
-import api                 from '../api/axios'
-import type { AxiosError } from 'axios'
-import logo42              from '../assets/42.svg'
+import logo42                           from '../../assets/42.svg'
+import Layout                           from '../../components/auth/Layout'
+import Divider                          from '../../components/auth/Divider'
+import LegalText                        from '../../components/auth/LegalText'
+import FooterLink                       from '../../components/auth/FooterLink'
+import PasswordInput                    from '../../components/auth/PasswordInput'
+import { signInRequest }                from '../../api/auth'
+import { getApiErrorMessage }           from '../../api/axios'
+import type { SignInForm }              from '../../types/auth'
+import { authInit }                     from './utils'
+import { signInSchema, parseSchema }    from '../../validation/auth'
 
-export default function SignInPage() {
-    const [identifier, setIdentifier] = useState('')
-    const [password,   setPassword]   = useState('')
-    const [loading,    setLoading]    = useState(false)
-    const [srvError,   setSrvError]   = useState<string | null>(null)
-    const navigate = useNavigate()
+export default function SignInPage()
+{
+    const { form, srvError, setSrvError, loading, setLoading, navigate, updateField } = authInit<SignInForm>({ identifier: '', password: '' })
 
     const handleOAuthLogin = () => {
         setSrvError(null)
@@ -25,43 +22,33 @@ export default function SignInPage() {
     const handleSubmit = async (e: React.SyntheticEvent<HTMLFormElement>) => {
         e.preventDefault()
 
-        const result = parseSchema(signInSchema, { identifier, password })
-
+        const result = parseSchema(signInSchema, form)
         if (!result.success)
         {
             setSrvError(result.errors.identifier || result.errors.password || 'Please check your inputs.')
             return
         }
 
-        console.log({ identifier, password })
+        console.log(`SignInPage successfully parsed: ${JSON.stringify(form)}`)
 
         setLoading(true)
         setSrvError(null)
 
-        try
-        {
-          const response = await api.post('/api/auth/signin', { identifier, password })
-
-          localStorage.setItem('token', response.data.token)
-          navigate('/dashboard')
+        try {
+            await signInRequest(form)
+            navigate('/dashboard')
         }
-        catch ( error )
-        {
-          const axiosError = error as AxiosError<{ message: string }>
-          const message = axiosError.response?.data?.message
-            || (axiosError.request ? 'Could not reach the server. Check your connection.'
-              : 'Something went wrong. Try again.')
-          setSrvError(message)
+        catch ( error ) {
+            setSrvError(getApiErrorMessage(error))
         }
-        finally
-        {
+        finally {
           setLoading(false)
         }
     }
 
     return (
         <Layout>
-            <h1 className="font-display font-extrabold text-[32px] text-slate-900 tracking-tight mb-8">
+            <h1 className="font-display font-extrabold text-[clamp(22px,8vw,32px)] text-slate-900 tracking-tight mb-8">
                 Welcome back!
             </h1>
 
@@ -83,15 +70,15 @@ export default function SignInPage() {
                 <input
                     type="text"
                     placeholder="Enter your username or email..."
-                    value={identifier}
-                    onChange={e => { setIdentifier(e.target.value); setSrvError(null) }}
+                    value={form.identifier}
+                    onChange={updateField('identifier')}
                     required
                     className="w-full px-3.5 py-3 border border-slate-200 rounded-lg font-body text-sm text-slate-900 bg-white outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/15 placeholder:text-slate-400"
                 />
                 <PasswordInput
                     placeholder="Enter your password..."
-                    value={password}
-                    onChange={e => { setPassword(e.target.value); setSrvError(null) }}
+                    value={form.password}
+                    onChange={updateField('password')}
                 />
                 <button
                     type="submit"
