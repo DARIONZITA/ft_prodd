@@ -3,7 +3,7 @@ import { oauthCallbackController, oauthLoginController }    from './oauth.contro
 
 const   oauthRouter = Router();
 
-/**
+/*
  * GET /auth/oauth/login
  * 
  * Inicia o fluxo OAuth. Gera state + PKCE e redireciona para o 42 Intra.
@@ -12,7 +12,7 @@ const   oauthRouter = Router();
 
 oauthRouter.get( '/login', oauthLoginController);
 
-/**
+/*
  * GET /auth/oauth/callback
  * 
  * O 42 Intra redireciona aqui depois do utilizador autorizar.

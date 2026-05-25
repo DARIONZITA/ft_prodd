@@ -10,6 +10,17 @@ const options = {
 			version: '1.0.0',
 			description: 'API documentation for the FT Prodd backend',
 		},
+		tags: [
+			{ name: 'Auth', description: 'Authentication endpoints' },
+			{ name: 'Users', description: 'User profile management' },
+			{ name: 'Workspaces', description: 'Manage workspaces and members' },
+			{ name: 'Badges', description: 'Manage badges' },
+			{ name: 'API Keys', description: 'Manage API keys for external access' },
+			{ name: 'Public API', description: `Public API endpoints secured with API key authentication.\n
+All endpoints limited to 30 requests per minute.\n
+Write operations have additional limit of 10 requests per minute (POST, PUT, DELETE)`
+			},
+		],
 		servers: [
 			{
 				url: 'http://localhost:3001/api',
@@ -44,6 +55,15 @@ const options = {
 						nickname: { type: 'string' },
 						email: { type: 'string' },
 						avatarUrl: { type: 'string' },
+						createdAt: { type: 'string', format: 'date-time' },
+						updatedAt: { type: 'string', format: 'date-time' },
+					},
+				},
+				ApiKey: {
+					type: 'object',
+					properties: {
+						id: { type: 'integer' },
+						name: { type: 'string' },
 						createdAt: { type: 'string', format: 'date-time' },
 						updatedAt: { type: 'string', format: 'date-time' },
 					},

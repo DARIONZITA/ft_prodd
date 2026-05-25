@@ -10,6 +10,7 @@ import friendRoutes from './routes/private/friends.router';
 import { errorHandler } from './middleware/errorHandler';
 import { setupSwagger } from './swagger';
 import publicAPIRouter from './routes/public/api.router';
+import apiKeyRouter from './routes/private/keys.router';
 
 export const app = express();
 
@@ -27,6 +28,7 @@ app.get('/api/health', (_req: Request, res: Response) => {
 
 app.use('/api/auth', authRoutes);
 app.use('/api/public', publicAPIRouter);
+app.use('/api/keys', apiKeyRouter);
 app.use('/api/workspaces', workspaceRoutes);
 app.use('/api/badges', badgeRoutes);
 

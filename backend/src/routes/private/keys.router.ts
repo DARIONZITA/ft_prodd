@@ -6,10 +6,85 @@ const   apiKeyRouter = Router( );
 
 apiKeyRouter.use( authenticate );
 
+/**
+ * @swagger
+ * /keys:
+ *   get:
+ *     summary: List all API keys for the authenticated user
+ *     tags: [API Keys]
+ *     security:
+ *       - BearerAuth: []
+ *     responses:
+ *       200:
+ *         description: List of API keys
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success: { type: boolean }
+ *                 data:
+ *                   type: array
+ *                   items: { $ref: '#/components/schemas/ApiKey' }
+ *       401:
+ *         description: Unauthorized
+ */
+
 apiKeyRouter.get('/', listApiKeys);
+
+
+/**
+ * @swagger
+ * /keys:
+ *   post:
+ *     summary: Create a new API key
+ *     tags: [API Keys]
+ *     security:
+ *       - BearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name: { type: string, example: "My API Key" }
+ *     responses:
+ *       201:
+ *         description: API key created
+ *       400:
+ *         description: Invalid input
+ *       401:
+ *         description: Unauthorized
+ */
 
 apiKeyRouter.post('/', createApiKey);
 
+
+/** * @swagger
+ * /keys/{id}:
+ *   delete:
+ *     summary: Delete an API key
+ *     tags: [API Keys]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *     responses:
+ *       200:
+ *         description: API key deleted
+ *       400:
+ *         description: Invalid input
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - User does not own the API key
+ *       404:
+ *         description: API key not found
+ */
 apiKeyRouter.delete('/:id', deleteApiKey);
 
 export default  apiKeyRouter;

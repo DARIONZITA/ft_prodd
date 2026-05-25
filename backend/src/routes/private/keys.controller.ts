@@ -1,8 +1,8 @@
+import type { Request, Response, NextFunction }         from 'express';
 import crypto                                           from 'crypto';
-import { prisma }                                       from '../../index';
+import { prisma }                                       from '../../lib/prisma';
 import { ApiError }                                     from '../../utils/ApiError';
 import { createApiKeySchema, requestParamsIdSchema }    from '../../validations/api';
-import type { Request, Response, NextFunction }         from 'express';
 import { hashApiKey }                                   from '../../utils/encryption';
 
 export async function   listApiKeys( req : Request, res : Response, next : NextFunction )
@@ -11,7 +11,7 @@ export async function   listApiKeys( req : Request, res : Response, next : NextF
     {
         const   keys = await prisma.apiKey.findMany(
         {
-            where:  { userId: req.user.id },
+            where:  { userId: req.user!.id },
             select: { id: true, name: true, createdAt: true, updatedAt: true },
             orderBy: { createdAt: 'desc' } ,
         });
@@ -34,7 +34,7 @@ export async function   createApiKey( req : Request, res : Response, next : Next
 
         const   apiKey = prisma.apiKey.create(
         {
-            data: { keyHash, name: result.data.name, userId: req.user.id },
+            data: { keyHash, name: result.data.name, userId: req.user!.id },
             select: { id: true, name: true, createdAt: true },
         });
 
@@ -62,7 +62,7 @@ export async function   deleteApiKey( req : Request, res : Response, next : Next
 
         if (!apiKey)
             return (next( new ApiError(404, "API Key not found") ));
-        if (apiKey.userId !== req.user.id)
+        if (apiKey.userId !== req.user!.id)
             return (next( new ApiError(403, "Forbidden")));
 
         await prisma.apiKey.delete( { where: { id } } );

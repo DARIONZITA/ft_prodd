@@ -15,10 +15,15 @@ publicAPIRouter.use( apiKeyAuth );
  * @swagger
  * /public/workspaces:
  *   get:
- *      summary: List public workspaces, accessible and protected through Public API Key. Rate limited to 30 requests per minute.
+ *      summary: List public workspaces.
  *      tags: [Public API]
  *      security:
  *          - ApiKeyAuth: []
+ *      parameters:
+ *          - in: header
+ *            name: X-API-Key
+ *            required: true
+ *            schema: { type: string }
  *      responses:
  *         200:
  *           description: Workspace list
@@ -44,7 +49,7 @@ publicAPIRouter.get('/workspaces', listUserWorkspaces);
  * @swagger
  * /public/workspaces/{id}:
  *   get:
- *      summary: Get a public workspace details, accessible and protected through Public API Key. Rate limited to 30 requests per minute.
+ *      summary: Get a public workspace details.
  *      tags: [Public API]
  *      security:
  *          - ApiKeyAuth: []
@@ -53,6 +58,10 @@ publicAPIRouter.get('/workspaces', listUserWorkspaces);
  *            name: id
  *            required: true
  *            schema: { type: integer }
+ *          - in: header
+ *            name: X-API-Key
+ *            required: true
+ *            schema: { type: string }
  *      responses:
  *          200:
  *              description: Workspace details with members and activity logs
@@ -73,10 +82,15 @@ publicAPIRouter.get('/workspaces/:id', getWorkspaceDetails);
  * @swagger
  * /public/workspaces:
  *   post:
- *     summary: Create a new workspace through Public API Key. Rate limited to 10 writes per minute, besides the general rate limit of 30 requests per minute.
+ *     summary: Create a new public workspace.
  *     tags: [Public API]
  *     security:
  *       - ApiKeyAuth: []
+ *     parameters:
+ *       - in: header
+ *         name: X-API-Key
+ *         required: true
+ *         schema: { type: string }
  *     requestBody:
  *       required: true
  *       content:
@@ -105,7 +119,7 @@ publicAPIRouter.post('/workspaces', apiWriteRateLimit, createWorkspace);
  * @swagger
  * /public/workspaces/{id}:
  *   put:
- *     summary: Update workspace details through Public API Key. Rate limited to 10 writes per minute, besides the general rate limit of 30 requests per minute.
+ *     summary: Update public workspace details.
  *     tags: [Public API]
  *     security:
  *       - ApiKeyAuth: []
@@ -114,6 +128,10 @@ publicAPIRouter.post('/workspaces', apiWriteRateLimit, createWorkspace);
  *         name: id
  *         required: true
  *         schema: { type: integer }
+ *       - in: header
+ *         name: X-API-Key
+ *         required: true
+ *         schema: { type: string }
  *     requestBody:
  *       required: true
  *       content:
@@ -143,7 +161,7 @@ publicAPIRouter.put('/workspaces/:id', apiWriteRateLimit, updateWorkspace);
  * @swagger
  * /public/workspaces/{id}:
  *   delete:
- *     summary: Delete a workspace through Public API Key. Rate limited to 10 writes per minute, besides the general rate limit of 30 requests per minute.
+ *     summary: Delete a public workspace.
  *     tags: [Public API]
  *     security:
  *       - ApiKeyAuth: []
