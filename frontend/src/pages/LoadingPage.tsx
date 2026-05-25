@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import api                      from '../api/axios'
+import { useNavigate }          from 'react-router-dom'
+import { useEffect, useState }  from 'react'
 
 interface LoadingPageProps {
   message?: string
@@ -37,9 +38,7 @@ export default function LoadingPage(props: LoadingPageProps) {
     {
       // Replace history so back button doesn't loop back to loading page
       window.history.replaceState(null, '', window.location.pathname)
-      
-      const base = import.meta.env.VITE_API_URL || 'http://localhost:3001'
-      window.location.href = `${base}/api/auth/42/login`
+      window.location.href = `${api.defaults.baseURL}/api/auth/42/login`
     }
   }, [])
 
