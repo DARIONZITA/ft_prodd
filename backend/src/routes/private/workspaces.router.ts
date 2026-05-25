@@ -5,7 +5,7 @@ import {
 	deleteWorkspace, deleteWorkspaceMember,
 	getWorkspaceDetails, getWorkspaceMember,
 	listUserWorkspaces, listWorkspaceMembers,
-	updateWorkspace, updateWorkspaceMemberRole }	from '../../controllers/private/workspaces.controller';
+	updateWorkspace, updateWorkspaceMemberRole }	from './workspaces.controller';
  
 const router = Router();
 

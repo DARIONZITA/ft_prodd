@@ -1,9 +1,8 @@
-import { Router, Request, Response, NextFunction }	from 'express';
-import { authenticate }								from '../../middleware/auth';
-import { prisma }									from '../../lib/prisma';
-import { ApiError }									from '../../utils/ApiError';
-import { parseOrThrow, parseQueryInt, idSchema }	from '../../validations/utils';
-import { updateUserProfileSchema }					from '../../validations/user';
+import { Router }								from 'express';
+import { authenticate }							from '../../middleware/auth';
+import { deleteUserAccount, getUserActivity,
+	getUserProfile, getUserStats, listUsers,
+	updateUserProfile }							from './users.controller';
 
 const router = Router();
 router.use(authenticate);
@@ -52,40 +51,7 @@ router.use(authenticate);
  *       500:
  *         description: Internal server error
  */
-router.get('/', async (req: Request, res: Response, next: NextFunction) => {
-	try
-    {
-		const skip = parseQueryInt('skip', req.query.skip, { default: 0 });
-		const take = parseQueryInt('take', req.query.take, { default: 42, min: 1, max: 100 });
-
-		const users = await prisma.user.findMany({
-			select: {
-				id: true,
-				nickname: true,
-				bio: true,
-				email: true,
-				avatarUrl: true,
-				createdAt: true,
-				updatedAt: true
-			},
-			skip,
-			take,
-			orderBy: { createdAt: 'desc' }
-		});
-
-		const total = await prisma.user.count();
-
-		res.json({
-			success: true,
-			data: {
-                users,
-			    pagination: { skip, take, total }
-			}
-		});
-	} catch (err) {
-		next(err);
-	}
-});
+router.get('/', listUsers);
 
 
 
@@ -134,32 +100,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
  *       500:
  *         description: Internal server error
  */
-router.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
-	try {
-		const id = parseOrThrow(idSchema, 'UserID', req.params.id);
-
-		const user = await prisma.user.findUnique({
-			where: { id },
-			select: {
-				id: true,
-				nickname: true,
-				email: true,
-				bio: true,
-				avatarUrl: true,
-				createdAt: true,
-				updatedAt: true
-			}
-		});
-		if (!user)
-			throw new ApiError(404, 'User not found');
-		res.json({
-			success: true,
-			data: user
-		});
-	} catch (err) {
-		next(err);
-	}
-});
+router.get('/:id', getUserProfile);
 
 
 
@@ -205,43 +146,7 @@ router.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
  *       404:
  *         $ref: '#/components/schemas/ErrorResponse'
  */
-router.patch('/:id', async (req: Request, res: Response, next: NextFunction) => {
-	try {
-		const id = parseOrThrow(idSchema, 'UserID', req.params.id);
-
-		if (req.user!.id !== id)
-			throw new ApiError(403, 'You can only update your own profile');
-
-		const updateData = parseOrThrow(updateUserProfileSchema, 'UpdateUserProfile', req.body);
-
-		const updateFields: any = {};
-		if (updateData.username !== undefined)
-			updateFields.nickname = updateData.username;
-		if (updateData.bio !== undefined)
-			updateFields.bio = updateData.bio;
-
-		const updatedUser = await prisma.user.update({
-			where: { id },
-			data: updateFields,
-			select: {
-				id: true,
-				nickname: true,
-				bio: true,
-				avatarUrl: true,
-				createdAt: true,
-				updatedAt: true
-			}
-		});
-
-		res.json({
-			success: true,
-			message: 'User profile updated successfully',
-			data: updatedUser
-		});
-	} catch (err) {
-		next(err);
-	}
-});
+router.patch('/:id', updateUserProfile);
 
 
 
@@ -260,33 +165,13 @@ router.patch('/:id', async (req: Request, res: Response, next: NextFunction) => 
  *         schema: { type: integer }
  *     responses:
  *       200:
- *         description: User deleted
+ *         description: User deleted successfully
  *       403:
  *         description: Forbidden - can only delete own account
  *       404:
  *         description: User not found
  */
-router.delete('/:id', async (req: Request, res: Response, next: NextFunction) => {
-	try {
-		const id = parseOrThrow(idSchema, 'UserID', req.params.id);
-
-		if (req.user!.id !== id)
-			throw new ApiError(403, 'You can only delete your own account');
-
-		const user = await prisma.user.findUnique({ where: { id } });
-		if (!user)
-			throw new ApiError(404, 'User not found');
-
-		await prisma.user.delete({ where: { id } });
-
-		res.json({
-			success: true,
-			message: 'User account deleted successfully'
-		});
-	} catch (err) {
-		next(err);
-	}
-});
+router.delete('/:id', deleteUserAccount);
 
 
 
@@ -315,41 +200,7 @@ router.delete('/:id', async (req: Request, res: Response, next: NextFunction) =>
  *       404:
  *         description: User not found
  */
-router.get('/:id/activity', async (req: Request, res: Response, next: NextFunction) => {
-	try {
-		const id = parseOrThrow(idSchema, 'UserID', req.params.id);
-		const skip = parseQueryInt('skip', req.query.skip, { default: 0 });
-		const take = parseQueryInt('take', req.query.take, { default: 42, min: 1, max: 100 });
-
-		const user = await prisma.user.findUnique({ where: { id } });
-		if (!user)
-			throw new ApiError(404, 'User not found');
-
-		const activities = await prisma.activityLog.findMany({
-			where: { userId: id },
-			include: {
-				workspace: {
-					select: { id: true, name: true }
-				}
-			},
-			skip,
-			take,
-			orderBy: { createdAt: 'desc' }
-		});
-
-		const total = await prisma.activityLog.count({ where: { userId: id } });
-
-		res.json({
-			success: true,
-			data: {
-				activities,
-				pagination: { skip, take, total }
-			}
-		});
-	} catch (err) {
-		next(err);
-	}
-});
+router.get('/:id/activity', getUserActivity);
 
 
 
@@ -372,61 +223,6 @@ router.get('/:id/activity', async (req: Request, res: Response, next: NextFuncti
  *       404:
  *         description: User not found
  */
-router.get('/:id/stats', async (req: Request, res: Response, next: NextFunction) => {
-	try {
-		const id = parseOrThrow(idSchema, 'UserID', req.params.id);
-
-		const user = await prisma.user.findUnique({ where: { id } });
-		if (!user)
-			throw new ApiError(404, 'User not found');
-
-		const userXP = await prisma.userXP.findFirst({
-            where: { userId: id },
-            orderBy: { createdAt: 'desc' }
-        });
-
-		const badges = await prisma.userBadge.findMany({
-			where: { userId: id },
-			include: {
-				badge: {
-					select: { id: true, name: true, description: true, iconUrl: true }
-				}
-			}
-		});
-
-		const leaderboardEntries = await prisma.leaderboardEntry.findMany({
-			where: { userId: id },
-			include: {
-				workspace: {
-					select: { id: true, name: true }
-				}
-			},
-			orderBy: { weekYear: 'desc' }
-		});
-
-		const totalComments = await prisma.comment.count({
-			where: { authorId: id }
-		});
-
-		const totalTasks = await prisma.taskAssignment.count({
-			where: { userId: id }
-		});
-
-		res.json({
-			success: true,
-			data: {
-				xp: userXP?.xp || 0,
-				badges: badges.map(ub => ub.badge),
-				leaderboardEntries,
-				stats: {
-					totalComments,
-					totalTasks
-				}
-			}
-		});
-	} catch (err) {
-		next(err);
-	}
-});
+router.get('/:id/stats', getUserStats);
 
 export default router;

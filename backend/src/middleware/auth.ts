@@ -7,7 +7,7 @@ export const	authenticate = async ( req : Request, res : Response, next : NextFu
 	const	authHeader = req.headers.authorization;
 
 	if (!authHeader || typeof authHeader !== "string" || !authHeader.startsWith( 'Bearer ' ))
-		return (next(new ApiError(401, "Invalid token format")));
+		return (next(new ApiError(401, "Unexistent or Invalid token format")));
 
 	const	token = authHeader.split(' ')[1];
 

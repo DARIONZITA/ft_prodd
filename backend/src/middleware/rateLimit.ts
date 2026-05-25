@@ -16,13 +16,13 @@ function    extractRequestId( req : Request ) : string
 
 export const    apiRateLimit = ratelimit(
 {
-    windowMs:           15000 * 60,
-    max:                100,
+    windowMs:           60000,
+    max:                30,
     standardHeaders:    true, // Devolve headers `RateLimit-*`
     legacyHeaders:      false, // Desativa os headers `X-RateLimit-*`
     message: {
         success: false,
-        message: "Too many Requests. Please try again in approximately 15 minutes.",
+        message: "Too many Requests. Please try again in approximately 1 minute.",
     },
     keyGenerator : ( req : Request ) => { return ( extractRequestId( req ) ); },
 });
@@ -32,12 +32,12 @@ export const    apiRateLimit = ratelimit(
 export const    apiWriteRateLimit = ratelimit(
 {
     windowMs:           60000, // 1 minuto = 60 mil milissegundos
-    max:                20,
+    max:                10, // Limite de 10 requisições por minuto para operações de escrita
     standardHeaders:    true,
     legacyHeaders:      false,
     message: {
         success: false,
-        message: "API write limit exceeded. Max 20 writes per minute.",
+        message: "API write limit exceeded. Max 10 writes per minute.",
     },
     keyGenerator : ( req : Request ) => { return ( extractRequestId( req ) ); },
 });

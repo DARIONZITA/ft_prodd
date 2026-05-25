@@ -1,25 +1,10 @@
-import { Router, Request, Response, NextFunction }	from 'express';
-import { authenticate }								from '../../middleware/auth';
-import { prisma }									from '../../lib/prisma';
-import { ApiError }									from '../../utils/ApiError';
-import {
-	badgeIdParamsSchema,
-	badgeUserParamsSchema,
-	createBadgeSchema,
-	updateBadgeSchema,
-	assignBadgeSchema
-}													from '../../validations/badge';
+import { Router }										from 'express';
+import { authenticate }									from '../../middleware/auth';
+import { assignBadge, createBadge, deleteBadge,
+	getBadgeDetails, listBadges, listUsersWithBadge,
+	removeBadgeFromUser, updateBadge }					from './badges.controller';
 
 const router = Router();
-
-const parseOrThrow = <T>(schema: { safeParse: (value: unknown) => { success: boolean; data?: T; error?: { issues: Array<{ message: string }> } } }, value: unknown): T => {
-	const result = schema.safeParse(value);
-
-	if (!result.success)
-		throw new ApiError(400, result.error?.issues.map((issue) => issue.message).join(', ') || 'Invalid input');
-
-	return result.data as T;
-};
 
 router.use(authenticate);
 
@@ -50,27 +35,7 @@ router.use(authenticate);
  *       401:
  *         description: Unauthorized
  */
-router.post('/', async (req: Request, res: Response, next: NextFunction) => {
-	try {
-		const { name, description, iconUrl } = parseOrThrow(createBadgeSchema, req.body);
-
-		const badge = await prisma.badge.create({
-			data: {
-				name,
-				description,
-				iconUrl
-			}
-		});
-
-		res.status(201).json({
-			success: true,
-			message: 'Badge created successfully',
-			data: badge
-		});
-	} catch (err) {
-		next(err);
-	}
-});
+router.post('/', createBadge);
 
 /**
  * @swagger
@@ -102,20 +67,7 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
  *       401:
  *         description: Unauthorized
  */
-router.get('/', async (req: Request, res: Response, next: NextFunction) => {
-	try {
-		const badges = await prisma.badge.findMany({
-			orderBy: { createdAt: 'desc' }
-		});
-
-		res.json({
-			success: true,
-			data: badges
-		});
-	} catch (err) {
-		next(err);
-	}
-});
+router.get('/', listBadges);
 
 /**
  * @swagger
@@ -138,39 +90,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
  *       401:
  *         description: Unauthorized
  */
-router.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
-	try {
-		const { id } = parseOrThrow(badgeIdParamsSchema, req.params);
-
-		const badge = await prisma.badge.findUnique({
-			where: { id },
-			include: {
-				userBadges: {
-					include: {
-						user: {
-							select: {
-								id: true,
-								nickname: true,
-								email: true,
-								avatarUrl: true
-							}
-						}
-					}
-				}
-			}
-		});
-
-		if (!badge)
-			throw new ApiError(404, 'Badge not found');
-
-		res.json({
-			success: true,
-			data: badge
-		});
-	} catch (err) {
-		next(err);
-	}
-});
+router.get('/:id', getBadgeDetails);
 
 /**
  * @swagger
@@ -205,37 +125,7 @@ router.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
  *       401:
  *         description: Unauthorized
  */
-router.put('/:id', async (req: Request, res: Response, next: NextFunction) => {
-	try {
-		const { id } = parseOrThrow(badgeIdParamsSchema, req.params);
-		const updateData = parseOrThrow(updateBadgeSchema, req.body);
-
-		if (!updateData.name && !updateData.description && !updateData.iconUrl) {
-			throw new ApiError(400, 'At least one field must be provided');
-		}
-
-		const badge = await prisma.badge.findUnique({ where: { id } });
-		if (!badge)
-			throw new ApiError(404, 'Badge not found');
-
-		const updatedBadge = await prisma.badge.update({
-			where: { id },
-			data: {
-				...(updateData.name && { name: updateData.name }),
-				...(updateData.description && { description: updateData.description }),
-				...(updateData.iconUrl && { iconUrl: updateData.iconUrl })
-			}
-		});
-
-		res.json({
-			success: true,
-			message: 'Badge updated successfully',
-			data: updatedBadge
-		});
-	} catch (err) {
-		next(err);
-	}
-});
+router.put('/:id', updateBadge);
 
 /**
  * @swagger
@@ -258,34 +148,7 @@ router.put('/:id', async (req: Request, res: Response, next: NextFunction) => {
  *       401:
  *         description: Unauthorized
  */
-router.delete('/:id', async (req: Request, res: Response, next: NextFunction) => {
-	try {
-		const { id } = parseOrThrow(badgeIdParamsSchema, req.params);
-
-		const badge = await prisma.badge.findUnique({ where: { id } });
-		if (!badge)
-			throw new ApiError(404, 'Badge not found');
-
-		await prisma.$transaction(async (tx) => {
-			// Delete all user-badge associations first
-			await tx.userBadge.deleteMany({
-				where: { badgeId: id }
-			});
-
-			// Then delete the badge
-			await tx.badge.delete({
-				where: { id }
-			});
-		});
-
-		res.json({
-			success: true,
-			message: 'Badge deleted successfully'
-		});
-	} catch (err) {
-		next(err);
-	}
-});
+router.delete('/:id', deleteBadge);
 
 /**
  * @swagger
@@ -319,52 +182,7 @@ router.delete('/:id', async (req: Request, res: Response, next: NextFunction) =>
  *       401:
  *         description: Unauthorized
  */
-router.post('/:id/assign', async (req: Request, res: Response, next: NextFunction) => {
-	try {
-		const { id } = parseOrThrow(badgeIdParamsSchema, req.params);
-		const { userId } = parseOrThrow(assignBadgeSchema, req.body);
-
-		const badge = await prisma.badge.findUnique({ where: { id } });
-		if (!badge)
-			throw new ApiError(404, 'Badge not found');
-
-		const user = await prisma.user.findUnique({ where: { id: userId } });
-		if (!user)
-			throw new ApiError(404, 'User not found');
-
-		const existingAssignment = await prisma.userBadge.findFirst({
-			where: { badgeId: id, userId }
-		});
-		if (existingAssignment)
-			throw new ApiError(400, 'User already has this badge');
-
-		const userBadge = await prisma.userBadge.create({
-			data: {
-				badgeId: id,
-				userId
-			},
-			include: {
-				badge: true,
-				user: {
-					select: {
-						id: true,
-						nickname: true,
-						email: true,
-						avatarUrl: true
-					}
-				}
-			}
-		});
-
-		res.status(201).json({
-			success: true,
-			message: 'Badge assigned successfully',
-			data: userBadge
-		});
-	} catch (err) {
-		next(err);
-	}
-});
+router.post('/:id/assign', assignBadge);
 
 /**
  * @swagger
@@ -387,52 +205,7 @@ router.post('/:id/assign', async (req: Request, res: Response, next: NextFunctio
  *       401:
  *         description: Unauthorized
  */
-router.get('/:id/users', async (req: Request, res: Response, next: NextFunction) => {
-	try {
-		const { id } = parseOrThrow(badgeIdParamsSchema, req.params);
-
-		const badge = await prisma.badge.findUnique({
-			where: { id },
-			include: {
-				userBadges: {
-					include: {
-						user: {
-							select: {
-								id: true,
-								nickname: true,
-								email: true,
-								avatarUrl: true,
-								createdAt: true
-							}
-						}
-					},
-					orderBy: { createdAt: 'desc' }
-				}
-			}
-		});
-
-		if (!badge)
-			throw new ApiError(404, 'Badge not found');
-
-		res.json({
-			success: true,
-			data: {
-				badge: {
-					id: badge.id,
-					name: badge.name,
-					description: badge.description,
-					iconUrl: badge.iconUrl
-				},
-				users: badge.userBadges.map((ub) => ({
-					...ub.user,
-					assignedAt: ub.createdAt
-				}))
-			}
-		});
-	} catch (err) {
-		next(err);
-	}
-});
+router.get('/:id/users', listUsersWithBadge);
 
 /**
  * @swagger
@@ -459,28 +232,6 @@ router.get('/:id/users', async (req: Request, res: Response, next: NextFunction)
  *       401:
  *         description: Unauthorized
  */
-router.delete('/:id/users/:userId', async (req: Request, res: Response, next: NextFunction) => {
-	try {
-		const { id, userId } = parseOrThrow(badgeUserParamsSchema, req.params);
-
-		const userBadge = await prisma.userBadge.findFirst({
-			where: { badgeId: id, userId }
-		});
-
-		if (!userBadge)
-			throw new ApiError(404, 'Badge assignment not found');
-
-		await prisma.userBadge.delete({
-			where: { id: userBadge.id }
-		});
-
-		res.json({
-			success: true,
-			message: 'Badge removed from user successfully'
-		});
-	} catch (err) {
-		next(err);
-	}
-});
+router.delete('/:id/users/:userId', removeBadgeFromUser);
 
 export default router;

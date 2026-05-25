@@ -1,7 +1,6 @@
 import { WorkspaceRole }							from '@prisma/client';
 import { prisma }									from '../../lib/prisma';
-import { Router, Request, Response, NextFunction }	from 'express';
-import { authenticate }								from '../../middleware/auth';
+import type { Request, Response, NextFunction }     from 'express';
 import { ApiError }									from '../../utils/ApiError';
 import {
 	workspaceIdParamsSchema,
@@ -11,16 +10,7 @@ import {
 	updateWorkspaceSchema,
 	addWorkspaceMemberSchema
 }													from '../../validations/workspace';
-
-
-const parseOrThrow = <T>(schema: { safeParse: (value: unknown) => { success: boolean; data?: T; error?: { issues: Array<{ message: string }> } } }, value: unknown): T => {
-	const result = schema.safeParse(value);
-
-	if (!result.success)
-		throw new ApiError(400, result.error?.issues.map((issue) => issue.message).join(', ') || 'Invalid input');
-
-	return result.data as T;
-};
+import { parseOrThrow }							    from '../../utils/parsing';
 
 const getWorkspaceMembership = async (workspaceId: number, userId: number) => {
 	const membership = await prisma.workspaceMember.findFirst({

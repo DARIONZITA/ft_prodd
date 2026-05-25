@@ -19,10 +19,21 @@ const options = {
 		components: {
 			securitySchemes: {
 				BearerAuth: {
-				type: 'http',
-				scheme: 'bearer',
-				bearerFormat: 'JWT',
-				description: 'JWT token in the Authorization header',
+					type: 'http',
+					scheme: 'bearer',
+					bearerFormat: 'JWT',
+					description: 'JWT token in the Authorization header',
+				},
+				ApiKeyAuth: {
+					type: 'apiKey',
+					in: 'header',
+					name: 'X-API-Key',
+					description: `
+						Public API authentication using API keys.
+
+						Example:
+						X-API-Key: your_api_key_here
+						`,
 				},
 			},
 			schemas: {
