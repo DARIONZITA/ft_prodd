@@ -5,11 +5,11 @@ interface LogoProps {
   fontSize?: string
 }
 
-export default function Logo({ iconSize = 32, fontSize = '18px' }: LogoProps) {
+export default function Logo({ iconSize = 28, fontSize = '16px' }: LogoProps) {
   return (
-    <Link to="/" className="flex items-center gap-2 no-underline">
-      <img src="/ft_prodd( ... ).svg" alt="ft_prodd logo" style={{ width: iconSize, height: iconSize }} />
-      <span className="font-display font-bold tracking-tight text-cyan-600" style={{ fontSize }}>
+    <Link to="/" className="flex items-center gap-2 no-underline shrink-0">
+      <img src="/ft_prodd( ... ).svg" alt="ft_prodd logo" style={{ width: iconSize, height: iconSize }} className="shrink-0" />
+      <span className="font-display font-bold tracking-tight text-cyan-600 whitespace-nowrap" style={{ fontSize }}>
         ft_prodd( <span className="text-indigo-600">...</span> )
       </span>
     </Link>
