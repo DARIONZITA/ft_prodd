@@ -7,8 +7,12 @@ export async function   apiKeyAuth( req : Request, _res : Response, next : NextF
 {
     const   key = req.headers['x-api-key'];
 
-    if (!key || typeof key !== "string")
-        return (next( new ApiError( 401, "Missing or malformed X-API-Key header")));
+    if (!key)
+        return (next( new ApiError( 401, "Missing X-API-Key header" ) ));
+    if (typeof key !== "string")
+        return (next( new ApiError( 401, "X-API-Key header must be a string" ) ));
+    if (key.trim() === "")
+        return (next( new ApiError( 401, "X-API-Key header cannot be empty" ) ));
 
     const   apiKey = await prisma.apiKey.findUnique(
     {

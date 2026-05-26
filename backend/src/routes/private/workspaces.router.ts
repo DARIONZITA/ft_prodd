@@ -142,6 +142,9 @@ router.delete('/:id', deleteWorkspace);
  *         description: Forbidden
  */
 router.get('/:id', getWorkspaceDetails);
+/*
+eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJqb2FvQGV4YW1wbGUuY29tIiwiaWF0IjoxNzc5Nzk4NjI2LCJleHAiOjE3Nzk4ODUwMjZ9.FTP796yPtAjqRtvczKSCYsCdLxA_SMagNWg_AHHERlk
+*/
 
 /**
  * @swagger
@@ -197,6 +200,8 @@ router.post('/:id/members', createWorkspaceMember);
  *         description: Member list
  *       403:
  *         description: Forbidden
+ *       404:
+ *         description: Workspace not found
  */
 router.get('/:id/members', listWorkspaceMembers);
 
@@ -255,6 +260,8 @@ router.get('/:id/members/:userId', getWorkspaceMember);
  *         description: Member updated
  *       403:
  *         description: Only admins can perform this action
+ *       404:
+ *         description: Member not found
  */
 router.put('/:id/members/:userId', updateWorkspaceMemberRole);
 
@@ -280,6 +287,8 @@ router.put('/:id/members/:userId', updateWorkspaceMemberRole);
  *         description: Member removed
  *       403:
  *         description: Only admins can perform this action
+ *       404:
+ *         description: Member not found
  */
 router.delete('/:id/members/:userId', deleteWorkspaceMember);
 

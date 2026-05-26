@@ -19,11 +19,6 @@ publicAPIRouter.use( apiKeyAuth );
  *      tags: [Public API]
  *      security:
  *          - ApiKeyAuth: []
- *      parameters:
- *          - in: header
- *            name: X-API-Key
- *            required: true
- *            schema: { type: string }
  *      responses:
  *         200:
  *           description: Workspace list
@@ -58,10 +53,6 @@ publicAPIRouter.get('/workspaces', listUserWorkspaces);
  *            name: id
  *            required: true
  *            schema: { type: integer }
- *          - in: header
- *            name: X-API-Key
- *            required: true
- *            schema: { type: string }
  *      responses:
  *          200:
  *              description: Workspace details with members and activity logs
@@ -86,11 +77,6 @@ publicAPIRouter.get('/workspaces/:id', getWorkspaceDetails);
  *     tags: [Public API]
  *     security:
  *       - ApiKeyAuth: []
- *     parameters:
- *       - in: header
- *         name: X-API-Key
- *         required: true
- *         schema: { type: string }
  *     requestBody:
  *       required: true
  *       content:
@@ -128,10 +114,6 @@ publicAPIRouter.post('/workspaces', apiWriteRateLimit, createWorkspace);
  *         name: id
  *         required: true
  *         schema: { type: integer }
- *       - in: header
- *         name: X-API-Key
- *         required: true
- *         schema: { type: string }
  *     requestBody:
  *       required: true
  *       content:

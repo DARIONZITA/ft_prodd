@@ -6,8 +6,13 @@ import { ApiError } from '../utils/ApiError';
 export const	authenticate = async ( req : Request, res : Response, next : NextFunction ) => {
 	const	authHeader = req.headers.authorization;
 
-	if (!authHeader || typeof authHeader !== "string" || !authHeader.startsWith( 'Bearer ' ))
-		return (next(new ApiError(401, "Unexistent or Invalid token format")));
+	console.log( `Request: ${req}`);
+	if (!authHeader)
+		return (next(new ApiError(401, "Unexistent Authorization header")));
+	if (typeof authHeader !== "string")
+		return (next(new ApiError(401, "Type of Authorization header must be string")));
+	if (!authHeader.startsWith( 'Bearer ' ) )
+		return (next(new ApiError(401, "Invalid token format")));
 
 	const	token = authHeader.split(' ')[1];
 
