@@ -160,7 +160,16 @@ make health
 make dev
 ```
 
-Runs the project with visible logs for easier debugging.
+Runs the project with visible logs for easier debugging. This starts the frontend development server through the dev profile, without nginx.
+
+To choose the frontend mode directly with Compose:
+
+```bash
+docker compose -f config/docker-compose.yaml up frontend
+docker compose --profile dev -f config/docker-compose.yaml up frontend-dev
+```
+
+By default, frontend development listens on port 5173 in the container and is published on port 5173 on the host. You can change the host port with FRONTEND_DEV_PORT.
 
 ---
 
@@ -255,22 +264,58 @@ This section is designed to be incrementally updated as new features are added, 
 
 In this section, you have access to the main resources that helped us develop this project:
 
-## Example
+## Team Organization and Project Management
 
-- [Module ngx_http_autoindex_module](https://nginx.org/en/docs/http/ngx_http_autoindex_module.html) — nginx\.org
-    **Directives**: *autoindex*
+- [Project Manager vc Product Owner](https://youtu.be/2DwP_3gBGeQ?si=LaIiU4pE2RX_cpnD) — Youtube
 
-- [Module ngx_http_index_module](https://nginx.org/en/docs/http/ngx_http_index_module.html) — nginx\.org
+- [Product Manager vs Project Manager - Project Management Training](https://youtu.be/WGvj_I2L020?si=HpxTi7Bkj9ocWPpb) — Youtube
 
-  ### AI Usage
-  - Helped identify relevant directives from the nginx documentation needed to fulfill the project requirements
-  - Used to validate the addition of new directives allowing users to define resource limits or rely on default values, helping mitigate or reduce the impact of slowloris-style DDoS attacks
+- [Product Owner or Tech Lead, Not Both](https://chris-hand.medium.com/product-owner-lead-engineer-absolute-power-c00323c96b66) — Medium
+
+- [Scrum vs Kanban - What's the Difference?](https://youtu.be/rIaz-l1Kf8w?si=qtOJpXPLZoCcXz0h) — Youtube
+
+- [Basics of Kanban Boards for Project Management with Ricardo Vargas](https://youtu.be/XpK1vXM5Dd0?si=2e1jMqJp8zzNrkUs) — Youtube
+
+- [What is a sprint (software development)?](https://www.techtarget.com/searchsoftwarequality/definition/Scrum-sprint) — TechTarget
+
+- [Trello Tutorial in Ten Minutes (How to Use Trello to Get Your Life Together)](https://youtu.be/en3z928rwus?si=SJI1De0LO2RZApAj) — Youtube
+
 
 ## Frontend
 
+- [The State of State Management in React (useState, Context API, Zustand...)](https://www.youtube.com/watch?v=qqqyUTTS-9g) — Youtube
+
+- [React Query Crash Course - Learn Queries, Mutations, Caching, Optimistic Updates...](https://www.youtube.com/watch?v=e74rB-14-m8) — Youtube
+
+- [React State Management in 2025: What You Actually Need](https://www.developerway.com/posts/react-state-management-2025) — developerway
+
+- [Quickstart Guide](https://dndkit.com/quickstart/) — dndkit
+
+### AI Usage
+
+- 
+
+
 ## Backend
 
+- [CI/CD Explained: The DevOps Skill That Makes You 10x More Valuable](https://www.youtube.com/watch?v=AknbizcLq4w) — Youtube
+
+- [Teste de integração no Node com Jest e SuperTest](https://www.youtube.com/watch?v=L9rHlPtNi3g) — Youtube
+
+- [Criando testes na aplicação com Jest e SuperTest - Code/drops #93](https://www.youtube.com/watch?v=18Dgf7lb9QA) — Youtube
+
+### AI Usage
+
+- 
+
+
 ## Database
+
+- [Aprenda em 13:37: Prisma](https://www.youtube.com/watch?v=uApCW1gcpdE&t=16s) — Youtube
+
+### AI Usage
+
+- 
 
 
 
@@ -519,24 +564,24 @@ erDiagram
 
 ### Core Entities
 
-| Table             | Description                          | Key Fields                                             |
-| ----------------- | ------------------------------------ | ------------------------------------------------------ |
-| `User`            | Platform users                       | `id`, `nickname`, `email`, `passwordHash`, `createdAt` |
-| `Workspace`       | Collaborative workspace              | `id`, `name`, `description`, `createdAt`               |
-| `WorkspaceMember` | Links users to workspaces with roles | `id`, `workspaceId`, `userId`, `role`                  |
+| Table             | Description                          | Key Fields                                                    |
+| ----------------- | ------------------------------------ | ------------------------------------------------------------- |
+| `User`            | Platform users                       | `id`, `nickname`, `email`, `passwordHash`, `totalXp`, `createdAt`       |
+| `Workspace`       | Collaborative workspace              | `id`, `name`, `description`, `totalTask`, `createdAt`        |
+| `WorkspaceMember` | Links users to workspaces with roles | `id`, `workspaceId`, `userId`, `role`                        |
 
 ---
 
 ### Task Management (Kanban)
 
-| Table            | Description                      | Key Fields                                                |
-| ---------------- | -------------------------------- | --------------------------------------------------------- |
-| `Column`         | Task grouping inside a workspace | `id`, `workspaceId`, `name`, `order`                      |
-| `Task`           | Main task entity                 | `id`, `columnId`, `title`, `description`, `orderInColumn` |
-| `TaskAssignment` | Assigns tasks to users           | `taskId`, `userId`                                        |
-| `ChecklistItem`  | Task checklist items             | `id`, `taskId`, `text`, `isCompleted`                     |
-| `Label`          | Reusable labels                  | `id`, `workspaceId`, `name`, `color`                      |
-| `TaskLabel`      | Task-label relationship          | `taskId`, `labelId`                                       |
+| Table            | Description                      | Key Fields                                                                              |
+| ---------------- | -------------------------------- | --------------------------------------------------------------------------------------- |
+| `Column`         | Task grouping inside a workspace | `id`, `workspaceId`, `name`, `order`                                                    |
+| `Task`           | Main task entity                 | `id`, `columnId`, `title`, `description`, `priority`, `dueDate`, `isDone`, `dateCompleted`, `orderInColumn` |
+| `TaskAssignment` | Assigns tasks to users           | `taskId`, `userId`                                                                      |
+| `ChecklistItem`  | Task checklist items             | `id`, `taskId`, `text`, `isCompleted`                                                   |
+| `Label`          | Reusable labels                  | `id`, `workspaceId`, `name`, `color`                                                    |
+| `TaskLabel`      | Task-label relationship          | `taskId`, `labelId`                                                                     |
 
 ---
 
@@ -570,13 +615,15 @@ The schema uses the following main data types:
 
 * **Int**: identifiers, ordering, ranking, XP values
 * **String**: names, descriptions, content, URLs
-* **Boolean**: state flags (e.g., `isCompleted`, `isRead`)
-* **DateTime**: timestamps for entity creation and updates
+* **Boolean**: state flags (e.g., `isCompleted`, `isRead`, `isDone`)
+* **DateTime**: timestamps for entity creation, updates, deadlines (e.g., `dueDate`, `dateCompleted`)
+* **Enum**: categorical values (e.g., `WorkspaceRole`, `NotificationType`, `Priority`)
 
 ### Enums
 
 * `WorkspaceRole`: `admin`, `member`, `guest`
 * `NotificationType`: `mention`, `taskAssignment`, `comment`, `invite`
+* `Priority`: `LOW`, `MEDIUM`, `HIGH`
 
 ---
 

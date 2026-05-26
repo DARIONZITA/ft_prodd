@@ -1,5 +1,5 @@
 import { z } from 'zod';
-
+ 
 const	username_length = { min : 3, max : 42 };
  
 export const	emailSchema = z.object(

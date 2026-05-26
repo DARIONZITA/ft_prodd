@@ -193,7 +193,7 @@ export async function   getUserStats( req: Request, res: Response, next: NextFun
 			}
 		});
 
-		const leaderboardEntries = await prisma.leaderboardEntry.findMany({
+		/*const leaderboardEntries = await prisma.leaderboardEntry.findMany({
 			where: { userId: id },
 			include: {
 				workspace: {
@@ -201,7 +201,7 @@ export async function   getUserStats( req: Request, res: Response, next: NextFun
 				}
 			},
 			orderBy: { weekYear: 'desc' }
-		});
+		});*/
 
 		const totalComments = await prisma.comment.count({
 			where: { authorId: id }
@@ -216,7 +216,7 @@ export async function   getUserStats( req: Request, res: Response, next: NextFun
 			data: {
 				xp: userXP?.xp || 0,
 				badges: badges.map(ub => ub.badge),
-				leaderboardEntries,
+				//leaderboardEntries,
 				stats: {
 					totalComments,
 					totalTasks

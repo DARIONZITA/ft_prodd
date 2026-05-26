@@ -1,25 +1,12 @@
-import { Clock, GitCommit, Code2, Terminal, Layers, Zap, Lock } from 'lucide-react'
+import { Clock } from 'lucide-react'
+import { SHARED_BADGES } from '../gamification/SharedBadges'
+import type { BadgeItem } from '../gamification/Types'
 
-interface Achievement {
-  id: string
-  label: string
-  description: string
-  Icon: React.ElementType
-  color: string
-  unlockedAt?: string
-}
-
-export const DEFAULT_ACHIEVEMENTS: Achievement[] = [
-  { id: 'first-commit',     label: 'First Commit',     description: 'Complete your first task',  Icon: GitCommit, color: 'bg-emerald-500', unlockedAt: 'Mar 15' },
-  { id: 'code-master',      label: 'Code Master',      description: 'Complete 5 sprints',        Icon: Code2,     color: 'bg-blue-600',   unlockedAt: 'Mar 2'  },
-  { id: 'bug-terminator',   label: 'Bug Terminator',   description: 'Fix 10 critical bugs',      Icon: Terminal,  color: 'bg-red-500',    unlockedAt: 'Mar 18' },
-  { id: 'system-architect', label: 'System Architect', description: 'Design 3 systems',          Icon: Layers,    color: 'bg-purple-600', unlockedAt: 'Mar 15' },
-  { id: 'performance-guru', label: 'Performance Guru', description: 'Optimize 5 paths',          Icon: Zap,       color: 'bg-slate-200'   },
-  { id: 'security-expert',  label: 'Security Expert',  description: 'Pass 10 audits',            Icon: Lock,      color: 'bg-slate-200'   },
-]
+// Re-export shared badges for direct use
+export const DEFAULT_ACHIEVEMENTS: BadgeItem[] = SHARED_BADGES
 
 interface AchievementsProps {
-  achievements: Achievement[]
+  achievements: BadgeItem[]
 }
 
 export default function Achievements({ achievements }: AchievementsProps) {
@@ -27,8 +14,8 @@ export default function Achievements({ achievements }: AchievementsProps) {
     <div className="bg-white border border-slate-200 rounded-xl p-5">
       <h2 className="font-display font-bold text-sm text-slate-900 mb-4">Achievements</h2>
       <div className="grid grid-cols-3 gap-3">
-        {achievements.map(({ id, label, description, Icon, color, unlockedAt }) => {
-          const locked = !unlockedAt
+        {achievements.map(({ id, name, description, Icon, color, earnedAt }) => {
+          const locked = !earnedAt
           return (
             <div
               key={id}
@@ -42,15 +29,15 @@ export default function Achievements({ achievements }: AchievementsProps) {
                 </div>
                 <div className="min-w-0">
                   <h3 className={`font-display text-[11px] font-bold leading-tight ${locked ? 'text-slate-500' : 'text-slate-900'}`}>
-                    {label}
+                    {name}
                   </h3>
                   <p className="font-body text-[9px] text-slate-400 leading-tight mt-0.5">{description}</p>
                 </div>
               </div>
-              {unlockedAt && (
+              {earnedAt && (
                 <div className="mt-auto pt-2 font-mono text-[9px] font-bold text-slate-400 flex items-center gap-1">
                   <Clock size={10} />
-                  {unlockedAt}
+                  {earnedAt}
                 </div>
               )}
             </div>

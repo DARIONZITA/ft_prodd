@@ -6,7 +6,6 @@ import { ApiError } from '../utils/ApiError';
 export const	authenticate = async ( req : Request, res : Response, next : NextFunction ) => {
 	const	authHeader = req.headers.authorization;
 
-	console.log( `Request: ${req}`);
 	if (!authHeader)
 		return (next(new ApiError(401, "Unexistent Authorization header")));
 	if (typeof authHeader !== "string")

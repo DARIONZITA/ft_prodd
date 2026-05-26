@@ -36,8 +36,3 @@ app.use(errorHandler);
 app.use('/api/users', userRoutes);
 app.use('/api/friends', friendRoutes);
 app.use(errorHandler);
-
-
-//import { PrismaClient } from '@prisma/client';
-
-//export const	prisma = new PrismaClient( { datasources: { db: { url: env.DATABASE_URL }, } } );

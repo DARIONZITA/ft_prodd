@@ -6,6 +6,7 @@ DOCKER-COMPOSE = ./config/docker-compose.yaml
 ENV_FILE = ./config/.env
 
 DOCKER := docker compose -f $(DOCKER-COMPOSE) --env-file $(ENV_FILE)
+FRONTEND_DEV_PORT ?= 5173
 
 .PHONY: help setup up down restart logs ps clean rebuild rebuild-all rebuild-% health migrate dev test
 
@@ -63,8 +64,9 @@ health: ## Verificar saúde dos serviços
 migrate: ## Executar migrations do banco de dados
 	@./scripts/migrate.sh
 
-dev: ## Modo desenvolvimento (com logs visíveis)
-	@./scripts/dev.sh
+dev: ## Modo desenvolvimento (com logs visíveis) docker compose --profile dev up frontend-dev
+	@FRONTEND_DEV_PORT=$(FRONTEND_DEV_PORT) $(DOCKER) --profile dev up frontend-dev
+	
 
 # ===========================
 # LOGS POR SERVIÇO
