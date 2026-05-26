@@ -35,5 +35,5 @@ export const    createApiKeySchema = z.object(
 
 export const    requestParamsIdSchema = z.object(
 {
-    id: z.number().int("Id in request params must be an integer").nonnegative("Id in request params must be a non-negative integer"),
+    id: z.coerce.number().int("Id in request params must be an integer").nonnegative("Id in request params must be a non-negative integer"),
 });

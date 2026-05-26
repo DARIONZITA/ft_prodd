@@ -32,7 +32,7 @@ export async function   createApiKey( req : Request, res : Response, next : Next
         const   raw_key = `pk_${crypto.randomBytes(32).toString('hex')}`;
         const   keyHash = hashApiKey( raw_key );
 
-        const   apiKey = prisma.apiKey.create(
+        const   apiKey = await prisma.apiKey.create(
         {
             data: { keyHash, name: result.data.name, userId: req.user!.id },
             select: { id: true, name: true, createdAt: true },
