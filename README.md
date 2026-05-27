@@ -566,7 +566,7 @@ erDiagram
 
 | Table             | Description                          | Key Fields                                                    |
 | ----------------- | ------------------------------------ | ------------------------------------------------------------- |
-| `User`            | Platform users                       | `id`, `nickname`, `email`, `passwordHash`, `totalXp`, `createdAt`       |
+| `User`            | Platform users                       | `id`, `username`, `email`, `passwordHash`, `totalXp`, `createdAt`       |
 | `Workspace`       | Collaborative workspace              | `id`, `name`, `description`, `totalTask`, `createdAt`        |
 | `WorkspaceMember` | Links users to workspaces with roles | `id`, `workspaceId`, `userId`, `role`                        |
 
@@ -630,7 +630,7 @@ The schema uses the following main data types:
 ## Modeling Rules
 
 * All entities use an auto-increment `id` as the primary key
-* `email` and `nickname` in `User` are unique
+* `email` and `username` in `User` are unique
 * Many-to-many relationships are handled through junction tables
 * Optional fields are used to support flexible relationships (e.g., notifications and reactions)
 

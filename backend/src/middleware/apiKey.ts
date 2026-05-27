@@ -17,7 +17,7 @@ export async function   apiKeyAuth( req : Request, _res : Response, next : NextF
     const   apiKey = await prisma.apiKey.findUnique(
     {
         where: { keyHash: hashApiKey( key ) },
-        include: { user: { select: { id: true, email: true, nickname : true } } },
+        include: { user: { select: { id: true, email: true, username : true } } },
     });
 
     if (!apiKey)

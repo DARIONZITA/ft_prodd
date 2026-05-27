@@ -184,7 +184,7 @@ export async function   getWorkspaceDetails(req: Request, res: Response, next: N
                         user: {
                             select: {
                                 id: true,
-                                nickname: true,
+                                username: true,
                                 email: true,
                                 avatarUrl: true
                             }
@@ -199,7 +199,7 @@ export async function   getWorkspaceDetails(req: Request, res: Response, next: N
                         user: {
                             select: {
                                 id: true,
-                                nickname: true,
+                                username: true,
                                 avatarUrl: true
                             }
                         }
@@ -268,7 +268,7 @@ export async function   createWorkspaceMember(req: Request, res: Response, next:
                     user: {
                         select: {
                             id: true,
-                            nickname: true,
+                            username: true,
                             email: true,
                             avatarUrl: true
                         }
@@ -312,7 +312,7 @@ export async function listWorkspaceMembers(req: Request, res: Response, next: Ne
                 user: {
                     select: {
                         id: true,
-                        nickname: true,
+                        username: true,
                         email: true,
                         avatarUrl: true
                     }
@@ -341,7 +341,7 @@ export async function   getWorkspaceMember(req: Request, res: Response, next: Ne
                 user: {
                     select: {
                         id: true,
-                        nickname: true,
+                        username: true,
                         email: true,
                         avatarUrl: true
                     }
@@ -389,7 +389,7 @@ export async function   updateWorkspaceMemberRole(req: Request, res: Response, n
                     user: {
                         select: {
                             id: true,
-                            nickname: true,
+                            username: true,
                             email: true,
                             avatarUrl: true
                         }

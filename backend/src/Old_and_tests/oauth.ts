@@ -108,13 +108,13 @@ router.get( '/callback', async ( req, res, next ) => {
         const   intraUser = intraUserResult.data;
         const   intraID = intraUser.id;
         const   intraEmail = intraUser.email ?? '';
-        const   intraNickname = intraUser.login;
+        const   intraUsername = intraUser.login;
         const   intraAvatar = intraUser.image?.link ?? '';
 
         let user = await prisma.user.findUnique(
         {
             where: { fortyTwoId: intraID },
-            select: { id: true, nickname: true, email: true, avatarUrl: true },
+            select: { id: true, username: true, email: true, avatarUrl: true },
         });
 
         if (!user)
@@ -122,7 +122,7 @@ router.get( '/callback', async ( req, res, next ) => {
             const   emailExists = await prisma.user.findUnique(
             {
                 where: { email: intraEmail },
-                select: { id: true, nickname: true, email: true, avatarUrl: true, fortyTwoId: true },
+                select: { id: true, username: true, email: true, avatarUrl: true, fortyTwoId: true },
             });
 
             if (emailExists)
@@ -135,19 +135,19 @@ router.get( '/callback', async ( req, res, next ) => {
                 {
                     where: { id: emailExists.id },
                     data: { fortyTwoId: intraID },
-                    select: { id: true, nickname: true, email: true, avatarUrl: true },
+                    select: { id: true, username: true, email: true, avatarUrl: true },
                 });
             }
             else
             {
                 // Criar nova conta para usuário 42
-               // if (await prisma.user.findFirst({ where: { intraNickname } }))
-                //     nickname = `${intraNickname}_${intraID}`;
+               // if (await prisma.user.findFirst({ where: { intraUsername } }))
+                //     username = `${intraUsername}_${intraID}`;
 
                 user = await prisma.user.create(
                 {
-                    data: { nickname: intraNickname, email: intraEmail, avatarUrl: intraAvatar, fortyTwoId: intraID, passwordHash: '' },
-                    select: { id: true, nickname: true, email: true, avatarUrl: true },
+                    data: { username: intraUsername, email: intraEmail, avatarUrl: intraAvatar, fortyTwoId: intraID, passwordHash: '' },
+                    select: { id: true, username: true, email: true, avatarUrl: true },
                 });
             }
         }

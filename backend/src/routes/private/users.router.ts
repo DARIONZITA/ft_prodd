@@ -108,7 +108,7 @@ router.get('/:id', getUserProfile);
  * @swagger
  * /users/{id}:
  *   patch:
- *     summary: Update user profile (nickname and bio only)
+ *     summary: Update user profile (username and bio only)
  *     tags: [Users]
  *     security:
  *       - BearerAuth: []

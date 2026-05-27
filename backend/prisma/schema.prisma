@@ -35,7 +35,7 @@ enum Priority {
 
 model User {
     id           Int      @id @default(autoincrement())
-    nickname     String   //@unique
+    username     String   //@unique
     bio          String   @default("")
     email        String   @unique
     fortyTwoId   Int?     @unique

@@ -70,7 +70,7 @@ async function  findOrCreateUser( intraUser : IntraUser ) : Promise<OauthCallbac
     let user = await prisma.user.findUnique(
     {
         where: { fortyTwoId: intraUser.id },
-        select: { id: true, nickname: true, email: true, avatarUrl: true, fortyTwoId: true },
+        select: { id: true, username: true, email: true, avatarUrl: true, fortyTwoId: true },
     });
 
     if (!user)
@@ -78,7 +78,7 @@ async function  findOrCreateUser( intraUser : IntraUser ) : Promise<OauthCallbac
         const   emailExists = await prisma.user.findUnique(
         {
             where: { email: intraUser.email },
-            select: { id: true, nickname: true, email: true, avatarUrl: true, fortyTwoId: true },
+            select: { id: true, username: true, email: true, avatarUrl: true, fortyTwoId: true },
         });
 
         if (emailExists)
@@ -91,19 +91,19 @@ async function  findOrCreateUser( intraUser : IntraUser ) : Promise<OauthCallbac
             {
                 where: { id: emailExists.id },
                 data: { fortyTwoId: intraUser.id },
-                select: { id: true, nickname: true, email: true, avatarUrl: true, fortyTwoId: true },
+                select: { id: true, username: true, email: true, avatarUrl: true, fortyTwoId: true },
             });
         }
         else
         {
             // Criar nova conta para usuário 42
-            // if (await prisma.user.findFirst({ where: { intraNickname } }))
-            //     nickname = `${intraNickname}_${intraID}`;
+            // if (await prisma.user.findFirst({ where: { intraUsername } }))
+            //     username = `${intraUsername}_${intraID}`;
 
             user = await prisma.user.create(
             {
-                data: { nickname: intraUser.login, email: intraUser.email, avatarUrl: intraUser.image?.link ?? '', fortyTwoId: intraUser.id, passwordHash: '' },
-                select: { id: true, nickname: true, email: true, avatarUrl: true, fortyTwoId: true },
+                data: { username: intraUser.login, email: intraUser.email, avatarUrl: intraUser.image?.link ?? '', fortyTwoId: intraUser.id, passwordHash: '' },
+                select: { id: true, username: true, email: true, avatarUrl: true, fortyTwoId: true },
             });
         }
     }

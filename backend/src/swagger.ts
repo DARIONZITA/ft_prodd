@@ -52,7 +52,7 @@ Write operations have additional limit of 10 requests per minute (POST, PUT, DEL
 					type: 'object',
 					properties: {
 						id: { type: 'string' },
-						nickname: { type: 'string' },
+						username: { type: 'string' },
 						email: { type: 'string' },
 						avatarUrl: { type: 'string' },
 						createdAt: { type: 'string', format: 'date-time' },
@@ -132,7 +132,7 @@ Write operations have additional limit of 10 requests per minute (POST, PUT, DEL
 				UpdateUserProfileRequest: {
 					type: 'object',
 					properties: {
-						nickname: { type: 'string', minLength: 3, maxLength: 42 },
+						username: { type: 'string', minLength: 3, maxLength: 42 },
 						bio: { type: 'string', maxLength: 142 },
 					},
 					additionalProperties: false,

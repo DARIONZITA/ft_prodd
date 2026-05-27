@@ -14,7 +14,7 @@ export async function   listUsers( req: Request, res: Response, next: NextFuncti
 		const users = await prisma.user.findMany({
 			select: {
 				id: true,
-				nickname: true,
+				username: true,
 				bio: true,
 				email: true,
 				avatarUrl: true,
@@ -50,7 +50,7 @@ export async function   getUserProfile( req: Request, res: Response, next: NextF
 			where: { id },
 			select: {
 				id: true,
-				nickname: true,
+				username: true,
 				email: true,
 				bio: true,
 				avatarUrl: true,
@@ -82,7 +82,7 @@ export async function   updateUserProfile( req: Request, res: Response, next: Ne
 
 		const updateFields: any = {};
 		if (updateData.username !== undefined)
-			updateFields.nickname = updateData.username;
+			updateFields.username = updateData.username;
 		if (updateData.bio !== undefined)
 			updateFields.bio = updateData.bio;
 
@@ -91,7 +91,7 @@ export async function   updateUserProfile( req: Request, res: Response, next: Ne
 			data: updateFields,
 			select: {
 				id: true,
-				nickname: true,
+				username: true,
 				bio: true,
 				avatarUrl: true,
 				createdAt: true,

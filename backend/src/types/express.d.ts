@@ -11,7 +11,7 @@ declare global
 			user? : {
 				id: number,
 				email?: string,
-				nickname?: string,
+				username?: string,
 				avatarUrl?: string,
 			}
 		}

@@ -146,7 +146,7 @@ describe('Workspace routes - Advanced Permissions System', () => {
 			role: 'guest',
 			user: {
 				id: 7,
-				nickname: 'user7',
+				username: 'user7',
 				email: 'user7@email.com',
 				avatarUrl: ''
 			}
@@ -380,7 +380,7 @@ describe('Workspace routes - Advanced Permissions System', () => {
 
 			prismaMock.user.findUnique.mockResolvedValueOnce({
 				id: 7,
-				nickname: 'newuser',
+				username: 'newuser',
 				email: 'new@example.com'
 			});
 
@@ -392,7 +392,7 @@ describe('Workspace routes - Advanced Permissions System', () => {
 							workspaceId: 1,
 							userId: 7,
 							role: 'member',
-							user: { id: 7, nickname: 'newuser', email: 'new@example.com' }
+							user: { id: 7, username: 'newuser', email: 'new@example.com' }
 						})
 					},
 					workspace: { update: jest.fn() },
@@ -473,7 +473,7 @@ describe('Workspace routes - Advanced Permissions System', () => {
 
 			prismaMock.user.findUnique.mockResolvedValueOnce({
 				id: 7,
-				nickname: 'newuser',
+				username: 'newuser',
 				email: 'new@example.com'
 			});
 

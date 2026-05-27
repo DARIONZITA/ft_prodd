@@ -3,7 +3,7 @@ import { IntraUser } from '../validations/auth';
 export interface ApiUser
 {
     id: number;
-    nickname: string;
+    username: string;
     email: string;
     avatarUrl: string;
     fortyTwoId: number | null;

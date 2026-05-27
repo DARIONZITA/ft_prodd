@@ -51,10 +51,10 @@ export async function   sendFriendRequest(req: Request, res: Response, next: Nex
                     data: { status: 'accepted' },
                     include: {
                         sender: {
-                            select: { id: true, nickname: true, email: true, avatarUrl: true }
+                            select: { id: true, username: true, email: true, avatarUrl: true }
                         },
                         receiver: {
-                            select: { id: true, nickname: true, email: true, avatarUrl: true }
+                            select: { id: true, username: true, email: true, avatarUrl: true }
                         }
                     }
                 });
@@ -70,10 +70,10 @@ export async function   sendFriendRequest(req: Request, res: Response, next: Nex
                 },
                 include: {
                     sender: {
-                        select: { id: true, nickname: true, email: true, avatarUrl: true }
+                        select: { id: true, username: true, email: true, avatarUrl: true }
                     },
                     receiver: {
-                        select: { id: true, nickname: true, email: true, avatarUrl: true }
+                        select: { id: true, username: true, email: true, avatarUrl: true }
                     }
                 }
             });
@@ -113,10 +113,10 @@ export async function   updateFriendRequest(req: Request, res: Response, next: N
 			data: { status },
 			include: {
 				sender: {
-					select: { id: true, nickname: true, email: true, avatarUrl: true }
+					select: { id: true, username: true, email: true, avatarUrl: true }
 				},
 				receiver: {
-					select: { id: true, nickname: true, email: true, avatarUrl: true }
+					select: { id: true, username: true, email: true, avatarUrl: true }
 				}
 			}
 		});
@@ -206,7 +206,7 @@ export async function   getFriends(req: Request, res: Response, next: NextFuncti
 					where: { id: friendId },
 					select: {
 						id: true,
-						nickname: true,
+						username: true,
 						email: true,
 						avatarUrl: true,
 						createdAt: true,
@@ -282,7 +282,7 @@ export async function   getOnlineFriends(req: Request, res: Response, next: Next
 					where: { id: friendId },
 					select: {
 						id: true,
-						nickname: true,
+						username: true,
 						email: true,
 						avatarUrl: true,
 						createdAt: true,

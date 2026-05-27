@@ -63,7 +63,7 @@ export async function   getBadgeDetails(req: Request, res: Response, next: NextF
 						user: {
 							select: {
 								id: true,
-								nickname: true,
+								username: true,
 								email: true,
 								avatarUrl: true
 							}
@@ -178,7 +178,7 @@ export async function   assignBadge(req: Request, res: Response, next: NextFunct
 				user: {
 					select: {
 						id: true,
-						nickname: true,
+						username: true,
 						email: true,
 						avatarUrl: true
 					}
@@ -209,7 +209,7 @@ export async function   listUsersWithBadge(req: Request, res: Response, next: Ne
 						user: {
 							select: {
 								id: true,
-								nickname: true,
+								username: true,
 								email: true,
 								avatarUrl: true,
 								createdAt: true

@@ -53,15 +53,15 @@ router.post( '/signup',
 
 		try
 		{
-			const	existing = await prisma.user.findFirst({ where: { OR: [ { email }, { nickname: username } ] }});
+			const	existing = await prisma.user.findFirst({ where: { OR: [ { email }, { username: username } ] }});
 
 			if (existing)
 				throw new ApiError(409, "Email ou username já existe");
 
 			const	passwordHash = await hashPassword( password );
 			const	user = await prisma.user.create({
-				data: { nickname: username, email, passwordHash, avatarUrl: avatarUrl || '' },
-				select: { id: true, nickname: true, email: true, avatarUrl: true }
+				data: { username: username, email, passwordHash, avatarUrl: avatarUrl || '' },
+				select: { id: true, username: true, email: true, avatarUrl: true }
 			});
 			const	token = generateToken( user.id, user.email );
 
