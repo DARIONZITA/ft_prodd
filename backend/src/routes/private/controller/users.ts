@@ -1,7 +1,9 @@
 import type { Request, Response, NextFunction }     from 'express';
 import { prisma }									from '../../../lib/prisma';
 import { ApiError }									from '../../../utils/ApiError';
-import { parseOrThrow, parseQueryInt, idSchema }	from '../../../validations/utils';
+import { NotificationType }							from '../../../types/enums';
+import { parseOrThrow, parseQueryInt,
+	parseQueryBool, parseQueryEnum, idSchema }		from '../../../validations/utils';
 import { updateUserProfileSchema }					from '../../../validations/user';
 
 export async function   listUsers( req: Request, res: Response, next: NextFunction )
@@ -169,6 +171,130 @@ export async function   getUserActivity( req: Request, res: Response, next: Next
     catch (err) { next(err); }
 }
 
+export async function getUserNotifications(req: Request, res: Response, next: NextFunction)
+{
+	try {
+		const userId = parseOrThrow(idSchema, 'UserID', req.params.id);
+		const skip = parseQueryInt('skip', req.query.skip, { default: 0 });
+		const take = parseQueryInt('take', req.query.take, { default: 42, min: 1, max: 100 });
+		const isRead = req.query.isRead === undefined ? undefined : parseQueryBool('isRead', req.query.isRead);
+		const type = req.query.type === undefined ? undefined : parseQueryEnum('type', req.query.type, NotificationType);
+		const relatedTaskId = req.query.relatedTaskId === undefined ? undefined : parseQueryInt('relatedTaskId', req.query.relatedTaskId, { min: 1 });
+		const relatedWorkspaceId = req.query.relatedWorkspaceId === undefined ? undefined : parseQueryInt('relatedWorkspaceId', req.query.relatedWorkspaceId, { min: 1 });
+
+		const user = await prisma.user.findUnique({ where: { id: userId } });
+		if (!user)
+			throw new ApiError(404, 'User not found');
+
+		const where: any = { userId };
+		if (type) where.type = type;
+		if (isRead !== undefined) where.isRead = isRead;
+		if (relatedTaskId) where.relatedTaskId = relatedTaskId;
+		if (relatedWorkspaceId) where.relatedWorkspaceId = relatedWorkspaceId;
+
+		const notifications = await prisma.notification.findMany({
+			where,
+			orderBy: { createdAt: 'desc' },
+			skip,
+			take
+		});
+
+		const total = await prisma.notification.count({ where });
+
+		res.json({ success: true, data: { notifications, pagination: { skip, take, total } } });
+	} catch (err) { next(err); }
+}
+
+export async function markAllUserNotificationsRead(req: Request, res: Response, next: NextFunction) {
+	try {
+		const userId = parseOrThrow(idSchema, 'UserID', req.params.id);
+		if (req.user!.id !== userId)
+			throw new ApiError(403, 'Not allowed');
+
+		const updated = await prisma.notification.updateMany({ where: { userId, isRead: false }, data: { isRead: true } });
+
+		res.json({ success: true, data: { updatedCount: updated.count } });
+	} catch (err) { next(err); }
+}
+
+export async function   getUserBadges( req: Request, res: Response, next: NextFunction )
+{
+	try
+    {
+		const id = parseOrThrow(idSchema, 'UserID', req.params.id);
+		const skip = parseQueryInt('skip', req.query.skip, { default: 0 });
+		const take = parseQueryInt('take', req.query.take, { default: 42, min: 1, max: 100 });
+
+		const user = await prisma.user.findUnique({ where: { id } });
+		if (!user)
+			throw new ApiError(404, 'User not found');
+
+		const earnedBadges = await prisma.userBadge.findMany({
+			where: { userId: id },
+			include: {
+				badge: {
+					select: { id: true, name: true, description: true, iconUrl: true, createdAt: true, updatedAt: true }
+				}
+			},
+			skip,
+			take,
+			orderBy: { createdAt: 'desc' }
+		});
+
+		const total = await prisma.userBadge.count({ where: { userId: id } });
+
+		res.json({
+			success: true,
+			data: {
+				badges: earnedBadges.map((userBadge: (typeof earnedBadges)[number]) => ({
+					...userBadge.badge,
+					earnedAt: userBadge.createdAt
+				})),
+				pagination: { skip, take, total }
+			}
+		});
+	}
+    catch (err) { next(err); }
+}
+
+export async function   getUserXpHistory( req: Request, res: Response, next: NextFunction )
+{
+	try
+    {
+		const id = parseOrThrow(idSchema, 'UserID', req.params.id);
+		const skip = parseQueryInt('skip', req.query.skip, { default: 0 });
+		const take = parseQueryInt('take', req.query.take, { default: 42, min: 1, max: 100 });
+
+		const user = await prisma.user.findUnique({ where: { id } });
+		if (!user)
+			throw new ApiError(404, 'User not found');
+
+		const xpHistory = await prisma.userXP.findMany({
+			where: { userId: id },
+			select: {
+				id: true,
+				xp: true,
+				createdAt: true,
+				updatedAt: true
+			},
+			skip,
+			take,
+			orderBy: { createdAt: 'desc' }
+		});
+
+		const total = await prisma.userXP.count({ where: { userId: id } });
+
+		res.json({
+			success: true,
+			data: {
+				history: xpHistory,
+				pagination: { skip, take, total }
+			}
+		});
+	}
+    catch (err) { next(err); }
+}
+
 export async function   getUserStats( req: Request, res: Response, next: NextFunction )
 {
 	try
@@ -215,7 +341,7 @@ export async function   getUserStats( req: Request, res: Response, next: NextFun
 			success: true,
 			data: {
 				xp: userXP?.xp || 0,
-				badges: badges.map(ub => ub.badge),
+				badges: badges.map((ub: (typeof badges)[number]) => ub.badge),
 				//leaderboardEntries,
 				stats: {
 					totalComments,

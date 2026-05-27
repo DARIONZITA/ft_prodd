@@ -1,8 +1,8 @@
-import { Router }								from 'express';
-import { authenticate }							from '../../../middleware/auth';
+import { Router }											from 'express';
+import { authenticate }										from '../../../middleware/auth';
 import { deleteUserAccount, getUserActivity,
-	getUserProfile, getUserStats, listUsers,
-	updateUserProfile }							from '../controller/users';
+	getUserBadges, getUserProfile, getUserStats,
+	getUserXpHistory, getUserNotifications, markAllUserNotificationsRead, listUsers, updateUserProfile }		from '../controller/users';
 
 const router = Router();
 router.use(authenticate);
@@ -201,6 +201,134 @@ router.delete('/:id', deleteUserAccount);
  *         description: User not found
  */
 router.get('/:id/activity', getUserActivity);
+
+/**
+ * @swagger
+ * /users/{id}/notifications:
+ *   get:
+ *     summary: Get all notifications for a user
+ *     tags: [Users]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *       - in: query
+ *         name: type
+ *         schema: { type: string, enum: [mention, taskAssignment, comment, invite] }
+ *       - in: query
+ *         name: isRead
+ *         schema: { type: boolean }
+ *       - in: query
+ *         name: relatedTaskId
+ *         schema: { type: integer }
+ *       - in: query
+ *         name: relatedWorkspaceId
+ *         schema: { type: integer }
+ *       - in: query
+ *         name: skip
+ *         schema: { type: integer, default: 0 }
+ *       - in: query
+ *         name: take
+ *         schema: { type: integer, default: 42 }
+ *     responses:
+ *       200:
+ *         description: Notifications list
+ *       404:
+ *         description: User not found
+ */
+router.get('/:id/notifications', getUserNotifications);
+
+/**
+ * @swagger
+ * /users/{id}/notifications/read-all:
+ *   patch:
+ *     summary: Mark all notifications as read for a user
+ *     tags: [Users]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *     responses:
+ *       200:
+ *         description: All notifications marked as read
+ *       403:
+ *         description: Forbidden
+ */
+router.patch('/:id/notifications/read-all', markAllUserNotificationsRead);
+
+
+
+/**
+ * @swagger
+ * /users/{id}/badges:
+ *   get:
+ *     summary: Get user's earned badges
+ *     tags: [Users]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *       - in: query
+ *         name: skip
+ *         schema:
+ *           type: integer
+ *           default: 0
+ *       - in: query
+ *         name: take
+ *         schema:
+ *           type: integer
+ *           default: 42
+ *     responses:
+ *       200:
+ *         description: User badges retrieved successfully
+ *       404:
+ *         description: User not found
+ */
+router.get('/:id/badges', getUserBadges);
+
+
+
+/**
+ * @swagger
+ * /users/{id}/xp:
+ *   get:
+ *     summary: Get XP history
+ *     tags: [Users]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *       - in: query
+ *         name: skip
+ *         schema:
+ *           type: integer
+ *           default: 0
+ *       - in: query
+ *         name: take
+ *         schema:
+ *           type: integer
+ *           default: 42
+ *     responses:
+ *       200:
+ *         description: XP history retrieved successfully
+ *       404:
+ *         description: User not found
+ */
+router.get('/:id/xp', getUserXpHistory);
 
 
 
