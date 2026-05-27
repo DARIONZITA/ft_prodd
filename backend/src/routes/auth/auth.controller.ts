@@ -60,7 +60,7 @@ export async function   signinController( req : Request, res : Response, next : 
         const	token = generateToken( user.id, user.email );
         const	{ passwordHash, ...userWithoutPassword } = user;
 
-        res.status(200).json( { success: true, message: "Signin successfully", token, userWithoutPassword } ); 
+        res.status(200).json( { success: true, message: "Signin successfully", token, user: userWithoutPassword } );
     }
     catch ( err ) { next( err ); }
 }

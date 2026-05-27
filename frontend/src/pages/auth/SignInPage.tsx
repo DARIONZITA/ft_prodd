@@ -35,7 +35,8 @@ export default function SignInPage()
         setSrvError(null)
 
         try {
-            await signInRequest(form)
+            const user = await signInRequest(form)
+            console.log(`user=${JSON.stringify(user)} signed-in successful, navigating to dashboard.`)
             navigate('/dashboard')
         }
         catch ( error ) {

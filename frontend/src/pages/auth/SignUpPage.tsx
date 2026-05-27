@@ -32,7 +32,8 @@ export default function SignUpPage()
     setSrvError(null)
 
     try {
-      await signUpRequest(form)
+      const user = await signUpRequest((({ repeat, ...rest }) => rest)(form))
+      console.log(`user=${JSON.stringify(user)} signed-up successful, navigating to dashboard.`)
       navigate('/dashboard')
     } catch (error) {
       setSrvError(getApiErrorMessage(error))
