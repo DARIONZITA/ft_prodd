@@ -12,7 +12,7 @@ export default function LandingPage() {
       {/* ── Navbar ── */}
       <nav className="max-w-7xl mx-auto px-4 sm:px-6 py-6 flex justify-between items-center">
         <Logo />
-        <div className="flex flex-col-reverse items-center gap-1 xs:flex-row xs:items-center xs:gap-3 sm:gap-6">
+        <div className="flex flex-row items-center gap-3 sm:gap-6 max-[280px]:flex-col-reverse max-[280px]:items-center max-[280px]:gap-1">
           <Link to="/signin" className="font-body text-sm font-semibold text-slate-500 hover:text-slate-900 no-underline transition-colors duration-150 whitespace-nowrap">
             Sign In
           </Link>
