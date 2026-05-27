@@ -52,14 +52,6 @@ export const	signupPasswordSchema = z.object(
  	email: emailSchema.shape.email,
 
 	password: signupPasswordSchema.shape.password,
-
-	avatarUrl: z
-		.string()
-		.trim()
-		.url("Invalid URL")
-		.optional()
-		.or( z.literal('') ),
- 
 });
 
 //------------------------------------Signin Schemas------------------------------------

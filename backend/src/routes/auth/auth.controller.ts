@@ -1,11 +1,9 @@
-import { Router }                               from 'express';
 import type { Request, Response, NextFunction } from 'express';
 import { prisma }                               from '../../lib/prisma';
 import { hashPassword, comparePassword }        from '../../utils/encryption';
 import { generateToken }                        from '../../utils/jwt';
 import { ApiError }                             from '../../utils/ApiError';
 import { signupSchema, signinSchema }           from '../../validations/auth';
-import { oauthRouter }                          from './oauth/oauth.router';
 
 export async function   signupController( req : Request, res : Response, next : NextFunction )
 {
@@ -14,7 +12,7 @@ export async function   signupController( req : Request, res : Response, next : 
 	if (!result.success)
 		return (next(new ApiError( 400, result.error.issues[0].message )));
 
-	const	{ username, email, password, avatarUrl } = result.data;
+	const	{ username, email, password } = result.data;
 
 	try
 	{
@@ -25,7 +23,7 @@ export async function   signupController( req : Request, res : Response, next : 
 
 		const	passwordHash = await hashPassword( password );
 		const	user = await prisma.user.create({
-			data: { username: username, email, passwordHash, avatarUrl: avatarUrl || '', updatedAt: new Date() },
+			data: { username: username, email, passwordHash, avatarUrl: '', updatedAt: new Date() },
 			select: { id: true, username: true, email: true, avatarUrl: true }
 		});
 		const	token = generateToken( user.id, user.email );
