@@ -1,6 +1,6 @@
 import { Router }                               from 'express';
 import { oauthRouter }                          from './oauth/oauth.router';
-import { signinController, signupController }from './auth.controller';
+import { signinController, signupController }   from './auth.controller';
 
 const	authRouter = Router( );
 
@@ -20,7 +20,6 @@ const	authRouter = Router( );
  *               username: { type: string, example: "joao_silva" }
  *               email: { type: string, example: "joao@example.com" }
  *               password: { type: string, example: "password123" }
- *               avatarUrl: { type: string, example: "https://..." }
  *     responses:
  *       201:
  *         description: User created successfully

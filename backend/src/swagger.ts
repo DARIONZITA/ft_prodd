@@ -6,9 +6,9 @@ const options = {
 	definition: {
 		openapi: '3.0.0',
 		info: {
-			title: 'FT Prodd API',
+			title: 'ft_prodd( ... ) API',
 			version: '1.0.0',
-			description: 'API documentation for the FT Prodd backend',
+			description: 'API documentation for the ft_prodd( ... ) backend',
 		},
 		tags: [
 			{ name: 'Auth', description: 'Authentication endpoints' },
