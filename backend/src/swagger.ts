@@ -1,6 +1,6 @@
-import swaggerJsdoc from 'swagger-jsdoc';
-import { Express } from 'express';
-import swaggerUi from 'swagger-ui-express';
+import swaggerUi	from 'swagger-ui-express';
+import swaggerJsdoc	from 'swagger-jsdoc';
+import { Express }	from 'express';
 
 const options = {
 	definition: {
@@ -87,6 +87,121 @@ Write operations have additional limit of 10 requests per minute (POST, PUT, DEL
 						iconUrl: { type: 'string', format: 'uri' },
 						createdAt: { type: 'string', format: 'date-time' },
 						updatedAt: { type: 'string', format: 'date-time' },
+					},
+				},
+				Notification: {
+					type: 'object',
+					properties: {
+						id: { type: 'integer' },
+						userId: { type: 'integer' },
+						message: { type: 'string' },
+						type: { type: 'string', enum: ['mention', 'taskAssignment', 'comment', 'invite'] },
+						isRead: { type: 'boolean' },
+						relatedTaskId: { type: 'integer', nullable: true },
+						relatedWorkspaceId: { type: 'integer', nullable: true },
+						createdAt: { type: 'string', format: 'date-time' },
+						updatedAt: { type: 'string', format: 'date-time' },
+					},
+				},
+				NotificationCreateRequest: {
+					type: 'object',
+					required: ['message', 'type'],
+					properties: {
+						userId: { type: 'integer' },
+						message: { type: 'string' },
+						type: { type: 'string', enum: ['mention', 'taskAssignment', 'comment', 'invite'] },
+						isRead: { type: 'boolean' },
+						relatedTaskId: { type: 'integer' },
+						relatedWorkspaceId: { type: 'integer' },
+					},
+					additionalProperties: false,
+				},
+				NotificationListResponse: {
+					type: 'object',
+					properties: {
+						success: { type: 'boolean', example: true },
+						data: {
+							type: 'object',
+							properties: {
+								notifications: {
+									type: 'array',
+									items: { $ref: '#/components/schemas/Notification' },
+								},
+								pagination: { $ref: '#/components/schemas/Pagination' },
+							},
+						},
+					},
+				},
+				NotificationResponse: {
+					type: 'object',
+					properties: {
+						success: { type: 'boolean', example: true },
+						data: { $ref: '#/components/schemas/Notification' },
+					},
+				},
+				BadgeWithEarnedAt: {
+					type: 'object',
+					properties: {
+						id: { type: 'integer' },
+						name: { type: 'string' },
+						description: { type: 'string' },
+						iconUrl: { type: 'string', format: 'uri' },
+						createdAt: { type: 'string', format: 'date-time' },
+						updatedAt: { type: 'string', format: 'date-time' },
+						earnedAt: { type: 'string', format: 'date-time' },
+					},
+				},
+				BadgeListResponse: {
+					type: 'object',
+					properties: {
+						success: { type: 'boolean', example: true },
+						data: {
+							type: 'object',
+							properties: {
+								badges: {
+									type: 'array',
+									items: { $ref: '#/components/schemas/BadgeWithEarnedAt' },
+								},
+								pagination: { $ref: '#/components/schemas/Pagination' },
+							},
+						},
+					},
+				},
+				XpHistoryItem: {
+					type: 'object',
+					properties: {
+						id: { type: 'integer' },
+						xp: { type: 'integer' },
+						createdAt: { type: 'string', format: 'date-time' },
+						updatedAt: { type: 'string', format: 'date-time' },
+					},
+				},
+				XpHistoryResponse: {
+					type: 'object',
+					properties: {
+						success: { type: 'boolean', example: true },
+						data: {
+							type: 'object',
+							properties: {
+								history: {
+									type: 'array',
+									items: { $ref: '#/components/schemas/XpHistoryItem' },
+								},
+								pagination: { $ref: '#/components/schemas/Pagination' },
+							},
+						},
+					},
+				},
+				NotificationReadAllResponse: {
+					type: 'object',
+					properties: {
+						success: { type: 'boolean', example: true },
+						data: {
+							type: 'object',
+							properties: {
+								updatedCount: { type: 'integer' },
+							},
+						},
 					},
 				},
 				Pagination: {

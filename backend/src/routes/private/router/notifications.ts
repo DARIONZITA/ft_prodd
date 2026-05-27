@@ -19,16 +19,18 @@ router.use(authenticate);
  *       content:
  *         application/json:
  *           schema:
- *             type: object
- *             required: [message, type]
- *             properties:
- *               message: { type: string }
- *               type: { type: string, enum: [mention, taskAssignment, comment, invite] }
- *               relatedTaskId: { type: integer }
- *               relatedWorkspaceId: { type: integer }
+ *             $ref: '#/components/schemas/NotificationCreateRequest'
  *     responses:
  *       201:
  *         description: Notification created
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/NotificationResponse'
+ *       400:
+ *         description: Invalid payload
+ *       403:
+ *         description: Not allowed
  */
 router.post('/', createNotification);
 
@@ -50,8 +52,14 @@ router.post('/', createNotification);
  *     responses:
  *       200:
  *         description: Notification found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/NotificationResponse'
  *       404:
  *         description: Notification not found
+ *       403:
+ *         description: Not allowed
  */
 router.get('/:id', getNotification);
 
@@ -73,6 +81,14 @@ router.get('/:id', getNotification);
  *     responses:
  *       200:
  *         description: Notification updated
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/NotificationResponse'
+ *       403:
+ *         description: Not allowed
+ *       404:
+ *         description: Notification not found
  */
 router.patch('/:id', updateNotification);
 
@@ -94,6 +110,10 @@ router.patch('/:id', updateNotification);
  *     responses:
  *       200:
  *         description: Notification deleted
+ *       403:
+ *         description: Not allowed
+ *       404:
+ *         description: Notification not found
  */
 router.delete('/:id', deleteNotification);
 

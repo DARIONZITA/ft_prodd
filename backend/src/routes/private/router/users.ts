@@ -236,6 +236,10 @@ router.get('/:id/activity', getUserActivity);
  *     responses:
  *       200:
  *         description: Notifications list
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/NotificationListResponse'
  *       404:
  *         description: User not found
  */
@@ -257,6 +261,10 @@ router.get('/:id/notifications', getUserNotifications);
  *     responses:
  *       200:
  *         description: All notifications marked as read
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/NotificationReadAllResponse'
  *       403:
  *         description: Forbidden
  */
@@ -291,6 +299,10 @@ router.patch('/:id/notifications/read-all', markAllUserNotificationsRead);
  *     responses:
  *       200:
  *         description: User badges retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/BadgeListResponse'
  *       404:
  *         description: User not found
  */
@@ -325,6 +337,10 @@ router.get('/:id/badges', getUserBadges);
  *     responses:
  *       200:
  *         description: XP history retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/XpHistoryResponse'
  *       404:
  *         description: User not found
  */
