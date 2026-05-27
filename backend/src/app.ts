@@ -1,16 +1,17 @@
-import express, { Request, Response } from 'express';
-import cors from 'cors';
-import helmet from 'helmet';
-import morgan from 'morgan';
-import authRoutes from './routes/auth/auth.router';
-import workspaceRoutes from './routes/private/router/workspaces';
-import badgeRoutes from './routes/private/router/badges';
-import userRoutes from './routes/private/router/users';
-import friendRoutes from './routes/private/router/friends';
-import { errorHandler } from './middleware/errorHandler';
-import { setupSwagger } from './swagger';
-import publicAPIRouter from './routes/public/api.router';
-import apiKeyRouter from './routes/private/router/keys';
+import express, { Request, Response }	from 'express';
+import cors								from 'cors';
+import helmet							from 'helmet';
+import morgan							from 'morgan';
+import authRoutes						from './routes/auth/auth.router';
+import workspaceRoutes					from './routes/private/router/workspaces';
+import badgeRoutes						from './routes/private/router/badges';
+import userRoutes						from './routes/private/router/users';
+import friendRoutes						from './routes/private/router/friends';
+import notificationsRouter				from './routes/private/router/notifications';
+import { errorHandler }					from './middleware/errorHandler';
+import { setupSwagger }					from './swagger';
+import publicAPIRouter					from './routes/public/api.router';
+import apiKeyRouter						from './routes/private/router/keys';
 
 export const app = express();
 
@@ -33,5 +34,6 @@ app.use('/api/workspaces', workspaceRoutes);
 app.use('/api/badges', badgeRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/friends', friendRoutes);
+app.use('/api/notifications', notificationsRouter);
 
 app.use(errorHandler);
