@@ -1,8 +1,8 @@
 import type { Request, Response, NextFunction }     from 'express';
-import { prisma }									from '../../lib/prisma';
-import { ApiError }									from '../../utils/ApiError';
-import { parseOrThrow, parseQueryInt, idSchema }	from '../../validations/utils';
-import { updateUserProfileSchema }					from '../../validations/user';
+import { prisma }									from '../../../lib/prisma';
+import { ApiError }									from '../../../utils/ApiError';
+import { parseOrThrow, parseQueryInt, idSchema }	from '../../../validations/utils';
+import { updateUserProfileSchema }					from '../../../validations/user';
 
 export async function   listUsers( req: Request, res: Response, next: NextFunction )
 {

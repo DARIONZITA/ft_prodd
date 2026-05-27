@@ -1,7 +1,7 @@
-import { WorkspaceRole }							from '@prisma/client';
-import { prisma }									from '../../lib/prisma';
 import type { Request, Response, NextFunction }     from 'express';
-import { ApiError }									from '../../utils/ApiError';
+import { WorkspaceRole }							from '@prisma/client';
+import { prisma }									from '../../../lib/prisma';
+import { ApiError }									from '../../../utils/ApiError';
 import {
 	workspaceIdParamsSchema,
 	workspaceMemberParamsSchema,
@@ -9,8 +9,8 @@ import {
 	createWorkspaceSchema,
 	updateWorkspaceSchema,
 	addWorkspaceMemberSchema
-}													from '../../validations/workspace';
-import { parseOrThrow }							    from '../../utils/parsing';
+}													from '../../../validations/workspace';
+import { parseOrThrow }							    from '../../../utils/parsing';
 
 const getWorkspaceMembership = async (workspaceId: number, userId: number) => {
 	const membership = await prisma.workspaceMember.findFirst({

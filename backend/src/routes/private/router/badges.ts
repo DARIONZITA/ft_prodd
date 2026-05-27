@@ -1,8 +1,8 @@
 import { Router }										from 'express';
-import { authenticate }									from '../../middleware/auth';
+import { authenticate }									from '../../../middleware/auth';
 import { assignBadge, createBadge, deleteBadge,
 	getBadgeDetails, listBadges, listUsersWithBadge,
-	removeBadgeFromUser, updateBadge }					from './badges.controller';
+	removeBadgeFromUser, updateBadge }					from '../controller/badges';
 
 const router = Router();
 

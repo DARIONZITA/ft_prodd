@@ -1,6 +1,6 @@
 import { Router }                                   from 'express';
-import { authenticate }                             from '../../middleware/auth';
-import { createApiKey, deleteApiKey, listApiKeys }  from './keys.controller';
+import { authenticate }                             from '../../../middleware/auth';
+import { createApiKey, deleteApiKey, listApiKeys }  from '../controller/keys';
 
 const   apiKeyRouter = Router( );
 

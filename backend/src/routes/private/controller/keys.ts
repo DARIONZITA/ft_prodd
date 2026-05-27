@@ -1,9 +1,9 @@
 import type { Request, Response, NextFunction }         from 'express';
 import crypto                                           from 'crypto';
-import { prisma }                                       from '../../lib/prisma';
-import { ApiError }                                     from '../../utils/ApiError';
-import { createApiKeySchema, requestParamsIdSchema }    from '../../validations/api';
-import { hashApiKey }                                   from '../../utils/encryption';
+import { prisma }                                       from '../../../lib/prisma';
+import { ApiError }                                     from '../../../utils/ApiError';
+import { createApiKeySchema, requestParamsIdSchema }    from '../../../validations/api';
+import { hashApiKey }                                   from '../../../utils/encryption';
 
 export async function   listApiKeys( req : Request, res : Response, next : NextFunction )
 {

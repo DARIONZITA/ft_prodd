@@ -1,9 +1,8 @@
 import { Router, Request, Response, NextFunction }	from 'express';
-import { authenticate }								from '../../middleware/auth';
-import { prisma }									from '../../lib/prisma';
-import { ApiError }									from '../../utils/ApiError';
-import { parseOrThrow, parseQueryInt, idSchema }	from '../../validations/utils';
-import { friendRequestStatusSchema }				from '../../validations/user';
+import { prisma }									from '../../../lib/prisma';
+import { ApiError }									from '../../../utils/ApiError';
+import { parseOrThrow, parseQueryInt, idSchema }	from '../../../validations/utils';
+import { friendRequestStatusSchema }				from '../../../validations/user';
 
 export async function   sendFriendRequest(req: Request, res: Response, next: NextFunction)
 {

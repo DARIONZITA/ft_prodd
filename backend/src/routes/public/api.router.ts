@@ -3,7 +3,7 @@ import { apiKeyAuth }                           from '../../middleware/apiKey';
 import { apiRateLimit, apiWriteRateLimit }      from '../../middleware/rateLimit';
 import { createWorkspace, deleteWorkspace,
     getWorkspaceDetails, listUserWorkspaces,
-    updateWorkspace }                           from '../private/workspaces.controller';
+    updateWorkspace }                           from '../private/controller/workspaces';
 
 const   publicAPIRouter = Router( );
 

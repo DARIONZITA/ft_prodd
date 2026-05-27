@@ -1,12 +1,12 @@
 import { Router }									from 'express';
-import { authenticate }								from '../../middleware/auth';
+import { authenticate }								from '../../../middleware/auth';
 import {
 	createWorkspace, createWorkspaceMember,
 	deleteWorkspace, deleteWorkspaceMember,
 	getWorkspaceDetails, getWorkspaceMember,
 	listUserWorkspaces, listWorkspaceMembers,
-	updateWorkspace, updateWorkspaceMemberRole }	from './workspaces.controller';
- 
+	updateWorkspace, updateWorkspaceMemberRole }	from '../controller/workspaces';
+
 const router = Router();
 
 router.use(authenticate);

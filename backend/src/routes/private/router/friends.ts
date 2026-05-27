@@ -1,7 +1,7 @@
 import { Router }									from 'express';
-import { authenticate }								from '../../middleware/auth';
+import { authenticate }								from '../../../middleware/auth';
 import { getFriends, getOnlineFriends, removeFriend,
-	sendFriendRequest, updateFriendRequest }		from './friends.controller';
+	sendFriendRequest, updateFriendRequest }		from '../controller/friends';
 
 const router = Router();
 router.use(authenticate);

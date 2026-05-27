@@ -1,14 +1,14 @@
 import type { Request, Response, NextFunction }	from 'express';
-import { prisma }									from '../../lib/prisma';
-import { ApiError }									from '../../utils/ApiError';
+import { prisma }								from '../../../lib/prisma';
+import { ApiError }								from '../../../utils/ApiError';
 import {
 	badgeIdParamsSchema,
 	badgeUserParamsSchema,
 	createBadgeSchema,
 	updateBadgeSchema,
 	assignBadgeSchema
-}													from '../../validations/badge';
-import { parseOrThrow }							    from '../../utils/parsing';
+}												from '../../../validations/badge';
+import { parseOrThrow }							from '../../../utils/parsing';
 
 export async function   createBadge(req: Request, res: Response, next: NextFunction)
 {

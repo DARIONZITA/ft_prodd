@@ -1,8 +1,8 @@
 import { Router }								from 'express';
-import { authenticate }							from '../../middleware/auth';
+import { authenticate }							from '../../../middleware/auth';
 import { deleteUserAccount, getUserActivity,
 	getUserProfile, getUserStats, listUsers,
-	updateUserProfile }							from './users.controller';
+	updateUserProfile }							from '../controller/users';
 
 const router = Router();
 router.use(authenticate);
