@@ -18,12 +18,12 @@ export async function   signupController( req : Request, res : Response, next : 
 	{
 		if (await prisma.user.findUnique({ where: { email } }))
 			return (next(new ApiError(409, "Email already in use")));
-		if (await prisma.user.findFirst({ where: { username: username }}))
+		if (await prisma.user.findFirst({ where: { username }}))
 			return (next(new ApiError(409, "Username already in use")));
 
 		const	passwordHash = await hashPassword( password );
 		const	user = await prisma.user.create({
-			data: { username: username, email, passwordHash, avatarUrl: '', updatedAt: new Date() },
+			data: { username: username, email, passwordHash, avatarUrl: '' },
 			select: { id: true, username: true, email: true, avatarUrl: true }
 		});
 		const	token = generateToken( user.id, user.email );
