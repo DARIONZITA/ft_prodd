@@ -22,18 +22,16 @@ export const signInSchema = z.object({
   identifier: z
     .string()
     .trim()
-    .min(1, errno.required('Username or email'))
-    .superRefine((value, ctx) => {
-      if (value.includes('@')) {
-        const emailResult = z.email(errno.EBAD).safeParse(value)
-        if (!emailResult.success)
-          ctx.addIssue({ code: 'custom', message: errno.EBAD })
-        return
-      }
+    .min(1)
+    .refine((value) => {
+      if (!value.includes('@'))
+        return true
+      return z.email().safeParse(value).success
     }),
   password: z
     .string()
-    .min(1, errno.required('Password'))
+    .trim()
+    .min(1)
 })
 
 export const signUpSchema = z.object({

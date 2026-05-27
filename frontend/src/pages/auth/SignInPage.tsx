@@ -25,7 +25,7 @@ export default function SignInPage()
         const result = parseSchema(signInSchema, form)
         if (!result.success)
         {
-            setSrvError(result.errors.identifier || result.errors.password || 'Please check your inputs.')
+            setSrvError('Invalid Credentials')
             return
         }
 
