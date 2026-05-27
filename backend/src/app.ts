@@ -31,8 +31,7 @@ app.use('/api/public', publicAPIRouter);
 app.use('/api/keys', apiKeyRouter);
 app.use('/api/workspaces', workspaceRoutes);
 app.use('/api/badges', badgeRoutes);
-
-app.use(errorHandler);
 app.use('/api/users', userRoutes);
 app.use('/api/friends', friendRoutes);
+
 app.use(errorHandler);
