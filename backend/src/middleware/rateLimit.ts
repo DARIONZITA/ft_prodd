@@ -1,20 +1,9 @@
 import ratelimit from 'express-rate-limit';
 import type { Request } from 'express';
 
-function    extractRequestId( req : Request ) : string
-{
-    const   apiKey = req.headers['x-api-key'];
-
-    if (typeof apiKey === "string" && apiKey.length === 67) //Se algum dia mudarmos como criamos as API keys isso tem de se trocar
-        return (apiKey);
-    if (req.ip)
-        return (req.ip);
-    return ('unknown');
-}
-
 //Limite geral da API
 
-export const    apiRateLimit = ratelimit(
+export const    readApiRateLimit = ratelimit(
 {
     windowMs:           60000,
     max:                30,
@@ -22,14 +11,14 @@ export const    apiRateLimit = ratelimit(
     legacyHeaders:      false, // Desativa os headers `X-RateLimit-*`
     message: {
         success: false,
-        message: "Too many Requests. Please try again in approximately 1 minute.",
+        message: "API read limit exceeded. Max 30 reads per minute.",
     },
-    keyGenerator : ( req : Request ) => { return ( extractRequestId( req ) ); },
+    keyGenerator : ( req : Request ) => { return ( req.headers['x-api-key'] as string ); },
 });
 
 //Limite mais restrito para criações (POST)
 
-export const    apiWriteRateLimit = ratelimit(
+export const    writeApiRateLimit = ratelimit(
 {
     windowMs:           60000, // 1 minuto = 60 mil milissegundos
     max:                10, // Limite de 10 requisições por minuto para operações de escrita
@@ -39,5 +28,5 @@ export const    apiWriteRateLimit = ratelimit(
         success: false,
         message: "API write limit exceeded. Max 10 writes per minute.",
     },
-    keyGenerator : ( req : Request ) => { return ( extractRequestId( req ) ); },
+    keyGenerator : ( req : Request ) => { return ( req.headers['x-api-key'] as string ); },
 });

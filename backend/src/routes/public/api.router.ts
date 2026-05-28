@@ -1,13 +1,11 @@
 import { Router }                               from 'express';
 import { apiKeyAuth }                           from '../../middleware/apiKey';
-import { apiRateLimit, apiWriteRateLimit }      from '../../middleware/rateLimit';
+import { readApiRateLimit, writeApiRateLimit }  from '../../middleware/rateLimit';
 import { createWorkspace, deleteWorkspace,
     getWorkspaceDetails, listUserWorkspaces,
     updateWorkspace }                           from '../private/controller/workspaces';
 
 const   publicAPIRouter = Router( );
-
-publicAPIRouter.use( apiRateLimit );
 
 publicAPIRouter.use( apiKeyAuth );
 
@@ -37,7 +35,7 @@ publicAPIRouter.use( apiKeyAuth );
  *           description: Too many requests - Rate limit exceeded
 */
 
-publicAPIRouter.get('/workspaces', listUserWorkspaces);
+publicAPIRouter.get('/workspaces', readApiRateLimit, listUserWorkspaces);
 
 
 /**
@@ -66,7 +64,7 @@ publicAPIRouter.get('/workspaces', listUserWorkspaces);
  *              description: Too many requests - Rate limit exceeded
 */
 
-publicAPIRouter.get('/workspaces/:id', getWorkspaceDetails);
+publicAPIRouter.get('/workspaces/:id', readApiRateLimit, getWorkspaceDetails);
 
 
 /**
@@ -98,7 +96,7 @@ publicAPIRouter.get('/workspaces/:id', getWorkspaceDetails);
  *         description: Too many requests - Rate limit exceeded
  */
 
-publicAPIRouter.post('/workspaces', apiWriteRateLimit, createWorkspace);
+publicAPIRouter.post('/workspaces', writeApiRateLimit, createWorkspace);
 
 
 /**
@@ -136,7 +134,7 @@ publicAPIRouter.post('/workspaces', apiWriteRateLimit, createWorkspace);
  *         description: Too many requests - Rate limit exceeded
  */
 
-publicAPIRouter.put('/workspaces/:id', apiWriteRateLimit, updateWorkspace);
+publicAPIRouter.put('/workspaces/:id', writeApiRateLimit, updateWorkspace);
 
 
 /**
@@ -165,6 +163,6 @@ publicAPIRouter.put('/workspaces/:id', apiWriteRateLimit, updateWorkspace);
  *         description: Too many requests - Rate limit exceeded
  */
 
-publicAPIRouter.delete('/workspaces/:id', apiWriteRateLimit, deleteWorkspace);
+publicAPIRouter.delete('/workspaces/:id', writeApiRateLimit, deleteWorkspace);
 
 export default  publicAPIRouter;
