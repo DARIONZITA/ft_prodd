@@ -13,8 +13,3 @@ export const updateUserProfileSchema = z.object({
 .refine(data => Object.values(data).some(v => v !== undefined), {
   message: 'At least one field must be provided.'
 });
-
-
-// ------------------------------------ PATCH /friends/:id/:friendId ------------------------------------
-
-export const friendRequestStatusSchema = z.object({status: z.enum(['accepted', 'rejected'])}).strict();

@@ -12,24 +12,28 @@ export function parseOrThrow<T extends z.ZodTypeAny>( schema: T, key: string, va
   return result.data;
 }
 
-function validateQueryParam<T>( key: string, value: unknown, options: { default?: T } ): { value: unknown } | { early: T }
+function validateQueryParam<T>( key: string, value: unknown, options: { default?: T, isOptional?: boolean } ): { value: unknown } | { early: T }
 {
   if (value === undefined)
   {
-    if (options.default === undefined)
-      throw new ApiError(400, `Query parameter "${key}" is required`);
-    return { early: options.default };
+    if (options.default !== undefined)
+      return { early: options.default };
+    if (options.isOptional)
+      return { value: undefined };
+    throw new ApiError(400, `Query parameter "${key}" is required`);
   }
   if (Array.isArray(value))
     throw new ApiError(400, `Query parameter "${key}" must be a single value, not an array`);
   return { value };
 }
 
-export function parseQueryInt( key: string, value: unknown, options: { default?: number; min?: number; max?: number } = {} ): number
+export function parseQueryInt( key: string, value: unknown, options: { default?: number; isOptional?: boolean, min?: number; max?: number } = {} ): number | undefined
 {
   const check = validateQueryParam(key, value, options);
   if ('early' in check)
     return check.early;
+  if (check.value === undefined)
+    return check.value;
 
   const schema = z.coerce.number().int()
                   .refine((val: number) => !Number.isNaN(val), { message: `Query parameter "${key}" is not a valid integer` })
@@ -38,11 +42,13 @@ export function parseQueryInt( key: string, value: unknown, options: { default?:
   return parseOrThrow(schema, key, value);
 }
 
-export function parseQueryBool( key: string, value: unknown, options: { default?: boolean } = {} ): boolean
+export function parseQueryBool( key: string, value: unknown, options: { default?: boolean, isOptional?: boolean } = {} ): boolean | undefined
 {
   const check = validateQueryParam(key, value, options);
   if ('early' in check)
     return check.early;
+  if (check.value === undefined)
+    return check.value;
 
   const schema = z.preprocess(
     (val) => {
@@ -58,14 +64,31 @@ export function parseQueryBool( key: string, value: unknown, options: { default?
   return parseOrThrow(schema, key, value);
 }
 
-export function parseQueryEnum<T extends string>( key: string, value: unknown, allowed: readonly [T, ...T[]], options: { default?: T } = {} ): T
+export function parseQueryEnum<T extends string>( key: string, value: unknown, allowed: readonly [T, ...T[]], options: { default?: T, isOptional?: boolean } = {} ): T | undefined
 {
   const check = validateQueryParam(key, value, options);
   if ('early' in check)
     return check.early;
+  if (check.value === undefined)
+    return check.value;
 
   const schema = z.enum(allowed, {message: `Query parameter "${key}" must be one of: ${allowed.join(', ')}`});
-  return parseOrThrow(schema, key, check.value);
+  return parseOrThrow(schema, key, value);
+}
+
+export function parseQueryString( key: string, value: unknown, options: { default?: string; minLength?: number; maxLength?: number; isOptional?: boolean } = {} ): string | undefined
+{
+  const check = validateQueryParam(key, value, options);
+  if ('early' in check)
+    return check.early;
+  if (check.value === undefined)
+    return check.value;
+
+  const schema = z.string().trim()
+    .min(options.minLength ?? 0, {message: `Query parameter "${key}" must contain at least ${options.minLength} characters`})
+    .max(options.maxLength ?? Infinity, {message: `Query parameter "${key}" must contain at most ${options.maxLength} characters`});
+
+  return parseOrThrow(schema, key, value);
 }
 
 export const requireRole = ( currentRole: string, allowedRoles: string[] ): void =>
