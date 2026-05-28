@@ -2,7 +2,8 @@ import { Router }											from 'express';
 import { authenticate }										from '../../../middleware/auth';
 import { deleteUserAccount, getUserActivity,
 	getUserBadges, getUserProfile, getUserStats,
-	getUserXpHistory, getUserNotifications, markAllUserNotificationsRead, listUsers, updateUserProfile }		from '../controller/users';
+	getUserXpHistory, getUserNotifications, getUserFriends,
+	markAllUserNotificationsRead, listUsers, updateUserProfile }	from '../controller/users';
 
 const router = Router();
 router.use(authenticate);
@@ -53,8 +54,6 @@ router.use(authenticate);
  */
 router.get('/', listUsers);
 
-
-
 /**
  * @swagger
  * /users/{id}:
@@ -102,8 +101,6 @@ router.get('/', listUsers);
  */
 router.get('/:id', getUserProfile);
 
-
-
 /**
  * @swagger
  * /users/{id}:
@@ -148,8 +145,6 @@ router.get('/:id', getUserProfile);
  */
 router.patch('/:id', updateUserProfile);
 
-
-
 /**
  * @swagger
  * /users/{id}:
@@ -175,32 +170,7 @@ router.delete('/:id', deleteUserAccount);
 
 
 
-/**
- * @swagger
- * /users/{id}/activity:
- *   get:
- *     summary: Get user activity
- *     tags: [Users]
- *     security:
- *       - BearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema: { type: integer }
- *       - in: query
- *         name: skip
- *         schema: { type: integer, default: 0 }
- *       - in: query
- *         name: take
- *         schema: { type: integer, default: 50 }
- *     responses:
- *       200:
- *         description: User activity
- *       404:
- *         description: User not found
- */
-router.get('/:id/activity', getUserActivity);
+/* USER-NOTIFICATIONS */
 
 /**
  * @swagger
@@ -269,6 +239,75 @@ router.get('/:id/notifications', getUserNotifications);
  *         description: Forbidden
  */
 router.patch('/:id/notifications/read-all', markAllUserNotificationsRead);
+
+
+
+/* USER-FRIENDS */
+
+/**
+ * @swagger
+ * /users/{id}/friends:
+ *   get:
+ *     summary: Get friends or friend requests for a user
+ *     tags: [Users]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *       - in: query
+ *         name: status
+ *         description: Filter by status - default to accepted
+ *         schema: { type: string, enum: [pending, accepted, rejected], default: accepted }
+ *       - in: query
+ *         name: type
+ *         description: Direction relative to the user. If omitted, returns both directions (OR)
+ *         schema: { type: string, enum: [incoming, outgoing] }
+ *       - in: query
+ *         name: skip
+ *         schema: { type: integer, default: 0 }
+ *       - in: query
+ *         name: take
+ *         schema: { type: integer, default: 42 }
+ *     responses:
+ *       200:
+ *         description: Friend list retrieved successfully
+ *       404:
+ *         description: User not found
+ */
+router.get('/:id/friends', getUserFriends);
+
+
+
+/**
+ * @swagger
+ * /users/{id}/activity:
+ *   get:
+ *     summary: Get user activity
+ *     tags: [Users]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *       - in: query
+ *         name: skip
+ *         schema: { type: integer, default: 0 }
+ *       - in: query
+ *         name: take
+ *         schema: { type: integer, default: 50 }
+ *     responses:
+ *       200:
+ *         description: User activity
+ *       404:
+ *         description: User not found
+ */
+router.get('/:id/activity', getUserActivity);
+
 
 
 
