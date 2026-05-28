@@ -14,6 +14,8 @@ const options = {
 			{ name: 'Auth', description: 'Authentication endpoints' },
 			{ name: 'Users', description: 'User profile management' },
 			{ name: 'Workspaces', description: 'Manage workspaces and members' },
+			{ name: 'Friends', description: 'Manage friend relationships' },
+			{ name: 'Notifications', description: 'Manage notifications' },
 			{ name: 'Badges', description: 'Manage badges' },
 			{ name: 'API Keys', description: 'Manage API keys for external access' },
 			{ name: 'Public API', description: `Public API endpoints secured with API key authentication.\n

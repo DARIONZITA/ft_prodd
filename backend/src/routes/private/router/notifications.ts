@@ -11,7 +11,7 @@ router.use(authenticate);
  * /notifications:
  *   post:
  *     summary: Create a notification for authenticated user
- *     tags: [Users]
+ *     tags: [Notifications]
  *     security:
  *       - BearerAuth: []
  *     requestBody:
@@ -34,14 +34,12 @@ router.use(authenticate);
  */
 router.post('/', createNotification);
 
-
-
 /**
  * @swagger
  * /notifications/{id}:
  *   get:
  *     summary: Get one notification by ID
- *     tags: [Users]
+ *     tags: [Notifications]
  *     security:
  *       - BearerAuth: []
  *     parameters:
@@ -63,14 +61,12 @@ router.post('/', createNotification);
  */
 router.get('/:id', getNotification);
 
-
-
 /**
  * @swagger
  * /notifications/{id}:
  *   patch:
  *     summary: Update a notification (mark as read)
- *     tags: [Users]
+ *     tags: [Notifications]
  *     security:
  *       - BearerAuth: []
  *     parameters:
@@ -92,14 +88,12 @@ router.get('/:id', getNotification);
  */
 router.patch('/:id', updateNotification);
 
-
-
 /**
  * @swagger
  * /notifications/{id}:
  *   delete:
  *     summary: Delete a notification
- *     tags: [Users]
+ *     tags: [Notifications]
  *     security:
  *       - BearerAuth: []
  *     parameters:
