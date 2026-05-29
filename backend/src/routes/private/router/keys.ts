@@ -37,7 +37,7 @@ apiKeyRouter.get('/', listApiKeys);
  * @swagger
  * /keys:
  *   post:
- *     summary: Create a new API key
+ *     summary: Create a new API key (MAX 3 per user)
  *     tags: [API Keys]
  *     security:
  *       - BearerAuth: []
@@ -56,6 +56,8 @@ apiKeyRouter.get('/', listApiKeys);
  *         description: Invalid input
  *       401:
  *         description: Unauthorized
+ *       429:
+ *         description: Too Many Requests - Maximum API keys per user reached
  */
 
 apiKeyRouter.post('/', createApiKey);
@@ -80,8 +82,6 @@ apiKeyRouter.post('/', createApiKey);
  *         description: Invalid input
  *       401:
  *         description: Unauthorized
- *       403:
- *         description: Forbidden - User does not own the API key
  *       404:
  *         description: API key not found
  */

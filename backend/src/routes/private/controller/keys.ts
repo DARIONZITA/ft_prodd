@@ -1,9 +1,12 @@
 import type { Request, Response, NextFunction }         from 'express';
 import crypto                                           from 'crypto';
+import { Prisma }                                       from '@prisma/client';
 import { prisma }                                       from '../../../lib/prisma';
 import { ApiError }                                     from '../../../utils/ApiError';
 import { createApiKeySchema, requestParamsIdSchema }    from '../../../validations/api';
 import { hashApiKey }                                   from '../../../utils/encryption';
+
+const   MAX_API_KEYS_PER_USER = 3;
 
 export async function   listApiKeys( req : Request, res : Response, next : NextFunction )
 {
@@ -22,39 +25,53 @@ export async function   listApiKeys( req : Request, res : Response, next : NextF
 
 export async function   createApiKey( req : Request, res : Response, next : NextFunction )
 {
-    const   result = createApiKeySchema.safeParse( req.body );
+    const   zod_result = createApiKeySchema.safeParse( req.body );
 
-    if (!result.success)
-        return (next( new ApiError( 400, result.error.issues[0].message )));
+    if (!zod_result.success)
+        return (next( new ApiError( 400, zod_result.error.issues[0].message )));
 
     try
     {
-        let     raw_key : string;
-        let     keyHash : string;
-        let     apiKey;
+        const   raw_key = `pk_${crypto.randomBytes(32).toString('hex')}`;
+        const   keyHash = hashApiKey( raw_key );
 
-        do
-        {
-            raw_key = `pk_${crypto.randomBytes(32).toString('hex')}`;
-            keyHash = hashApiKey( raw_key );
-            apiKey = await prisma.apiKey.findUnique( { where: { keyHash } } );
-        }
-        while (apiKey);
+        const   result = await prisma.$transaction( async (tx) => {
 
-        apiKey = await prisma.apiKey.create(
-        {
-            data: { keyHash, name: result.data.name, userId: req.user!.id },
-            select: { id: true, name: true, createdAt: true },
+            const   updatedUser = await tx.user.updateMany(
+            {
+                where:
+                {
+                    id: req.user!.id,
+                    apiKeyCount: { lt: MAX_API_KEYS_PER_USER }
+                },
+                data: { apiKeyCount: { increment: 1 } },
+            });
+
+            if (updatedUser.count === 0)
+                throw new ApiError(429, "Maximum API keys per user reached");
+
+            const   apiKey = await tx.apiKey.create(
+            {
+                data: { keyHash, name: zod_result.data.name, userId: req.user!.id },
+                select: { id: true, name: true, createdAt: true },
+            });
+
+            return (apiKey);
         });
 
         res.status(201).json(
         {
             success: true,
             message: "API Key created. Store it safely - it won't be shown again.",
-            data:   { ...apiKey, key: raw_key },
+            data:   { ...result, key: raw_key },
         });
     }
-    catch ( err ) { next( err ); }
+    catch ( err )
+    {
+        if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002')
+            return (next( new ApiError(409, 'API Key collision detected. Please try again.') ));
+        next( err );
+    }
 }
 
 export async function   deleteApiKey( req : Request, res : Response, next : NextFunction )
@@ -67,14 +84,20 @@ export async function   deleteApiKey( req : Request, res : Response, next : Next
     try
     {
         const   id = params_result.data.id;
-        const   apiKey = await prisma.apiKey.findFirst( { where: { id } } );
 
-        if (!apiKey)
-            return (next( new ApiError(404, "API Key not found") ));
-        if (apiKey.userId !== req.user!.id)
-            return (next( new ApiError(403, "Forbidden")));
+        await prisma.$transaction( async (tx) => {
 
-        await prisma.apiKey.delete( { where: { id } } );
+            const   deletedKeys = await tx.apiKey.deleteMany( { where: { id, userId: req.user!.id } } );
+
+            if (deletedKeys.count === 0)
+                throw new ApiError(404, "No API key with the given id was found for this user.");
+
+            await tx.user.update({
+                where: { id: req.user!.id },
+                data: { apiKeyCount: { decrement: 1 } }
+            });
+        });
+
         res.json({ success: true, message: "API Key revoked"});
     }
     catch ( err ) { next( err ); }

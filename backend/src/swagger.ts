@@ -19,8 +19,8 @@ const options = {
 			{ name: 'Badges', description: 'Manage badges' },
 			{ name: 'API Keys', description: 'Manage API keys for external access' },
 			{ name: 'Public API', description: `Public API endpoints secured with API key authentication.\n
-All endpoints limited to 30 requests per minute.\n
-Write operations have additional limit of 10 requests per minute (POST, PUT, DELETE)`
+Read operations limited to 30 requests per minute (GET).\n
+Write operations have a shorter limit of 10 requests per minute (POST, PUT, DELETE)`
 			},
 		],
 		servers: [
