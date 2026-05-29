@@ -1,6 +1,6 @@
 import { z }                from 'zod';
 import { idSchema }         from './utils';
-import { NotificationType } from '../types/enums';
+import { NotificationType } from '../types/constants';
 
 export const createNotificationSchema = z.object({
     userId: idSchema,
