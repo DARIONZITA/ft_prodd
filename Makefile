@@ -8,7 +8,7 @@ ENV_FILE = ./config/.env
 DOCKER := docker compose -f $(DOCKER-COMPOSE) --env-file $(ENV_FILE)
 FRONTEND_DEV_PORT ?= 5173
 
-.PHONY: help setup up down restart logs ps clean rebuild rebuild-all rebuild-% health migrate dev test
+.PHONY: help setup up down restart logs ps clean rebuild rebuild-all rebuild-% health migrate dev test prisma-migrate-deploy
 
 all: 
 	@$(DOCKER) up -d
@@ -61,8 +61,12 @@ rebuild-%: ## Rebuild um serviço específico (ex: make rebuild-backend)
 health: ## Verificar saúde dos serviços
 	@./scripts/health-check.sh
 
-migrate: ## Executar migrations do banco de dados
-	@./scripts/migrate.sh
+migrate: prisma-migrate-deploy ## Executar migrations do banco de dados
+
+prisma-migrate-deploy: ## Executar migrate deploy direto no container backend
+	@echo "🧩 Executando Prisma migrate deploy no backend..."
+	@$(DOCKER) up -d postgres redis
+	@$(DOCKER) run --rm --no-deps backend sh -lc 'npx prisma migrate deploy && npx prisma generate'
 
 dev: ## Modo desenvolvimento (com logs visíveis) docker compose --profile dev up frontend-dev
 	@FRONTEND_DEV_PORT=$(FRONTEND_DEV_PORT) $(DOCKER) --profile dev up frontend-dev
@@ -153,10 +157,10 @@ install-all: ## Instalar dependências de todos os serviços
 reset-db: ## Reset completo do banco de dados (PERDE DADOS)
 	@echo "⚠️  ATENÇÃO: Isso irá deletar todos os dados!"
 	@read -p "Tem certeza? [y/N]: " confirm && [ "$$confirm" = "y" ] || exit 1
-	@$(DOCKER) down -v
+	@$(DOCKER) down -v --remove-orphans
 	@$(DOCKER) up -d postgres redis
-	@sleep 5
-	@make prisma-migrate
+	@$(MAKE) migrate
+	@$(DOCKER) up -d backend frontend
 
 reset-all: ## Reset completo do projeto (PERDE TUDO)
 	@echo "⚠️  ATENÇÃO: Isso irá deletar containers, volumes e dados!"

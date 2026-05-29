@@ -5,7 +5,8 @@
 
 */
 -- DropIndex
-DROP INDEX "User_username_key";
+DROP INDEX IF EXISTS "User_username_key";
+DROP INDEX IF EXISTS "User_nickname_key";
 
 -- AlterTable
 ALTER TABLE "User" ADD COLUMN     "fortyTwoId" INTEGER;
