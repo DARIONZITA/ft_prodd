@@ -61,7 +61,8 @@ apiKeyRouter.get('/', listApiKeys);
 apiKeyRouter.post('/', createApiKey);
 
 
-/** * @swagger
+/**
+ * @swagger
  * /keys/{id}:
  *   delete:
  *     summary: Delete an API key

@@ -16,21 +16,6 @@ router.use(authenticate);
  *     tags: [Users]
  *     security:
  *       - BearerAuth: []
- *     parameters:
- *       - in: query
- *         name: skip
- *         description: Number of records to skip for pagination (used as the starting offset)
- *         schema:
- *           type: integer
- *           default: 0
- *       - in: query
- *         name: take
- *         description: Number of users to return per request (page size)
- *         schema:
- *           type: integer
- *           default: 42
- *           minimum: 1
- *           maximum: 100
  *     responses:
  *       200:
  *         description: Users retrieved successfully
@@ -38,21 +23,47 @@ router.use(authenticate);
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/UserListResponse'
- *
  *       400:
  *         description: Invalid query parameters
  *         content:
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
- *
  *       401:
  *         description: Unauthorized
- *
  *       500:
  *         description: Internal server error
  */
 router.get('/', listUsers);
+
+/**
+ * @swagger
+ * /users/me:
+ *   get:
+ *     summary: Get own user profile
+ *     tags: [Users]
+ *     security:
+ *       - BearerAuth: []
+ *     responses:
+ *       200:
+ *         description: User profile retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   $ref: '#/components/schemas/User'
+ *       401:
+ *         description: Unauthorized
+ *       500:
+ *         description: Internal server error
+ * */
+
+router.get('/me', getUserProfile);
 
 /**
  * @swagger
