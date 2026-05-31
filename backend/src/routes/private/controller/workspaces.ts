@@ -8,9 +8,12 @@ import {
 	updateWorkspaceMemberRoleSchema,
 	createWorkspaceSchema,
 	updateWorkspaceSchema,
-	addWorkspaceMemberSchema
-}													from '../../../validations/workspace';
-import { parseOrThrow }							    from '../../../utils/parsing';
+    addWorkspaceMemberSchema
+}                                                   from '../../../validations/workspace';
+import { idSchema, parseOrThrow,
+    parseQueryInt, parseQueryString }               from '../../../validations/utils';
+import { ActivityLogActionMaxLength }               from '../../../types/constants';
+
 
 const getWorkspaceMembership = async (workspaceId: number, userId: number) => {
 	const membership = await prisma.workspaceMember.findFirst({
@@ -31,7 +34,7 @@ const ensureAdmin = (role: WorkspaceRole) => {
 export async function createWorkspace(req: Request, res: Response, next: NextFunction)
 {
     try {
-        const { name, description } = parseOrThrow(createWorkspaceSchema, req.body);
+        const { name, description } = parseOrThrow(createWorkspaceSchema, 'WorkspaceID', req.body);
 
         const newWorkspace = await prisma.$transaction(async (tx) => {
             
@@ -103,8 +106,8 @@ export async function   listUserWorkspaces(req: Request, res: Response, next: Ne
 export async function   updateWorkspace(req: Request, res: Response, next: NextFunction)
 {
     try {
-        const { id } = parseOrThrow(workspaceIdParamsSchema, req.params);
-        const updateData = parseOrThrow(updateWorkspaceSchema, req.body);
+        const { id } = parseOrThrow(workspaceIdParamsSchema, 'workspaceID', req.params);
+        const updateData = parseOrThrow(updateWorkspaceSchema, 'UpdateWorkspace', req.body);
         const requesterMembership = await getWorkspaceMembership(id, req.user!.id);
         ensureAdmin(requesterMembership.role);
 
@@ -144,7 +147,7 @@ export async function   updateWorkspace(req: Request, res: Response, next: NextF
 export async function   deleteWorkspace(req: Request, res: Response, next: NextFunction)
 {
     try {
-        const { id } = parseOrThrow(workspaceIdParamsSchema, req.params);
+        const { id } = parseOrThrow(workspaceIdParamsSchema, 'workspaceID', req.params);
         const requesterMembership = await getWorkspaceMembership(id, req.user!.id);
         ensureAdmin(requesterMembership.role);
 
@@ -173,7 +176,7 @@ export async function   deleteWorkspace(req: Request, res: Response, next: NextF
 export async function   getWorkspaceDetails(req: Request, res: Response, next: NextFunction)
 {
     try {
-        const { id } = parseOrThrow(workspaceIdParamsSchema, req.params);
+        const { id } = parseOrThrow(workspaceIdParamsSchema, 'workspaceID', req.params);
         const membership = await getWorkspaceMembership(id, req.user!.id);
 
         const workspace = await prisma.workspace.findUnique({
@@ -240,8 +243,8 @@ export async function   getWorkspaceDetails(req: Request, res: Response, next: N
 export async function   createWorkspaceMember(req: Request, res: Response, next: NextFunction)
 {
     try {
-        const { id } = parseOrThrow(workspaceIdParamsSchema, req.params);
-        const { userId, role } = parseOrThrow(addWorkspaceMemberSchema, req.body);
+        const { id } = parseOrThrow(workspaceIdParamsSchema, 'workspaceID', req.params);
+        const { userId, role } = parseOrThrow(addWorkspaceMemberSchema, 'AddWorkspaceMember', req.body);
         const requesterMembership = await getWorkspaceMembership(id, req.user!.id);
         ensureAdmin(requesterMembership.role);
 
@@ -303,7 +306,7 @@ export async function   createWorkspaceMember(req: Request, res: Response, next:
 
 export async function listWorkspaceMembers(req: Request, res: Response, next: NextFunction) {
     try {
-        const { id } = parseOrThrow(workspaceIdParamsSchema, req.params);
+        const { id } = parseOrThrow(workspaceIdParamsSchema, 'workspaceID', req.params);
         await getWorkspaceMembership(id, req.user!.id);
 
         const members = await prisma.workspaceMember.findMany({
@@ -329,7 +332,7 @@ export async function listWorkspaceMembers(req: Request, res: Response, next: Ne
 export async function   getWorkspaceMember(req: Request, res: Response, next: NextFunction)
 {
     try {
-        const { id, userId } = parseOrThrow(workspaceMemberParamsSchema, req.params);
+        const { id, userId } = parseOrThrow(workspaceMemberParamsSchema, 'WorkspaceMemberParams', req.params);
         const requesterMembership = await getWorkspaceMembership(id, req.user!.id);
 
         if (requesterMembership.role === 'guest' && req.user!.id !== userId)
@@ -360,8 +363,8 @@ export async function   getWorkspaceMember(req: Request, res: Response, next: Ne
 export async function   updateWorkspaceMemberRole(req: Request, res: Response, next: NextFunction)
 {
     try {
-        const { id, userId } = parseOrThrow(workspaceMemberParamsSchema, req.params);
-        const { role } = parseOrThrow(updateWorkspaceMemberRoleSchema, req.body);
+        const { id, userId } = parseOrThrow(workspaceMemberParamsSchema, 'WorkspaceMemberParams', req.params);
+        const { role } = parseOrThrow(updateWorkspaceMemberRoleSchema, 'UpdateWorkspaceMemberRole', req.body);
         const requesterMembership = await getWorkspaceMembership(id, req.user!.id);
         ensureAdmin(requesterMembership.role);
 
@@ -421,7 +424,7 @@ export async function   updateWorkspaceMemberRole(req: Request, res: Response, n
 export async function deleteWorkspaceMember(req: Request, res: Response, next: NextFunction)
 {
     try {
-        const { id, userId } = parseOrThrow(workspaceMemberParamsSchema, req.params);
+        const { id, userId } = parseOrThrow(workspaceMemberParamsSchema, 'WorkspaceMemberParams', req.params);
         const requesterMembership = await getWorkspaceMembership(id, req.user!.id);
         ensureAdmin(requesterMembership.role);
 
@@ -461,6 +464,71 @@ export async function deleteWorkspaceMember(req: Request, res: Response, next: N
         });
 
         res.json({ success: true, message: 'Member successfully removed.' });
+    }
+    catch (err) { next(err); }
+}
+
+export async function getWorkspaceActivityLog(req: Request, res: Response, next: NextFunction) {
+    try {
+        const id = parseOrThrow(idSchema, 'WorkspaceID', req.params.id);
+        await getWorkspaceMembership(id, req.user!.id);
+		const skip = parseQueryInt('skip', req.query.skip, { default: 0, min: 0 });
+		const take = parseQueryInt('take', req.query.take, { default: 42, min: 1, max: 100 });
+
+        const where: any = { workspaceId: id, userId: req.user!.id };
+
+        const activityLogs = await prisma.activityLog.findMany({
+            where,
+            include: {
+                user: {
+                    select: {
+                        id: true,
+                        username: true,
+                        avatarUrl: true
+                    }
+                }
+            },
+            skip,
+            take,
+            orderBy: { createdAt: 'desc' }
+        });
+        const total = await prisma.activityLog.count({ where });
+
+		res.json({
+			success: true,
+			data: {
+				activityLogs,
+				pagination: { skip, take, total }
+			}
+		});
+    }
+    catch (err) { next(err); }
+}
+
+export async function createWorkspaceActivityLog(req: Request, res: Response, next: NextFunction) {
+    try {
+        const id = parseOrThrow(idSchema, 'WorkspaceID', req.params.id);
+        await getWorkspaceMembership(id, req.user!.id);
+        const action: string = parseQueryString('action', req.body.action, { isOptional: false, minLength: 1, maxLength: ActivityLogActionMaxLength }) ?? "";
+
+        const activityLog = await prisma.activityLog.create({
+            data: {
+                workspaceId: id,
+                userId: req.user!.id,
+                action
+            },
+            include: {
+                user: {
+                    select: {
+                        id: true,
+                        username: true,
+                        avatarUrl: true
+                    }
+                }
+            }
+        });
+
+        res.status(201).json({ success: true, data: activityLog });
     }
     catch (err) { next(err); }
 }

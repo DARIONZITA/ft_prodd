@@ -5,7 +5,8 @@ import {
 	deleteWorkspace, deleteWorkspaceMember,
 	getWorkspaceDetails, getWorkspaceMember,
 	listUserWorkspaces, listWorkspaceMembers,
-	updateWorkspace, updateWorkspaceMemberRole }	from '../controller/workspaces';
+	updateWorkspace, updateWorkspaceMemberRole,
+	getWorkspaceActivityLog, createWorkspaceActivityLog } from '../controller/workspaces';
 
 const router = Router();
 
@@ -292,4 +293,62 @@ router.put('/:id/members/:userId', updateWorkspaceMemberRole);
  */
 router.delete('/:id/members/:userId', deleteWorkspaceMember);
 
+/**
+ * @swagger
+ * /workspaces/{id}/activity:
+ *   get:
+ *     summary: Get workspace activity log
+ *     tags: [Workspaces]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *       - in: query
+ *         name: skip
+ *         schema: { type: integer, default: 0, min: 0 }
+ *       - in: query
+ *         name: take
+ *         schema: { type: integer, default: 42, min: 1, max: 100 }
+ *     responses:
+ *       200:
+ *         description: Pagination activity log list
+ *       403:
+ *         description: Logged user doesn't belong to workspace
+ *       404:
+ *         description: Invalid workspace ID or query value
+ */
+router.get('/:id/activity', getWorkspaceActivityLog);
+
+/**
+ * @swagger
+ * /workspaces/{id}/activity:
+ *   post:
+ *     summary: Log a workspace action
+ *     tags: [Workspaces]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [action]
+ *             properties:
+ *               action: { type: string }
+ *     responses:
+ *       201:
+ *         description: Activity log created
+ */
+router.post('/:id/activity', createWorkspaceActivityLog);
+
 export default router;
+

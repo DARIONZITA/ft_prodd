@@ -1,7 +1,7 @@
 import type { Request, Response, NextFunction }     	from 'express';
 import { prisma }										from '../../../lib/prisma';
 import { ApiError }										from '../../../utils/ApiError';
-import { NotificationType, FriendRequestStatus }		from '../../../types/enums';
+import { NotificationType, FriendRequestStatus }		from '../../../types/constants';
 import { idSchema, parseOrThrow, parseQueryInt,
 	parseQueryBool, parseQueryEnum, parseQueryString }	from '../../../validations/utils';
 import { updateUserProfileSchema }						from '../../../validations/user';
@@ -10,7 +10,7 @@ export async function   listUsers( req: Request, res: Response, next: NextFuncti
 {
 	try
     {
-		const skip = parseQueryInt('skip', req.query.skip, { default: 0 });
+		const skip = parseQueryInt('skip', req.query.skip, { default: 0, min: 0 });
 		const take = parseQueryInt('take', req.query.take, { default: 42, min: 1, max: 100 });
 
 		const users = await prisma.user.findMany({
@@ -140,7 +140,7 @@ export async function getUserNotifications(req: Request, res: Response, next: Ne
 {
 	try {
 		const userId = parseOrThrow(idSchema, 'UserID', req.params.id);
-		const skip = parseQueryInt('skip', req.query.skip, { default: 0 });
+		const skip = parseQueryInt('skip', req.query.skip, { default: 0, min: 0 });
 		const take = parseQueryInt('take', req.query.take, { default: 42, min: 1, max: 100 });
 		const isRead = parseQueryBool('isRead', req.query.isRead, { isOptional: true });
 		const type = parseQueryEnum('type', req.query.type, NotificationType, { isOptional: true });
@@ -189,7 +189,7 @@ export async function	getUserFriends(req: Request, res: Response, next: NextFunc
 {
     try {
         const id = parseOrThrow(idSchema, 'UserID', req.params.id);
-        const skip = parseQueryInt('skip', req.query.skip, { default: 0 });
+        const skip = parseQueryInt('skip', req.query.skip, { default: 0, min: 0 });
         const take = parseQueryInt('take', req.query.take, { default: 42, min: 1, max: 100 });
         const status = parseQueryEnum('status', req.query.status, FriendRequestStatus, { default: 'accepted' });
 		const type = parseQueryString('type', req.query.type, { isOptional: true, minLength: 8, maxLength: 8 });
@@ -234,7 +234,7 @@ export async function   getUserActivity( req: Request, res: Response, next: Next
 	try
     {
 		const id = parseOrThrow(idSchema, 'UserID', req.params.id);
-		const skip = parseQueryInt('skip', req.query.skip, { default: 0 });
+		const skip = parseQueryInt('skip', req.query.skip, { default: 0, min: 0 });
 		const take = parseQueryInt('take', req.query.take, { default: 42, min: 1, max: 100 });
 
 		const user = await prisma.user.findUnique({ where: { id } });
@@ -273,7 +273,7 @@ export async function   getUserBadges( req: Request, res: Response, next: NextFu
 	try
     {
 		const id = parseOrThrow(idSchema, 'UserID', req.params.id);
-		const skip = parseQueryInt('skip', req.query.skip, { default: 0 });
+		const skip = parseQueryInt('skip', req.query.skip, { default: 0, min: 0 });
 		const take = parseQueryInt('take', req.query.take, { default: 42, min: 1, max: 100 });
 
 		const user = await prisma.user.findUnique({ where: { id } });
@@ -313,7 +313,7 @@ export async function   getUserXpHistory( req: Request, res: Response, next: Nex
 	try
     {
 		const id = parseOrThrow(idSchema, 'UserID', req.params.id);
-		const skip = parseQueryInt('skip', req.query.skip, { default: 0 });
+		const skip = parseQueryInt('skip', req.query.skip, { default: 0, min: 0 });
 		const take = parseQueryInt('take', req.query.take, { default: 42, min: 1, max: 100 });
 
 		const user = await prisma.user.findUnique({ where: { id } });
