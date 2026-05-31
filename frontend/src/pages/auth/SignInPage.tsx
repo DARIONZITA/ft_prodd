@@ -4,7 +4,7 @@ import Divider                          from '../../components/auth/Divider'
 import LegalText                        from '../../components/auth/LegalText'
 import FooterLink                       from '../../components/auth/FooterLink'
 import PasswordInput                    from '../../components/auth/PasswordInput'
-import { signInRequest }                from '../../api/auth'
+import { useSignInMutation }            from '../../api/auth'
 import { getApiErrorMessage }           from '../../api/axios'
 import type { SignInForm }              from '../../types/auth'
 import { authInit }                     from './utils'
@@ -12,7 +12,17 @@ import { signInSchema, parseSchema }    from '../../validation/auth'
 
 export default function SignInPage()
 {
-    const { form, srvError, setSrvError, loading, setLoading, navigate, updateField } = authInit<SignInForm>({ identifier: '', password: '' })
+    const { form, srvError, setSrvError, navigate, updateField } = authInit<SignInForm>({ identifier: '', password: '' })
+
+    const signInMutation = useSignInMutation({
+        onSuccess: () => {
+            console.log('sign-in successful, navigating to dashboard.')
+            navigate('/dashboard')
+        },
+        onError: (error) => {
+            setSrvError(getApiErrorMessage(error))
+        },
+    })
 
     const handleOAuthLogin = () => {
         setSrvError(null)
@@ -31,19 +41,13 @@ export default function SignInPage()
 
         console.log(`SignInPage successfully parsed: ${JSON.stringify(form)}`)
 
-        setLoading(true)
         setSrvError(null)
 
         try {
-            const user = await signInRequest(form)
-            console.log(`user=${JSON.stringify(user)} signed-in successful, navigating to dashboard.`)
-            navigate('/dashboard')
+            await signInMutation.mutateAsync(form)
         }
         catch ( error ) {
-            setSrvError(getApiErrorMessage(error))
-        }
-        finally {
-          setLoading(false)
+            console.error(error)
         }
     }
 
@@ -83,10 +87,10 @@ export default function SignInPage()
                 />
                 <button
                     type="submit"
-                    disabled={loading}
+                    disabled={signInMutation.isPending}
                     className="w-full px-4 py-3.5 mt-1 bg-cyan-600 hover:bg-cyan-700 disabled:bg-cyan-400 disabled:cursor-not-allowed text-white rounded-lg font-display font-bold text-[15px] cursor-pointer transition-colors duration-150"
                 >
-                    {loading ? 'Signing in...' : 'Sign in'}
+                    {signInMutation.isPending ? 'Signing in...' : 'Sign in'}
                 </button>
             </form>
 

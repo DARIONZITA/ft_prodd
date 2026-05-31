@@ -1,5 +1,7 @@
+import { useMutation, type UseMutationOptions } from '@tanstack/react-query'
 import api from './axios'
-import type { AuthResponseData } from '../types/auth'
+import type { AuthResponseData, SignInForm, SignUpForm } from '../types/auth'
+import { queryClient } from '../main'
 
 async function authRequest<T>(endpoint: string, form: T): Promise<AuthResponseData['user']>
 {
@@ -8,8 +10,29 @@ async function authRequest<T>(endpoint: string, form: T): Promise<AuthResponseDa
 
   console.log(`Received response from POST ${endpoint}: token=${token}, user=${JSON.stringify(user)}`)
   localStorage.setItem('token', token)
+  queryClient.setQueryData(['user'], user)
   return user
 }
 
-export const signInRequest = <T>(form: T) => authRequest('/api/auth/signin', form)
-export const signUpRequest = <T>(form: T) => authRequest('/api/auth/signup', form)
+export const signInRequest = (form: SignInForm) => authRequest('/api/auth/signin', form)
+export const signUpRequest = (form: Omit<SignUpForm, 'repeat'>) => authRequest('/api/auth/signup', form)
+
+export function useSignInMutation(
+  options?: UseMutationOptions<AuthResponseData['user'], unknown, SignInForm>
+)
+{
+  return useMutation({
+    mutationFn: signInRequest,
+    ...options,
+  })
+}
+
+export function useSignUpMutation(
+  options?: UseMutationOptions<AuthResponseData['user'], unknown, Omit<SignUpForm, 'repeat'>>
+)
+{
+  return useMutation({
+    mutationFn: signUpRequest,
+    ...options,
+  })
+}

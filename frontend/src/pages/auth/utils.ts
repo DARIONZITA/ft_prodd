@@ -5,7 +5,6 @@ export function authInit<T extends Record<string, string>>( initial: T )
 {
   const [form,     setForm]     = useState<T>(initial)
   const [srvError, setSrvError] = useState<string | null>(null)
-  const [loading,  setLoading]  = useState(false)
   const navigate = useNavigate()
 
   const updateField = (field: keyof T) => (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -13,7 +12,7 @@ export function authInit<T extends Record<string, string>>( initial: T )
     setSrvError(null)
   }
 
-  return { form, srvError, setSrvError, loading, setLoading, navigate, updateField }
+  return { form, srvError, setSrvError, navigate, updateField }
 }
 
 export function reportFieldError( errors: Partial<Record<string, string>>, refs: Partial<Record<string, HTMLInputElement | null> > ): boolean

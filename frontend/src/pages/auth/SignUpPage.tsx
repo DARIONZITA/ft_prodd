@@ -5,15 +5,25 @@ import FooterLink                     from '../../components/auth/FooterLink'
 import PasswordInput                  from '../../components/auth/PasswordInput'
 import { signUpSchema, parseSchema }  from '../../validation/auth'
 import { authInit, reportFieldError } from './utils'
-import { signUpRequest }              from '../../api/auth'
+import { useSignUpMutation }          from '../../api/auth'
 import type { SignUpForm }            from '../../types/auth'
-import { getApiErrorMessage }         from '../../api/axios'
 
 type Fields = 'username' | 'password' | 'repeat'
 
 export default function SignUpPage()
 {
-  const { form, srvError, setSrvError, loading, setLoading, navigate, updateField } = authInit<SignUpForm>({ email: '', username: '', password: '', repeat: '' })
+  const { form, srvError, setSrvError, navigate, updateField } = authInit<SignUpForm>({ email: '', username: '', password: '', repeat: '' })
+
+  const signUpMutation = useSignUpMutation({
+    onSuccess: () => {
+      console.log('sign-up successful, navigating to dashboard.')
+      navigate('/dashboard')
+    },
+    onError: (error) => {
+      console.error(error)
+      setSrvError('Unexpected error while creating the account')
+    },
+  })
 
   const fieldRefs = useRef<Partial<Record<Fields, HTMLInputElement>>>({})
 
@@ -28,17 +38,12 @@ export default function SignUpPage()
 
     console.log(`SignUpPage successfully parsed: ${JSON.stringify(form)}`)
 
-    setLoading(true)
     setSrvError(null)
 
     try {
-      const user = await signUpRequest((({ repeat, ...rest }) => rest)(form))
-      console.log(`user=${JSON.stringify(user)} signed-up successful, navigating to dashboard.`)
-      navigate('/dashboard')
+      await signUpMutation.mutateAsync((({ repeat, ...rest }) => rest)(form))
     } catch (error) {
-      setSrvError(getApiErrorMessage(error))
-    } finally {
-      setLoading(false)
+      console.error(error)
     }
   }
 
@@ -92,10 +97,10 @@ export default function SignUpPage()
 
         <button
           type="submit"
-          disabled={loading}
+          disabled={signUpMutation.isPending}
           className="w-full px-4 py-3.5 mt-1 bg-cyan-600 hover:bg-cyan-700 disabled:bg-cyan-400 disabled:cursor-not-allowed text-white rounded-lg font-display font-bold text-[15px] cursor-pointer transition-colors duration-150"
         >
-          {loading ? 'Signing up...' : 'Sign up'}
+          {signUpMutation.isPending ? 'Signing up...' : 'Sign up'}
         </button>
       </form>
 
