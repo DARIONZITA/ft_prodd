@@ -9,13 +9,15 @@ import type { Data } from '../../components/profile/Types'
 import { DEFAULT_ACHIEVEMENTS } from '../../components/profile/Achievements'
 
 interface ProfileProps {
-  user: Data
+  profile: Data
   onFriendsClick?: () => void
   onProfileUpdate?: (updated: Partial<Data>) => void
 }
 
-export default function Profile({ user: initialUser, onFriendsClick, onProfileUpdate }: ProfileProps) {
-  const [user, setUser]         = useState(initialUser)
+export default function Profile({ profile: initialUser, onFriendsClick, onProfileUpdate }: ProfileProps) {
+  const [user, setUser]         = useState(initialUser.user);
+
+  const [profile, setProfile]       = useState(initialUser);
   const [editOpen, setEditOpen] = useState(false)
 
   const handleSave = (updated: { name: string; bio: string; avatarUrl: string | null }) => {
@@ -53,8 +55,8 @@ export default function Profile({ user: initialUser, onFriendsClick, onProfileUp
             </div>
           </div>
 
-          <StatsRow stats={user.stats} onFriendsClick={onFriendsClick} />
-          <XPbar level={user.level} xp={user.xp} xpRequired={user.xpRequired} />
+          <StatsRow stats={profile.stats} onFriendsClick={onFriendsClick} />
+          <XPbar level={profile.level} xp={profile.xp} xpRequired={profile.xpRequired} />
           <Achievements achievements={DEFAULT_ACHIEVEMENTS} />
 
         </div>

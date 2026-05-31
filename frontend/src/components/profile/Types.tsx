@@ -1,3 +1,4 @@
+import { User } from '../../types'
 export interface Stats {
   tasksCompleted: number
   tasksAssigned: number
@@ -5,9 +6,7 @@ export interface Stats {
 }
 
 export interface Data {
-  name: string
-  bio: string
-  avatarUrl?: string | null
+  user: User
   isOnline: boolean
   lastSeen?: string
   stats: Stats

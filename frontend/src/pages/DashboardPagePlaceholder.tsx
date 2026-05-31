@@ -16,7 +16,9 @@ import BadgesPage from './gamification/BadgesPage.tsx'
 import LevelUpToast from '../components/gamification/LevelUpToast.tsx'
 import { SHARED_BADGES } from '../components/gamification/SharedBadges.ts'
 import type { LeaderboardEntry, XpSummary } from '../components/gamification/Types.ts'
-
+import type { User, UserResponse } from '../types/user.ts'
+import { useGetUserRequest } from '../api/user.ts'
+import { useUserWorkspacesQuery } from '../api/workspace.ts'
 interface Workspace {
   id: string | number
   name: string
@@ -28,7 +30,7 @@ interface Workspace {
   healthScore?: number
 }
 
-interface User {
+interface dataSideBar{
   name: string
   avatarUrl: string | null
   workspaces: Workspace[]
@@ -149,7 +151,11 @@ function PlaceholderView({ title }: { title: string }) {
 export default function DashboardPagePlaceholder() {
   const navigate = useNavigate()
   const location = useLocation()
-  
+  const dataQuery: UserResponse | undefined = useGetUserRequest({refetchOnMount: false}).data
+  const userDataQuery: User | null = dataQuery?.success ? dataQuery.data : null
+  const workspaceQuery = useUserWorkspacesQuery({ refetchOnMount: false })
+  const workspaceDataQuery: Workspace[] = workspaceQuery.data?.success ? workspaceQuery.data.data : []
+
   // Parse URL search params
   const searchParams = new URLSearchParams(location.search)
   const viewParam = searchParams.get('view') || 'dashboard'
@@ -171,7 +177,7 @@ export default function DashboardPagePlaceholder() {
 
   const [friendsOpen, setFriendsOpen] = useState(false)
   const [createOrganizationOpen, setCreateOrganizationOpen] = useState(false)
-  const [user, setUser] = useState<User>(MOCK_USER)
+ 
  const [showLevelUpToast, setShowLevelUpToast] = useState(false)
 
   // Friends state — in real app this comes from API
@@ -179,24 +185,24 @@ export default function DashboardPagePlaceholder() {
   const [pendingRequests, setPending] = useState<PendingRequest[]>(MOCK_PENDING)
 
   const selectedWorkspaceId = useMemo<string | number>(() => {
-    return workspaceParam || MOCK_USER.workspaces[0]?.id || 0
-  }, [workspaceParam])
+    return workspaceParam || workspaceDataQuery[0]?.id || 0
+  }, [workspaceParam, workspaceDataQuery])
 
   const currentWorkspace = useMemo(() => {
     // Get workspace from URL param first (works for kanbanBoard, workspace-logs, etc.)
     if (workspaceParam) {
-      return user.workspaces.find(workspace => String(workspace.id) === String(workspaceParam)) ?? user.workspaces[0]
+      return workspaceDataQuery.find((workspace: Workspace) => String(workspace.id) === String(workspaceParam)) ?? workspaceDataQuery[0]
     }
     
     // Fallback: try to extract from activeView (for 'workspace-{id}' pattern)
     if (activeView.startsWith('workspace-') && activeView !== 'workspace-logs') {
       const workspaceId = activeView.replace('workspace-', '')
-      return user.workspaces.find(workspace => String(workspace.id) === String(workspaceId)) ?? user.workspaces[0]
+      return workspaceDataQuery.find((workspace: Workspace) => String(workspace.id) === String(workspaceId)) ?? workspaceDataQuery[0]
     }
     
     // Default: use selected workspace or first one
-    return user.workspaces.find(workspace => String(workspace.id) === String(selectedWorkspaceId)) ?? user.workspaces[0]
-  }, [activeView, selectedWorkspaceId, user.workspaces, workspaceParam])
+    return workspaceDataQuery.find((workspace: Workspace) => String(workspace.id) === String(selectedWorkspaceId)) ?? workspaceDataQuery[0]
+  }, [activeView, selectedWorkspaceId, workspaceDataQuery, workspaceParam])
 
   const handleNavigate = (view: string, payload?: string | number) => {
     setCreateOrganizationOpen(false)
@@ -306,7 +312,7 @@ export default function DashboardPagePlaceholder() {
   // ── Render main area ─────────────────────────────────────────────────────
   const renderMain = () => {
     if (activeView === 'dashboard') {return <PlaceholderView title="Dashboard" />}
-    if (activeView === 'profile') return <UserProfile user={MOCK_PROFILE} onFriendsClick={() => setFriendsOpen(true)} />
+    if (activeView === 'profile') return <UserProfile profile={{ user: userDataQuery ? { ...MOCK_PROFILE, name: userDataQuery.username, bio: userDataQuery.bio, avatarUrl: userDataQuery.avatarUrl } : MOCK_PROFILE, isOnline: false, lastSeen: undefined, stats: { tasksCompleted: 0, tasksAssigned: 0, friends: 0 }, level: 1, xp: 0, xpRequired: 100 }} onFriendsClick={() => setFriendsOpen(true)} />
     if (activeView === 'notifications') return <NotificationsPage />
     if (activeView === 'all-boards') return <PlaceholderView title="All Boards" />
     if (activeView === 'completed') return <PlaceholderView title="Completed Tasks" />
@@ -379,7 +385,20 @@ export default function DashboardPagePlaceholder() {
 
     if (activeView.startsWith('user-')) {
       // In a real app, fetch the user by ID. For now show the mock other user.
-      return <OtherUserProfile user={MOCK_OTHER_USER} />
+      return <OtherUserProfile user={{
+        user: {
+          name: MOCK_OTHER_USER.name,
+          bio: MOCK_OTHER_USER.bio,
+          avatarUrl: MOCK_OTHER_USER.avatarUrl,
+        },
+        isOnline: MOCK_OTHER_USER.isOnline,
+        lastSeen: MOCK_OTHER_USER.lastSeen,
+        stats: MOCK_OTHER_USER.stats,
+        level: MOCK_OTHER_USER.level,
+        xp: MOCK_OTHER_USER.xp,
+        xpRequired: MOCK_OTHER_USER.xpRequired,
+        isFriend: MOCK_OTHER_USER.isFriend,
+      }} />
     }
 
     return <PlaceholderView title="Dashboard" />
@@ -388,7 +407,11 @@ export default function DashboardPagePlaceholder() {
   return (
     <div className="flex h-screen bg-slate-50 overflow-hidden">
       <Sidebar
-        user={user}
+        data={{
+          name: userDataQuery ? userDataQuery.username : 'User',
+          avatarUrl: userDataQuery ? userDataQuery.avatarUrl : null,
+          workspaces: workspaceDataQuery || []
+        }}
         activeView={activeView}
         onNavigate={handleNavigate}
         xpSummary={XP_SUMMARY}

@@ -8,14 +8,14 @@ interface Workspace {
   taskCount?: number
 }
 
-interface User {
+interface DataSidebar {
   name: string
   avatarUrl?: string | null
   workspaces: Workspace[]
 }
 
 interface SidebarProps {
-  user: User
+  data: DataSidebar
   activeView: string
   onNavigate: (view: string, payload?: string | number) => void
   xpSummary?: {
@@ -31,7 +31,7 @@ interface SidebarProps {
 
 const WORKSPACE_ICONS = [Grid2x2, FileText, ArrowLeftRight]
 
-export default function Sidebar({ user, activeView, onNavigate, onLogout = () => {}, onCreateWorkspace = () => {}, className = '', activeWorkspace = null }: SidebarProps) {
+export default function Sidebar({ data, activeView, onNavigate, onLogout = () => {}, onCreateWorkspace = () => {}, className = '', activeWorkspace = null }: SidebarProps) {
   const [searchQuery, setSearchQuery] = useState('')
   const [isOpen, setIsOpen] = useState(() => {
     const saved = localStorage.getItem('sidebar-open')
@@ -43,17 +43,17 @@ export default function Sidebar({ user, activeView, onNavigate, onLogout = () =>
     localStorage.setItem('sidebar-open', String(isOpen))
   }, [isOpen])
 
-  const filteredWorkspaces = user.workspaces.filter(ws => ws.name.toLowerCase().includes(searchQuery.toLowerCase()))
+  const filteredWorkspaces = data.workspaces.filter(ws => ws.name.toLowerCase().includes(searchQuery.toLowerCase()))
 
-  const initials = user.name?.trim()[0]?.toUpperCase() ?? '?'
+  const initials = data.name?.trim()[0]?.toUpperCase() ?? '?'
 
   const navItems = [
     { id: 'leaderboard', label: 'Leaderboard', Icon: Trophy },
     { id: 'badges', label: 'Badges', Icon: Medal },
   ]
 
-  const renderAvatar = () => user.avatarUrl ? (
-    <img src={user.avatarUrl} alt={user.name} className="w-8 h-8 rounded-full object-cover flex-shrink-0" />
+  const renderAvatar = () => data.avatarUrl ? (
+    <img src={data.avatarUrl} alt={data.name} className="w-8 h-8 rounded-full object-cover flex-shrink-0" />
   ) : (
     <div className="w-8 h-8 rounded-full bg-cyan-600 text-white text-xs font-bold flex items-center justify-center flex-shrink-0 font-display">
       {initials}
@@ -110,7 +110,7 @@ export default function Sidebar({ user, activeView, onNavigate, onLogout = () =>
         >
           {renderAvatar()}
           <span className="flex-1 min-w-0 truncate font-display font-semibold text-sm text-slate-900">
-            {user.name}
+            {data.name}
           </span>
         </button>
 
