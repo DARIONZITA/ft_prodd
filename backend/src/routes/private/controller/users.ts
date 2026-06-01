@@ -10,16 +10,26 @@ export async function   listUsers( req: Request, res: Response, next: NextFuncti
 {
 	try
     {
-		const skip = parseQueryInt('skip', req.query.skip, { default: 0, min: 0 });
-		const take = parseQueryInt('take', req.query.take, { default: 42, min: 1, max: 100 });
+		const	skip = parseQueryInt('skip', req.query.skip, { default: 0, min: 0 });
+		const	take = parseQueryInt('take', req.query.take, { default: 42, min: 1, max: 100 });
+		let		email;
+		let		username;
 
-		const users = await prisma.user.findMany({
+		if (typeof req.query.search === 'string')
+		{
+			email = req.query.search.includes('@') ? req.query.search : undefined;
+			username = !email ? req.query.search : undefined;
+		}
+		const users = await prisma.user.findMany(
+		{
+			where: { email, username },
 			select: {
 				id: true,
 				username: true,
 				bio: true,
 				email: true,
 				avatarUrl: true,
+				fortyTwoId: true,
 				createdAt: true,
 				updatedAt: true
 			},
