@@ -17,6 +17,7 @@ const options = {
 			{ name: 'Friends', description: 'Manage friend relationships' },
 			{ name: 'Notifications', description: 'Manage notifications' },
 			{ name: 'Badges', description: 'Manage badges' },
+			{ name: 'Analytics', description: 'Workspace analytics and dashboard metrics' },
 			{ name: 'API Keys', description: 'Manage API keys for external access' },
 			{ name: 'Public API', description: `Public API endpoints secured with API key authentication.\n
 Read operations limited to 30 requests per minute (GET).\n
@@ -267,6 +268,98 @@ Write operations have a shorter limit of 10 requests per minute (POST, PUT, DELE
 						},
 					},
 				},
+					AnalyticsOverview: {
+						type: 'object',
+						properties: {
+							totalTasks: { type: 'integer' },
+							openTasks: { type: 'integer' },
+							completedTasks: { type: 'integer' },
+							avgCompletionTimeHours: { type: 'number' },
+							tasksCreatedLast7Days: { type: 'integer' },
+							tasksCompletedLast7Days: { type: 'integer' },
+							membersCount: { type: 'integer' },
+						},
+					},
+					AnalyticsSeriesPoint: {
+						type: 'object',
+						properties: {
+							timestamp: { type: 'string', format: 'date-time' },
+							value: { type: 'number' },
+						},
+					},
+					AnalyticsDistributionPoint: {
+						type: 'object',
+						properties: {
+							key: { type: 'string' },
+							count: { type: 'integer' },
+							percentage: { type: 'number' },
+						},
+					},
+					AnalyticsMemberWorkload: {
+						type: 'object',
+						properties: {
+							memberId: { type: 'string' },
+							username: { type: 'string' },
+							openTasks: { type: 'integer' },
+							assignedTasks: { type: 'integer' },
+						},
+					},
+					AnalyticsOverviewResponse: {
+						type: 'object',
+						properties: {
+							success: { type: 'boolean', example: true },
+							data: { $ref: '#/components/schemas/AnalyticsOverview' },
+						},
+					},
+					AnalyticsSeriesResponse: {
+						type: 'object',
+						properties: {
+							success: { type: 'boolean', example: true },
+							data: {
+								type: 'array',
+								items: { $ref: '#/components/schemas/AnalyticsSeriesPoint' },
+							},
+						},
+					},
+					AnalyticsTrendResponse: {
+						type: 'object',
+						properties: {
+							success: { type: 'boolean', example: true },
+							data: {
+								type: 'object',
+								properties: {
+									created: {
+										type: 'array',
+										items: { $ref: '#/components/schemas/AnalyticsSeriesPoint' },
+									},
+									completed: {
+										type: 'array',
+										items: { $ref: '#/components/schemas/AnalyticsSeriesPoint' },
+									},
+								},
+							},
+						},
+					},
+					AnalyticsDistributionResponse: {
+						type: 'object',
+						properties: {
+							success: { type: 'boolean', example: true },
+							data: {
+								type: 'array',
+								items: { $ref: '#/components/schemas/AnalyticsDistributionPoint' },
+							},
+						},
+					},
+					AnalyticsWorkloadResponse: {
+						type: 'object',
+						properties: {
+							success: { type: 'boolean', example: true },
+							data: {
+								type: 'array',
+								items: { $ref: '#/components/schemas/AnalyticsMemberWorkload' },
+							},
+						},
+					},
 			},
 		},
 	},
