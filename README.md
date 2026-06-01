@@ -299,8 +299,7 @@ In this section, you have access to the main resources that helped us develop th
 
 ### AI Usage
 
-- 
-
+-  **IA Usage:** IA was used in the public API design, and implementation were guided by best practices and examples provided by AI, ensuring secure authentication, proper rate limiting, and comprehensive documentation, it also provided code snippets for implementing API key authentication and rate limiting in Express, it also helped choosing a secure way to create and store API keys. Another core functionality for which te IA was used, was the OAuth, its flow implementation was guided by official documentation and best practices, with code snippets and examples provided by AI to ensure correct handling of the authentication process, including redirecting users to the 42 authorization page, handling the callback with the authorization code, exchanging the code for an access token, and retrieving user information from the 42 API, another example of IA usage was in the implementation of the signup and login endpoints, where IA provided code snippets for securely handling user credentials, hashing passwords with bcrypt, and generating JWT tokens for authenticated sessions, also IA was used in best practices for structuring the backend code, organizing routes, controllers, and middleware to ensure maintainability and scalability of the application, parsing and validation, of any foreign data that came to the backend where IA provided guidance on using TypeScript effectively to define types for request bodies, responses, and database models, improving code reliability and reducing runtime errors and using features like Zod for schema validation.
 
 ## Database
 
@@ -764,6 +763,38 @@ This section lists all selected modules for the project, including their type, p
 * **Team:** dnzita
 
 ---
+
+### Implement remote authentication with OAuth 2.0
+
+* **Justification:**
+  Implementing OAuth 2.0 allows users to authenticate using their existing accounts from popular providers (e.g., Google, GitHub), or in our case 42 API, improving user experience and security by leveraging trusted authentication systems.
+
+* **Implementation:**
+  The backend implements OAuth 2.0 authentication flow, allowing users to log in using their 42 credentials. The process includes:
+
+  * Redirecting users to the 42 authorization page
+  * Handling the callback with the authorization code received from 42 API
+  * Exchanging the code for an access token to authenticate requests to the 42 API
+  * Retrieving user information from the 42 API using the access token, and creating a local user session
+
+* **Team:** efinda (Frontend), jbofengo (Backend)
+
+---
+
+### A public API to interact with the database with a secured API key, rate limiting, documentation, and at least 5 endpoints
+
+* **Justification:**
+  Providing a public API allows external applications to interact with the database securely. Implementing API key authentication and rate limiting ensures that access is controlled and prevents abuse, while documentation facilitates integration by third-party developers.
+
+* **Implementation:**
+  The backend exposes a RESTful API with the following features:
+
+  * **API Key Authentication:** Each request to the API must include a valid API key in the headers. The backend validates the key before processing the request, but to get the API key, users must authenticate through the standard login flow, ensuring that only authorized users can access the API, the keys can also be revoked by the user if necessary, each user can have a maximum limit of active API keys, a key will only be shown once on API's key creation, the keys are generated randomly, using a cryptographically secure pseudorandom number generator, crypto.getRandomValues() as confirmed on *https://nodejs.org/api/crypto.html#cryptorandombytessize-callback*, and each key has a unique identifier, the API key, which is stored hashed on DB.
+  * **Rate Limiting:** The API implements rate limiting to restrict the number of requests from a single API key within a specified time frame, preventing abuse and ensuring fair usage, while read operations have a more generous limit, of up to three times more, compared to write operations per minute, and that's based on the assumption that read operations are more common than write operations, and that write operations typically have a greater impact on the system's resources, and if a user exceeds the rate limit, they receive a clear error message with the http code of 429 indicating that they have made too many requests and should try again later.
+  * **Documentation:** The API is documented using Swagger, providing clear information about available endpoints and their usage.
+  * **Endpoints:** The API includes 5 endpoints for managing workspaces (e.g., create workspace, list workspaces, get workspace details, update workspace, delete workspace). Through the API, external applications can perform CRUD operations on workspaces.
+
+* **Team:** efinda (Frontend), jbofengo (Backend)
 
 ## Notes
 
