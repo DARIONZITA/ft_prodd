@@ -297,13 +297,15 @@ In this section, you have access to the main resources that helped us develop th
 
 - [Criando testes na aplicação com Jest e SuperTest - Code/drops #93](https://www.youtube.com/watch?v=18Dgf7lb9QA) — Youtube
 
+- [Crypto module](https://nodejs.org/api/crypto.html#cryptorandombytessize-callback) — nodejs.org
+
 ### AI Usage
 
-- **Public API:** IA was used in the public API design, and implementation were guided by best practices and examples provided by AI, ensuring secure authentication, proper rate limiting, and comprehensive documentation, it also provided code snippets for implementing API key authentication and rate limiting in Express, it also helped choosing a secure way to create and store API keys.
+- **Public API:** it helped to design and implement the API with code snippets for secure key authentication (creation and storage) and rate limiting in Express, together with a comprehensive documentation.
 
-- **OAuth 2.0:** IA was used, was the OAuth, its flow implementation was guided by official documentation and best practices, with code snippets and examples provided by AI to ensure correct handling of the authentication process, including redirecting users to the 42 authorization page, handling the callback with the authorization code, exchanging the code for an access token, and retrieving user information from the 42 API
+- **OAuth 2.0:** it helped implement the OAuth 2.0 authentication flow, including user redirection to the 42 authorization page, callback handling, authorization code exchange, access token retrieval, and user information fetching from the 42 API.
 
-- **login and signup:** IA was used in the implementation of the authentication system, providing guidance on securely handling user credentials, hashing passwords with bcrypt, and generating JWT tokens for authenticated sessions, it also provided code snippets for implementing these features in Express, ensuring that the authentication flow is secure and follows best practices, structuring the backend code, organizing routes, controllers, and middleware to ensure maintainability and scalability of the application, parsing and validation, of any foreign data that came to the backend where IA provided guidance on using TypeScript effectively to define types for request bodies, responses, and database models, improving code reliability and reducing runtime errors and using features like Zod for schema validation.
+- **SignIn and SignUp:** it helped implement the authentication system, including password hashing with bcrypt, JWT-based session authentication, request parsing and validation, TypeScript typing, and schema validation with Zod. It also helped structure the backend into routes, controllers, and middleware to improve maintainability and scalability.
 
 ## Database
 
@@ -747,8 +749,8 @@ This section lists all selected modules for the project, including their type, p
 
 * **Team:**
 
-  * Frontend (React): efinda, dnzita
-  * Backend (Express): cgama, jbofengo
+  * efinda, dnzita (Frontend)
+  * cgama, jbofengo (Backend)
 
 ---
 
@@ -782,6 +784,7 @@ This section lists all selected modules for the project, including their type, p
   * Retrieving user information from the 42 API using the access token, and creating a local user session, and then redirecting the user to the frontend application with a JWT token for authenticated access, or an error message if authentication fails.
 
 * **Team:**
+
   * efinda (Frontend)
   * jbofengo (Backend)
 
@@ -795,15 +798,16 @@ This section lists all selected modules for the project, including their type, p
 * **Implementation:**
   The backend exposes a RESTful API with the following features:
 
-  * **API Key Authentication:** Each request to the API must include a valid API key in the headers. The backend validates the key before processing the request, but to get the API key, users must authenticate through the standard login flow, ensuring that only authorized users can access the API, the keys can also be revoked by the user if necessary, each user can have a maximum limit of active API keys, the keys are generated randomly using crypto, which uses a cryptographically secure pseudorandom number generator, as confirmed on *https://nodejs.org/api/crypto.html#cryptorandombytessize-callback*, and each key has a unique identifier, the API key, which is stored hashed on DB, the hashing is done using bcrypt, and the API key is never stored in plaintext, when a user creates an API key, they are shown the plaintext value only once, and they are responsible for storing it securely, if they lose it, they will have to create a new one.
+  * **API Key Authentication:** Each request to the API must include a valid API key in the headers. The backend validates the key before processing the request, but to get the API key, users must authenticate through the standard login flow, ensuring that only authorized users can access the API, the keys can also be revoked by the user if necessary, each user can have a maximum limit of active API keys, the keys are generated randomly using crypto, and each key has a unique identifier, the API key, which is stored hashed on DB, the hashing is done using bcrypt, and the API key is never stored in plaintext, when a user creates an API key, they are shown the plaintext value only once, and they are responsible for storing it securely, if they lose it, they will have to create a new one.
 
   * **Rate Limiting:** The API implements rate limiting provided by the `express-rate-limit` middleware to restrict the number of requests from a single API key within a specified time frame, preventing abuse and ensuring fair usage, while read operations have a more generous limit, of up to three times more, compared to write operations per minute, and that's based on the assumption that read operations are more common than write operations, and that write operations typically have a greater impact on the system's resources, and if a user exceeds the rate limit, they receive a clear error message with the http code of 429 indicating that they have made too many requests and should try again later.
 
   * **Documentation:** The API is documented using Swagger, providing clear information about available endpoints and their usage.
 
-  * **Endpoints:** The API includes 5 endpoints for managing workspaces (e.g., create workspace, list workspaces, get workspace details, update workspace, delete workspace). Through the API, external applications can perform CRUD operations on workspaces.
+  * **Endpoints:** The API includes 5 endpoints for managing workspaces — create, list, get details, update, and delete. Through the API, external applications can perform CRUD operations on workspaces.
 
 * **Team:**
+
   * efinda (Frontend)
   * jbofengo (Backend)
 
