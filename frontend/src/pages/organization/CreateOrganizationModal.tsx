@@ -76,7 +76,7 @@ export default function CreateOrganizationModal({ isOpen, onClose, onCreate }: C
         </div>
 
         {/* Body */}
-        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
+        <form id="create-organization-form" onSubmit={handleSubmit} className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
           {/* Name */}
           <div>
             <label className="block font-mono text-[11px] uppercase tracking-wider text-slate-400 mb-1.5">
@@ -118,6 +118,7 @@ export default function CreateOrganizationModal({ isOpen, onClose, onCreate }: C
           </button>
           <button
             type="submit"
+            form="create-organization-form"
             disabled={!name.trim()}
             className="px-4 py-2 font-body text-sm font-bold text-white bg-cyan-600 rounded-lg transition-all hover:-translate-y-0.5 hover:bg-cyan-700 shadow-[0_4px_14px_rgba(8,145,178,0.2)] hover:shadow-[0_6px_20px_rgba(8,145,178,0.3)] disabled:cursor-not-allowed disabled:bg-slate-300 disabled:hover:translate-y-0 disabled:shadow-none"
           >

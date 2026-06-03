@@ -1,3 +1,4 @@
+import { useEffect, useState, type FormEvent } from 'react'
 import { ChevronLeft } from 'lucide-react'
 
 interface WorkspaceSettingsContext {
@@ -10,9 +11,35 @@ interface OrganizationSettingsPageProps {
   workspace: WorkspaceSettingsContext
   onBack?: () => void
   onOpenMembers?: () => void
+  onSave?: (data: { name: string; description: string }) => void | Promise<void>
+  onDelete?: () => void | Promise<void>
 }
 
-export default function OrganizationSettingsPage({ workspace, onBack, onOpenMembers }: OrganizationSettingsPageProps) {
+export default function OrganizationSettingsPage({ workspace, onBack, onOpenMembers, onSave, onDelete }: OrganizationSettingsPageProps) {
+  const [name, setName] = useState(workspace.name)
+  const [description, setDescription] = useState(workspace.description ?? '')
+
+
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+
+    try {
+      await onSave?.({ name: name.trim(), description: description.trim() })
+      window.alert('Changes saved successfully.')
+    } catch {
+      return
+    }
+  }
+
+  const handleDelete = async () => {
+    const confirmed = window.confirm('Delete this organization? This action cannot be undone.')
+    if (!confirmed) {
+      return
+    }
+
+    await onDelete?.()
+  }
+
   return (
     <div className="flex-1 h-full overflow-y-auto bg-slate-100 text-slate-900">
       <div className="mx-auto max-w-[980px] px-6 py-8 lg:px-8">
@@ -40,15 +67,15 @@ export default function OrganizationSettingsPage({ workspace, onBack, onOpenMemb
             <p className="mt-1 text-sm text-slate-500">Update your organization's public details.</p>
           </div>
 
-          <div className="space-y-5 px-6 py-5">
-            
+          <form id="workspace-settings-form" onSubmit={handleSubmit} className="space-y-5 px-6 py-5">
             <div>
               <label htmlFor="settings-name" className="mb-1 block text-sm font-semibold text-slate-700">
                 Organization Name
               </label>
               <input
                 id="settings-name"
-                defaultValue={workspace.name}
+                value={name}
+                onChange={(event) => setName(event.target.value)}
                 className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-base text-slate-900 outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/10"
               />
               <p className="mt-1 text-xs text-slate-400">Visible to all members and on invitations.</p>
@@ -60,15 +87,17 @@ export default function OrganizationSettingsPage({ workspace, onBack, onOpenMemb
               </label>
               <textarea
                 id="settings-description"
-                defaultValue={workspace.description || 'The first tuition-free coding school in Angola.'}
+                value={description}
+                onChange={(event) => setDescription(event.target.value)}
                 className="min-h-[90px] w-full resize-none rounded-lg border border-slate-300 bg-white px-3 py-2 text-base text-slate-900 outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/10"
               />
             </div>
-          </div>
+          </form>
 
           <div className="flex justify-end border-t border-slate-200 bg-slate-50 px-6 py-4">
             <button
-              type="button"
+              type="submit"
+              form="workspace-settings-form"
               className="rounded-lg bg-cyan-600 px-5 py-2 text-sm font-bold text-white shadow-[0_6px_18px_rgba(8,145,178,0.2)] hover:bg-cyan-700"
             >
               Save Changes
@@ -91,6 +120,7 @@ export default function OrganizationSettingsPage({ workspace, onBack, onOpenMemb
             </div>
             <button
               type="button"
+              onClick={handleDelete}
               className="rounded-lg bg-red-600 px-5 py-2 text-sm font-bold text-white hover:bg-red-700"
             >
               Delete Organization

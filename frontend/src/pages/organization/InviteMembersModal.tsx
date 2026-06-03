@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { Check, ChevronDown, Search, X } from 'lucide-react'
 
-interface InviteCandidate {
+export interface InviteCandidate {
   id: string
   name: string
   username: string
@@ -9,11 +9,14 @@ interface InviteCandidate {
   initials: string
 }
 
+
 interface InviteMembersModalProps {
   isOpen: boolean
   search: string
   onSearchChange: (value: string) => void
-  selectedCandidate: InviteCandidate
+  candidates: InviteCandidate[]
+  selectedCandidateId: string | null
+  onSelectCandidate: (candidate: InviteCandidate) => void
   roleLabel: string
   onClose: () => void
   onSendInvite: () => void
@@ -23,7 +26,9 @@ export default function InviteMembersModal({
   isOpen,
   search,
   onSearchChange,
-  selectedCandidate,
+  candidates,
+  selectedCandidateId,
+  onSelectCandidate,
   roleLabel,
   onClose,
   onSendInvite,
@@ -53,6 +58,19 @@ export default function InviteMembersModal({
   if (!isOpen) {
     return null
   }
+
+  const normalizedSearch = search.trim().toLowerCase()
+  const filteredCandidates = candidates.filter(candidate => {
+    if (!normalizedSearch) {
+      return true
+    }
+
+    return (
+      candidate.name.toLowerCase().includes(normalizedSearch) ||
+      candidate.username.toLowerCase().includes(normalizedSearch) ||
+      candidate.email.toLowerCase().includes(normalizedSearch)
+    )
+  })
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
@@ -100,23 +118,39 @@ export default function InviteMembersModal({
             <label className="block font-mono text-[11px] uppercase tracking-wider text-slate-400 mb-1.5">
               Search Results
             </label>
-            <button
-              type="button"
-              className="flex w-full items-center justify-between rounded-lg border border-cyan-200 bg-cyan-50 px-3 py-2.5 text-left transition-colors"
-            >
-              <div className="flex items-center gap-3">
-                <span className="flex h-9 w-9 items-center justify-center rounded-full bg-cyan-500 text-sm font-bold text-white">
-                  {selectedCandidate.initials}
-                </span>
-                <div>
-                  <span className="block text-sm font-semibold text-slate-900">{selectedCandidate.name}</span>
-                  <span className="block text-xs text-slate-500">
-                    {selectedCandidate.username} • {selectedCandidate.email}
-                  </span>
-                </div>
-              </div>
-              <Check className="w-4 h-4 text-cyan-600" />
-            </button>
+            <div className="space-y-2">
+              {filteredCandidates.length > 0 ? (
+                filteredCandidates.map(candidate => {
+                  const isSelected = candidate.id === selectedCandidateId
+
+                  return (
+                    <button
+                      key={candidate.id}
+                      type="button"
+                      onClick={() => onSelectCandidate(candidate)}
+                      className={`flex w-full items-center justify-between rounded-lg border px-3 py-2.5 text-left transition-colors ${isSelected ? 'border-cyan-200 bg-cyan-50' : 'border-slate-200 bg-white hover:bg-slate-50'}`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className="flex h-9 w-9 items-center justify-center rounded-full bg-cyan-500 text-sm font-bold text-white">
+                          {candidate.initials}
+                        </span>
+                        <div>
+                          <span className="block text-sm font-semibold text-slate-900">{candidate.name}</span>
+                          <span className="block text-xs text-slate-500">
+                            {candidate.username} • {candidate.email}
+                          </span>
+                        </div>
+                      </div>
+                      {isSelected ? <Check className="w-4 h-4 text-cyan-600" /> : null}
+                    </button>
+                  )
+                })
+              ) : (
+                <p className="rounded-lg border border-dashed border-slate-200 px-3 py-4 text-sm text-slate-500">
+                  No users found.
+                </p>
+              )}
+            </div>
           </div>
 
           {/* Role */}

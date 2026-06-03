@@ -1,6 +1,15 @@
 import { EllipsisVertical, Plus, Search } from 'lucide-react'
-import { useMemo, useState } from 'react'
-import InviteMembersModal from './InviteMembersModal'
+import { useEffect, useMemo, useState } from 'react'
+import InviteMembersModal, { type InviteCandidate } from './InviteMembersModal'
+import {
+  useCreateWorkspaceMemberMutation,
+  useDeleteWorkspaceMemberMutation,
+  useWorkspaceMembersQuery,
+  useUpdateWorkspaceMemberRoleMutation,
+  type WorkspaceMember,
+  type WorkspaceRole,
+} from '../../api/workspace'
+import { useUsersQuery, type UserListItem } from '../../api/user'
 
 interface WorkspaceMembersContext {
   id: string | number
@@ -12,11 +21,10 @@ interface OrganizationMembersPageProps {
   onBackToSettings?: () => void
 }
 
-type MemberRole = 'Owner' | 'Admin' | 'Member' | 'Guest'
+type MemberRole = 'Admin' | 'Member' | 'Guest'
 
 interface MemberRow {
   id: string
-  name: string
   username: string
   initials: string
   role: MemberRole
@@ -25,23 +33,77 @@ interface MemberRow {
   accent: string
 }
 
-//mockdata
-const initialMembers: MemberRow[] = [
-
-]
-
 const roleStyles: Record<MemberRole, string> = {
-  Owner: 'border-amber-200 bg-amber-50 text-amber-700',
   Admin: 'border-indigo-200 bg-indigo-50 text-indigo-700',
   Member: 'border-slate-200 bg-slate-100 text-slate-600',
   Guest: 'border-slate-200 bg-white text-slate-500',
 }
 
 export default function OrganizationMembersPage({ workspace, onBackToSettings }: OrganizationMembersPageProps) {
-  const [members, setMembers] = useState<MemberRow[]>(initialMembers)
   const [query, setQuery] = useState('')
   const [inviteOpen, setInviteOpen] = useState(false)
   const [inviteSearch, setInviteSearch] = useState('')
+  const [actionMember, setActionMember] = useState<MemberRow | null>(null)
+  const [draftRole, setDraftRole] = useState<MemberRole>('Member')
+  const [selectedCandidateId, setSelectedCandidateId] = useState<string | null>(null)
+
+  const membersQuery = useWorkspaceMembersQuery(workspace.id, { refetchOnMount: false })
+  const usersQuery = useUsersQuery({ refetchOnMount: false })
+  const createMemberMutation = useCreateWorkspaceMemberMutation()
+  const updateMemberRoleMutation = useUpdateWorkspaceMemberRoleMutation()
+  const deleteMemberMutation = useDeleteWorkspaceMemberMutation()
+
+  const toWorkspaceRole = (role: MemberRole): WorkspaceRole => {
+    switch (role) {
+      case 'Admin':
+        return 'admin'
+      case 'Guest':
+        return 'guest'
+      default:
+        return 'member'
+    }
+  }
+
+  const workspaceMembers = (membersQuery.data ?? []) as WorkspaceMember[]
+
+  const members = useMemo<MemberRow[]>(() => {
+    return workspaceMembers.map((member: WorkspaceMember) => {
+      const role = toMemberRole(member.role)
+      const username = member.user?.username ?? `user-${member.userId}`
+
+      return {
+        id: String(member.userId),
+        username: username,
+        initials: getInitials(member.user?.username ?? `U${member.userId}`),
+        role,
+        joinedDate: member.createdAt ? new Date(member.createdAt).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }) : '—',
+        editable: true,
+        accent: 'bg-cyan-500',
+      }
+    })
+  }, [workspaceMembers])
+
+  const inviteCandidates = useMemo<InviteCandidate[]>(() => {
+    const memberIds = new Set(workspaceMembers.map((member: WorkspaceMember) => String(member.userId)))
+
+    const users: UserListItem[] = usersQuery.data?.success ? usersQuery.data.data.users : []
+    const nextCandidates: InviteCandidate[] = []
+
+    for (const user of users) {
+      if (memberIds.has(String(user.id))) {
+        continue
+      }
+
+      nextCandidates.push({
+        id: String(user.id),
+        username: user.username,
+        email: user.email,
+        initials: getInitials(user.username),
+      })
+    }
+
+    return nextCandidates
+  }, [usersQuery.data, workspaceMembers])
 
   const filteredMembers = useMemo(() => {
     const normalized = query.trim().toLowerCase()
@@ -49,29 +111,82 @@ export default function OrganizationMembersPage({ workspace, onBackToSettings }:
       return members
     }
 
-    return members.filter(member => {
+    return members.filter((member: MemberRow) => {
       return member.name.toLowerCase().includes(normalized) || member.username.toLowerCase().includes(normalized)
     })
   }, [members, query])
 
-  const handleSendInvite = () => {
-    const exists = members.some(member => member.username === '@ricardo_g')
-    if (!exists) {
-      setMembers(current => [
-        ...current,
-        {
-          id: String(Date.now()),
-          name: 'Ricardo Gomes',
-          username: '@ricardo_g',
-          initials: 'RG',
-          role: 'Member',
-          joinedDate: 'Mar 22, 2026',
-          editable: true,
-          accent: 'bg-cyan-500',
-        },
-      ])
+  useEffect(() => {
+    if (!inviteOpen) {
+      return
     }
+
+    setInviteSearch('')
+    setSelectedCandidateId(inviteCandidates[0]?.id ?? null)
+  }, [inviteCandidates, inviteOpen])
+
+  const selectedCandidate = useMemo(
+    () => inviteCandidates.find((candidate: InviteCandidate) => candidate.id === selectedCandidateId) ?? inviteCandidates[0] ?? null,
+    [inviteCandidates, selectedCandidateId]
+  )
+
+  const handleSendInvite = async () => {
+    if (!selectedCandidate) {
+      return
+    }
+    //TO DO: implentar a logica do convite aqui
+    await createMemberMutation.mutateAsync({
+      id: workspace.id,
+      form: {
+        userId: Number(selectedCandidate.id),
+        role: 'member',
+      },
+    })
+
     setInviteOpen(false)
+  }
+
+  const openMemberActions = (member: MemberRow) => {
+    setActionMember(member)
+    setDraftRole(member.role)
+  }
+
+  const closeMemberActions = () => {
+    setActionMember(null)
+  }
+
+  const handleSaveRole = async () => {
+    if (!actionMember) {
+      return
+    }
+
+    await updateMemberRoleMutation.mutateAsync({
+      id: workspace.id,
+      userId: actionMember.id,
+      form: { role: toWorkspaceRole(draftRole) },
+    })
+    closeMemberActions()
+  }
+
+  const handleDeleteMember = async () => {
+    if (!actionMember) {
+      return
+    }
+
+    const confirmed = window.confirm(`Remove ${actionMember.name} from this workspace?`)
+    if (!confirmed) {
+      return
+    }
+
+    await deleteMemberMutation.mutateAsync({
+      id: workspace.id,
+      userId: actionMember.id,
+    })
+    closeMemberActions()
+  }
+
+  const handleInviteSelect = (candidate: InviteCandidate) => {
+    setSelectedCandidateId(candidate.id)
   }
 
   const isEmpty = members.length === 0
@@ -112,7 +227,7 @@ export default function OrganizationMembersPage({ workspace, onBackToSettings }:
             <Search size={18} className="text-slate-400" />
             <input
               value={query}
-              onChange={event => setQuery(event.target.value)}
+              onChange={(event: { target: { value: string } }) => setQuery(event.target.value)}
               placeholder="Search members..."
               className="w-full bg-transparent text-lg text-slate-700 outline-none placeholder:text-slate-400"
             />
@@ -190,7 +305,11 @@ export default function OrganizationMembersPage({ workspace, onBackToSettings }:
 
                 <div className="flex justify-end">
                   {member.editable ? (
-                    <button type="button" className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600">
+                    <button
+                      type="button"
+                      onClick={() => openMemberActions(member)}
+                      className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+                    >
                       <EllipsisVertical size={20} />
                     </button>
                   ) : (
@@ -203,21 +322,97 @@ export default function OrganizationMembersPage({ workspace, onBackToSettings }:
         )}
       </div>
 
+      {actionMember && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/35 p-4" onClick={closeMemberActions}>
+          <div
+            className="w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_20px_60px_-20px_rgba(15,23,42,0.35)]"
+            onClick={event => event.stopPropagation()}
+          >
+            <div className="mb-4">
+              <p className="text-xs font-mono uppercase tracking-[0.25em] text-slate-400">Member Actions</p>
+              <h3 className="mt-2 text-xl font-bold text-slate-900">{actionMember.name}</h3>
+              <p className="text-sm text-slate-500">{actionMember.username}</p>
+            </div>
+
+            <label className="mb-2 block text-sm font-semibold text-slate-700" htmlFor="member-role-select">
+              Edit role
+            </label>
+            <select
+              id="member-role-select"
+              value={draftRole}
+              onChange={(event: { target: { value: string } }) => setDraftRole(event.target.value as MemberRole)}
+              className="mb-4 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/10"
+            >
+              <option value="Admin">Admin</option>
+              <option value="Member">Member</option>
+              <option value="Guest">Guest</option>
+            </select>
+
+            <div className="flex items-center justify-between gap-3">
+              <button
+                type="button"
+                onClick={handleDeleteMember}
+                className="rounded-xl bg-red-600 px-4 py-2 text-sm font-bold text-white hover:bg-red-700"
+              >
+                Delete member
+              </button>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={closeMemberActions}
+                  className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSaveRole}
+                  className="rounded-xl bg-cyan-600 px-4 py-2 text-sm font-bold text-white hover:bg-cyan-700"
+                >
+                  Save role
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <InviteMembersModal
         isOpen={inviteOpen}
         search={inviteSearch}
         onSearchChange={setInviteSearch}
-        selectedCandidate={{
-          id: 'candidate-1',
-          name: 'Ricardo Gomes',
-          username: '@ricardo_g',
-          email: 'ricardo@example.com',
-          initials: 'RG',
-        }}
+        candidates={inviteCandidates}
+        selectedCandidateId={selectedCandidate?.id ?? null}
+        onSelectCandidate={handleInviteSelect}
         roleLabel="Member (Can create & edit tasks)"
         onClose={() => setInviteOpen(false)}
         onSendInvite={handleSendInvite}
       />
     </div>
   )
+}
+
+function toMemberRole(role: WorkspaceRole): MemberRole {
+  switch (role) {
+    case 'admin':
+      return 'Admin'
+    case 'guest':
+      return 'Guest'
+    default:
+      return 'Member'
+  }
+}
+
+function getInitials(value: string): string {
+  const parts = value.split(/\s+/).filter(Boolean)
+  if (parts.length === 0) {
+    return '??'
+  }
+
+  return parts
+    .slice(0, 2)
+    .map(part => part[0]?.toUpperCase() ?? '')
+    .join('')
+    .slice(0, 2)
 }

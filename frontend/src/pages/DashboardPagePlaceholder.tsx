@@ -18,7 +18,7 @@ import { SHARED_BADGES } from '../components/gamification/SharedBadges.ts'
 import type { LeaderboardEntry, XpSummary } from '../components/gamification/Types.ts'
 import type { User, UserResponse } from '../types/user.ts'
 import { useGetUserRequest } from '../api/user.ts'
-import { useUserWorkspacesQuery } from '../api/workspace.ts'
+import { useCreateWorkspaceMutation, useDeleteWorkspaceMutation, useUpdateWorkspaceMutation, useUserWorkspacesQuery } from '../api/workspace.ts'
 interface Workspace {
   id: string | number
   name: string
@@ -154,6 +154,9 @@ export default function DashboardPagePlaceholder() {
   const dataQuery: UserResponse | undefined = useGetUserRequest({refetchOnMount: false}).data
   const userDataQuery: User | null = dataQuery?.success ? dataQuery.data : null
   const workspaceQuery = useUserWorkspacesQuery({ refetchOnMount: false })
+  const createWorkspaceMutation = useCreateWorkspaceMutation()
+  const updateWorkspaceMutation = useUpdateWorkspaceMutation()
+  const deleteWorkspaceMutation = useDeleteWorkspaceMutation()
   const workspaceDataQuery: Workspace[] = workspaceQuery.data?.success ? workspaceQuery.data.data : []
 
   // Parse URL search params
@@ -288,25 +291,37 @@ export default function DashboardPagePlaceholder() {
     handleNavigate(`user-${id}`)
   }
 
-  const handleCreateOrganization = (data: { name: string; description: string; visibility: 'private' | 'team'; template: string }) => {
-    const newWorkspaceId = Date.now()
-    const newWorkspace: Workspace = {
-      id: newWorkspaceId,
+  const handleCreateOrganization = async (data: { name: string; description: string; visibility: 'private' | 'team'; template: string }) => {
+    const createdWorkspace = await createWorkspaceMutation.mutateAsync({
       name: data.name,
-      description: data.description || 'New organization workspace',
-      taskCount: 0,
-      memberCount: 1,
-      onlineCount: 1,
-      sprintDaysLeft: 14,
-      healthScore: 80,
+      description: data.description || "New workspace",
+    })
+   
+    handleNavigate('workspace', createdWorkspace.id)
+    setCreateOrganizationOpen(false)
+  }
+
+  const handleUpdateWorkspace = async (data: { name: string; description: string }) => {
+    if (!currentWorkspace) {
+      return
     }
 
-    setUser(currentUser => ({
-      ...currentUser,
-      workspaces: [newWorkspace, ...currentUser.workspaces],
-    }))
-    handleNavigate('workspace', newWorkspaceId)
-    setCreateOrganizationOpen(false)
+    await updateWorkspaceMutation.mutateAsync({
+      id: currentWorkspace.id,
+      form: {
+        name: data.name,
+        description: data.description,
+      },
+    })
+  }
+
+  const handleDeleteWorkspace = async () => {
+    if (!currentWorkspace) {
+      return
+    }
+
+    await deleteWorkspaceMutation.mutateAsync(currentWorkspace.id)
+    handleNavigate('dashboard')
   }
 
   // ── Render main area ─────────────────────────────────────────────────────
@@ -349,6 +364,8 @@ export default function DashboardPagePlaceholder() {
           workspace={currentWorkspace}
           onBack={() => handleNavigate('workspace', currentWorkspace.id)}
           onOpenMembers={() => handleNavigate('organization-members')}
+          onSave={handleUpdateWorkspace}
+          onDelete={handleDeleteWorkspace}
         />
       ) : (
         <PlaceholderView title="Organization Settings" />
