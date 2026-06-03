@@ -10,7 +10,7 @@ export const    updateWorkspaceSchema = z.object(
 {
     name:           z.string().min(1, "Workspace name cannot be empty").max(100, "Workspace name too long, it can have up to 100 characters").optional(),
     description:    z.string().min(1, "Workspace description cannot be empty").max(500, "Workspace description too long, it can have up to 500 characters").optional(),
-}).refine( data => Object.keys(data).length > 0, { message: "At least one field (name or description) must be provided" } );
+}).refine( data => data.name !== undefined || data.description !== undefined, { message: "At least one field (name or description) must be provided" } );
 
 export const    createTaskSchema = z.object(
 {
@@ -26,7 +26,7 @@ export const   updateTaskSchema = z.object(
     description:    z.string().min(1, "Task description cannot be empty").max(500, "Task description too long, it can have up to 500 characters").optional(),
     orderInColumn:  z.number().int("Order in column must be an integer").nonnegative("Order in column must be a non-negative integer").optional(),
     columnId:       z.number().int("Column ID must be an integer").positive("Column ID must be a positive integer").optional(),
-}).refine( data => Object.keys(data).length > 0, { message: "At least one field (title, description, columnId or orderInColumn) must be provided" } );
+}).refine( data => data.title !== undefined || data.description !== undefined || data.columnId !== undefined || data.orderInColumn !== undefined, { message: "At least one field (title, description, columnId or orderInColumn) must be provided" } );
 
 export const    createApiKeySchema = z.object(
 {

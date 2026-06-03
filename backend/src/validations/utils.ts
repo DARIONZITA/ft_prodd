@@ -51,7 +51,7 @@ export function parseQueryBool( key: string, value: unknown, options: { default?
     return check.value;
 
   const schema = z.preprocess(
-    (val) => {
+    (val: unknown) => {
       if (typeof val === 'boolean') return val;
       if (typeof val === 'string') {
         if (val.toLowerCase() === 'true') return true;
@@ -87,6 +87,27 @@ export function parseQueryString( key: string, value: unknown, options: { defaul
   const schema = z.string().trim()
     .min(options.minLength ?? 0, {message: `Query parameter "${key}" must contain at least ${options.minLength} characters`})
     .max(options.maxLength ?? Infinity, {message: `Query parameter "${key}" must contain at most ${options.maxLength} characters`});
+
+  return parseOrThrow(schema, key, value);
+}
+
+export function parseQueryDate( key: string, value: unknown, options: { default?: Date; isOptional?: boolean } = {} ): Date | undefined
+{
+  const check = validateQueryParam(key, value, options);
+  if ('early' in check)
+    return check.early;
+  if (check.value === undefined)
+    return check.value;
+
+  const schema = z.preprocess(
+    (val: unknown) => {
+      if (typeof val !== 'string' && !(val instanceof Date))
+        return undefined;
+      const parsed = new Date(val);
+      return Number.isNaN(parsed.getTime()) ? undefined : parsed;
+    },
+    z.date({ message: `Query parameter "${key}" must be a valid date string` })
+  );
 
   return parseOrThrow(schema, key, value);
 }

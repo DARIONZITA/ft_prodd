@@ -38,6 +38,7 @@ model User {
     username     String   //@unique
     bio          String   @default("")
     email        String   @unique
+    apiKeyCount  Int      @default(0)
     fortyTwoId   Int?     @unique
     totalXp      Int      @default(0)
     apiKeyCount  Int      @default(0)

@@ -8,6 +8,7 @@ import badgeRoutes						from './routes/private/router/badges';
 import userRoutes						from './routes/private/router/users';
 import friendRoutes						from './routes/private/router/friends';
 import notificationsRouter				from './routes/private/router/notifications';
+import analyticsRouter					from './routes/private/router/analytics';
 import { errorHandler }					from './middleware/errorHandler';
 import { setupSwagger }					from './swagger';
 import publicAPIRouter					from './routes/public/api.router';
@@ -30,6 +31,7 @@ app.get('/api/health', (_req: Request, res: Response) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/public', publicAPIRouter);
 app.use('/api/keys', apiKeyRouter);
+app.use('/api/analytics', analyticsRouter);
 app.use('/api/workspaces', workspaceRoutes);
 app.use('/api/badges', badgeRoutes);
 app.use('/api/users', userRoutes);
