@@ -34,6 +34,18 @@ router.use(authenticate);
  *       - in: query
  *         name: to
  *         schema: { type: string, format: date-time }
+ *       - in: query
+ *         name: priority
+ *         description: Filter by task priority
+ *         schema: { type: string, enum: [LOW, MEDIUM, HIGH] }
+ *       - in: query
+ *         name: status
+ *         description: Filter by task status
+ *         schema: { type: string, enum: [open, done, completed] }
+ *       - in: query
+ *         name: memberId
+ *         description: Filter by assigned member
+ *         schema: { type: integer }
  *     responses:
  *       200:
  *         description: Workspace analytics overview
@@ -63,6 +75,18 @@ router.get('/workspaces/:id/overview', requireWorkspaceAdmin, getWorkspaceOvervi
  *       - in: query
  *         name: interval
  *         schema: { type: string, enum: [day, week, month] }
+ *       - in: query
+ *         name: priority
+ *         description: Filter by task priority
+ *         schema: { type: string, enum: [LOW, MEDIUM, HIGH] }
+ *       - in: query
+ *         name: status
+ *         description: Filter by task status
+ *         schema: { type: string, enum: [open, done, completed] }
+ *       - in: query
+ *         name: memberId
+ *         description: Filter by assigned member
+ *         schema: { type: integer }
  *     responses:
  *       200:
  *         description: Created and completed task trend series
@@ -96,6 +120,18 @@ router.get('/workspaces/:id/trend', requireWorkspaceAdmin, getWorkspaceTaskTrend
  *       - in: query
  *         name: interval
  *         schema: { type: string, enum: [day, week, month] }
+ *       - in: query
+ *         name: priority
+ *         description: Filter by task priority
+ *         schema: { type: string, enum: [LOW, MEDIUM, HIGH] }
+ *       - in: query
+ *         name: status
+ *         description: Filter by task status
+ *         schema: { type: string, enum: [open, done, completed] }
+ *       - in: query
+ *         name: memberId
+ *         description: Filter by assigned member
+ *         schema: { type: integer }
  *     responses:
  *       200:
  *         description: Series of task creations
@@ -129,6 +165,18 @@ router.get('/workspaces/:id/series/creation', requireWorkspaceAdmin, getWorkspac
  *       - in: query
  *         name: interval
  *         schema: { type: string, enum: [day, week, month] }
+ *       - in: query
+ *         name: priority
+ *         description: Filter by task priority
+ *         schema: { type: string, enum: [LOW, MEDIUM, HIGH] }
+ *       - in: query
+ *         name: status
+ *         description: Filter by task status
+ *         schema: { type: string, enum: [open, done, completed] }
+ *       - in: query
+ *         name: memberId
+ *         description: Filter by assigned member
+ *         schema: { type: integer }
  *     responses:
  *       200:
  *         description: Series of task completions
@@ -152,6 +200,18 @@ router.get('/workspaces/:id/series/completion', requireWorkspaceAdmin, getWorksp
  *       - in: path
  *         name: id
  *         required: true
+ *         schema: { type: integer }
+ *       - in: query
+ *         name: priority
+ *         description: Filter by task priority
+ *         schema: { type: string, enum: [LOW, MEDIUM, HIGH] }
+ *       - in: query
+ *         name: status
+ *         description: Filter by task status
+ *         schema: { type: string, enum: [open, done, completed] }
+ *       - in: query
+ *         name: memberId
+ *         description: Filter by assigned member
  *         schema: { type: integer }
  *     responses:
  *       200:
@@ -177,6 +237,18 @@ router.get('/workspaces/:id/distributions/priority', requireWorkspaceAdmin, getW
  *         name: id
  *         required: true
  *         schema: { type: integer }
+ *       - in: query
+ *         name: priority
+ *         description: Filter by task priority
+ *         schema: { type: string, enum: [LOW, MEDIUM, HIGH] }
+ *       - in: query
+ *         name: status
+ *         description: Filter by task status
+ *         schema: { type: string, enum: [open, done, completed] }
+ *       - in: query
+ *         name: memberId
+ *         description: Filter by assigned member
+ *         schema: { type: integer }
  *     responses:
  *       200:
  *         description: Status distribution
@@ -200,6 +272,18 @@ router.get('/workspaces/:id/distributions/status', requireWorkspaceAdmin, getWor
  *       - in: path
  *         name: id
  *         required: true
+ *         schema: { type: integer }
+ *       - in: query
+ *         name: priority
+ *         description: Filter by task priority
+ *         schema: { type: string, enum: [LOW, MEDIUM, HIGH] }
+ *       - in: query
+ *         name: status
+ *         description: Filter by task status
+ *         schema: { type: string, enum: [open, done, completed] }
+ *       - in: query
+ *         name: memberId
+ *         description: Filter by assigned member
  *         schema: { type: integer }
  *     responses:
  *       200:
