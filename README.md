@@ -284,6 +284,8 @@ In this section, you have access to the main resources that helped us develop th
 
 - [Quickstart Guide](https://dndkit.com/quickstart/) — dndkit
 
+- [Graph vs Chart: What’s the Difference?](https://blacklabel.net/blog/data-visualization/chart-types/graph-vs-chart-whats-the-difference/) — blacklabel.net
+
 ### AI Usage
 
 - 
