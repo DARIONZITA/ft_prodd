@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
-const envSchema = z.object({
+export const envSchema = z.object(
+{
   DATABASE_URL: z.string().url(),
 
   JWT_SECRET: z.string().min(32, 'JWT_SECRET must be at least 32 characters long'),
@@ -29,4 +30,13 @@ const envSchema = z.object({
   };
 });
 
-export const	env = envSchema.parse(process.env);
+const	result = envSchema.safeParse(process.env);
+
+if (!result.success)
+{
+  console.error('Environment variable validation failed:', result.error.format());
+  process.exit(1);
+}
+
+export type   Env = z.infer<typeof envSchema>;
+export const	env : Env = result.data;
