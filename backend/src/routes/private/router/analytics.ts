@@ -53,6 +53,7 @@ router.use(authenticate);
  *         description: Only admins can access analytics for this workspace
  */
 router.get('/workspaces/:id/overview', requireWorkspaceAdmin, getWorkspaceOverview);
+
 /**
  * @swagger
  * /analytics/workspaces/{id}/trend:
@@ -98,6 +99,7 @@ router.get('/workspaces/:id/overview', requireWorkspaceAdmin, getWorkspaceOvervi
  *         description: Only admins can access analytics for this workspace
  */
 router.get('/workspaces/:id/trend', requireWorkspaceAdmin, getWorkspaceTaskTrendHandler);
+
 /**
  * @swagger
  * /analytics/workspaces/{id}/series/creation:
@@ -143,6 +145,7 @@ router.get('/workspaces/:id/trend', requireWorkspaceAdmin, getWorkspaceTaskTrend
  *         description: Only admins can access analytics for this workspace
  */
 router.get('/workspaces/:id/series/creation', requireWorkspaceAdmin, getWorkspaceTaskCreationSeriesHandler);
+
 /**
  * @swagger
  * /analytics/workspaces/{id}/series/completion:
@@ -188,6 +191,7 @@ router.get('/workspaces/:id/series/creation', requireWorkspaceAdmin, getWorkspac
  *         description: Only admins can access analytics for this workspace
  */
 router.get('/workspaces/:id/series/completion', requireWorkspaceAdmin, getWorkspaceTaskCompletionSeriesHandler);
+
 /**
  * @swagger
  * /analytics/workspaces/{id}/distributions/priority:
@@ -224,6 +228,7 @@ router.get('/workspaces/:id/series/completion', requireWorkspaceAdmin, getWorksp
  *         description: Only admins can access analytics for this workspace
  */
 router.get('/workspaces/:id/distributions/priority', requireWorkspaceAdmin, getWorkspaceTaskPriorityDistributionHandler);
+
 /**
  * @swagger
  * /analytics/workspaces/{id}/distributions/status:
@@ -260,6 +265,7 @@ router.get('/workspaces/:id/distributions/priority', requireWorkspaceAdmin, getW
  *         description: Only admins can access analytics for this workspace
  */
 router.get('/workspaces/:id/distributions/status', requireWorkspaceAdmin, getWorkspaceTaskStatusDistributionHandler);
+
 /**
  * @swagger
  * /analytics/workspaces/{id}/workload:

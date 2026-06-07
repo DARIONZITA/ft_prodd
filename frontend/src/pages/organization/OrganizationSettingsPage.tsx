@@ -10,9 +10,10 @@ interface OrganizationSettingsPageProps {
   workspace: WorkspaceSettingsContext
   onBack?: () => void
   onOpenMembers?: () => void
+  onOpenAnalytics?: () => void
 }
 
-export default function OrganizationSettingsPage({ workspace, onBack, onOpenMembers }: OrganizationSettingsPageProps) {
+export default function OrganizationSettingsPage({ workspace, onBack, onOpenMembers, onOpenAnalytics }: OrganizationSettingsPageProps) {
   return (
     <div className="flex-1 h-full overflow-y-auto bg-slate-100 text-slate-900">
       <div className="mx-auto max-w-[980px] px-6 py-8 lg:px-8">
@@ -25,6 +26,13 @@ export default function OrganizationSettingsPage({ workspace, onBack, onOpenMemb
             <ChevronLeft size={16} /> Back
           </button>
 
+          <button
+            type="button"
+            onClick={onOpenAnalytics}
+            className="rounded-lg bg-cyan-600 px-4 py-2 text-sm font-bold text-white shadow-[0_6px_18px_rgba(8,145,178,0.2)] hover:bg-cyan-700"
+          >
+            Analytics
+          </button>
           <button
             type="button"
             onClick={onOpenMembers}
