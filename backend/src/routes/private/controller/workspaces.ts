@@ -1,40 +1,16 @@
-import type { Request, Response, NextFunction }     from 'express';
-import { WorkspaceRole }							from '@prisma/client';
-import { prisma }									from '../../../lib/prisma';
-import { ApiError }									from '../../../utils/ApiError';
-import {
-	workspaceIdParamsSchema,
-	workspaceMemberParamsSchema,
-	updateWorkspaceMemberRoleSchema,
-	createWorkspaceSchema,
-	updateWorkspaceSchema,
-    addWorkspaceMemberSchema
-}                                                   from '../../../validations/workspace';
+import type { Request, Response, NextFunction }         from 'express';
+import { prisma }									    from '../../../lib/prisma';
+import { ApiError }									    from '../../../utils/ApiError';
+import { getWorkspaceRole }                             from '../../../middleware/rbac';
+import { ActivityLogActionMaxLength, WorkspaceRole }    from '../../../types/constants';
 import { idSchema, parseOrThrow,
-    parseQueryInt, parseQueryString }               from '../../../validations/utils';
-import { ActivityLogActionMaxLength }               from '../../../types/constants';
-
-
-const getWorkspaceMembership = async (workspaceId: number, userId: number) => {
-	const membership = await prisma.workspaceMember.findFirst({
-		where: { workspaceId, userId }
-	});
-
-	if (!membership)
-		throw new ApiError(403, 'No permission for this workspace');
-
-	return membership;
-};
-
-const ensureAdmin = (role: WorkspaceRole) => {
-	if (role !== 'admin')
-		throw new ApiError(403, 'Only admins can perform this action');
-};
+    parseQueryEnum, parseQueryInt, parseQueryString }   from '../../../validations/utils';
 
 export async function createWorkspace(req: Request, res: Response, next: NextFunction)
 {
     try {
-        const { name, description } = parseOrThrow(createWorkspaceSchema, 'WorkspaceID', req.body);
+        const name = parseQueryString('name', req.body.name, { isOptional: false, minLength: 1, maxLength: 255 })!;
+        const description = parseQueryString('description', req.body.description, { default: '', isOptional: true, minLength: 1, maxLength: 1000 })!;
 
         const newWorkspace = await prisma.$transaction(async (tx) => {
             
@@ -106,21 +82,19 @@ export async function   listUserWorkspaces(req: Request, res: Response, next: Ne
 export async function   updateWorkspace(req: Request, res: Response, next: NextFunction)
 {
     try {
-        const { id } = parseOrThrow(workspaceIdParamsSchema, 'workspaceID', req.params);
-        const updateData = parseOrThrow(updateWorkspaceSchema, 'UpdateWorkspace', req.body);
-        const requesterMembership = await getWorkspaceMembership(id, req.user!.id);
-        ensureAdmin(requesterMembership.role);
+        const id = parseOrThrow(idSchema, 'UserID', req.params.id);
+        const name = parseQueryString('name', req.body.name, { isOptional: true, minLength: 1, maxLength: 255 });
+        const description = parseQueryString('description', req.body.description, { isOptional: true, minLength: 1, maxLength: 1000 });
 
-        if (!updateData.name && updateData.description === undefined) {
+        if (name === undefined && description === undefined)
             throw new ApiError(400, 'At least one field must be provided');
-        }
 
         const updatedWorkspace = await prisma.$transaction(async (tx) => {
             const workspace = await tx.workspace.update({
                 where: { id },
                 data: {
-                    ...(updateData.name && { name: updateData.name }),
-                    ...(updateData.description !== undefined && { description: updateData.description })
+                    ...(name !== undefined && { name }),
+                    ...(description !== undefined && { description })
                 }
             });
 
@@ -147,14 +121,11 @@ export async function   updateWorkspace(req: Request, res: Response, next: NextF
 export async function   deleteWorkspace(req: Request, res: Response, next: NextFunction)
 {
     try {
-        const { id } = parseOrThrow(workspaceIdParamsSchema, 'workspaceID', req.params);
-        const requesterMembership = await getWorkspaceMembership(id, req.user!.id);
-        ensureAdmin(requesterMembership.role);
+        const id = parseOrThrow(idSchema, 'UserID', req.params.id);
 
         const workspace = await prisma.workspace.findUnique({ where: { id } });
-        if (!workspace) {
+        if (!workspace)
             throw new ApiError(404, 'Workspace not found');
-        }
 
         await prisma.$transaction(async (tx) => {
             
@@ -176,8 +147,8 @@ export async function   deleteWorkspace(req: Request, res: Response, next: NextF
 export async function   getWorkspaceDetails(req: Request, res: Response, next: NextFunction)
 {
     try {
-        const { id } = parseOrThrow(workspaceIdParamsSchema, 'workspaceID', req.params);
-        const membership = await getWorkspaceMembership(id, req.user!.id);
+        const id = parseOrThrow(idSchema, 'UserID', req.params.id);
+        const requesterRole = await getWorkspaceRole(id, req.user!.id);
 
         const workspace = await prisma.workspace.findUnique({
             where: { id },
@@ -229,7 +200,7 @@ export async function   getWorkspaceDetails(req: Request, res: Response, next: N
             description: workspace.description,
             createdAt: workspace.createdAt,
             updatedAt: workspace.updatedAt,
-            role: membership.role,
+            role: requesterRole,
             taskCount: totalTaskCount,
             members: workspace.members,
             activityLogs: workspace.activityLogs.reverse()
@@ -243,10 +214,9 @@ export async function   getWorkspaceDetails(req: Request, res: Response, next: N
 export async function   createWorkspaceMember(req: Request, res: Response, next: NextFunction)
 {
     try {
-        const { id } = parseOrThrow(workspaceIdParamsSchema, 'workspaceID', req.params);
-        const { userId, role } = parseOrThrow(addWorkspaceMemberSchema, 'AddWorkspaceMember', req.body);
-        const requesterMembership = await getWorkspaceMembership(id, req.user!.id);
-        ensureAdmin(requesterMembership.role);
+        const id = parseOrThrow(idSchema, 'WorkspaceID', req.params.id);
+        const userId = parseOrThrow(idSchema, 'UserID', req.body.userId);
+        const role = parseQueryEnum('role', req.body.role, WorkspaceRole, { default: WorkspaceRole[1], isOptional: true })!;
 
         const targetUser = await prisma.user.findUnique({ where: { id: userId } });
         if (!targetUser) {
@@ -306,8 +276,7 @@ export async function   createWorkspaceMember(req: Request, res: Response, next:
 
 export async function listWorkspaceMembers(req: Request, res: Response, next: NextFunction) {
     try {
-        const { id } = parseOrThrow(workspaceIdParamsSchema, 'workspaceID', req.params);
-        await getWorkspaceMembership(id, req.user!.id);
+        const id = parseOrThrow(idSchema, 'UserID', req.params.id);
 
         const members = await prisma.workspaceMember.findMany({
             where: { workspaceId: id },
@@ -332,10 +301,11 @@ export async function listWorkspaceMembers(req: Request, res: Response, next: Ne
 export async function   getWorkspaceMember(req: Request, res: Response, next: NextFunction)
 {
     try {
-        const { id, userId } = parseOrThrow(workspaceMemberParamsSchema, 'WorkspaceMemberParams', req.params);
-        const requesterMembership = await getWorkspaceMembership(id, req.user!.id);
+        const id = parseOrThrow(idSchema, 'WorkspaceID', req.params.id);
+        const userId = parseOrThrow(idSchema, 'UserID', req.params.userId);
+        const requesterRole = await getWorkspaceRole(id, req.user!.id);
 
-        if (requesterMembership.role === 'guest' && req.user!.id !== userId)
+        if (requesterRole === 'guest' && req.user!.id !== userId)
             throw new ApiError(403, 'Guests can only view their own profile');
 
         const member = await prisma.workspaceMember.findFirst({
@@ -363,10 +333,9 @@ export async function   getWorkspaceMember(req: Request, res: Response, next: Ne
 export async function   updateWorkspaceMemberRole(req: Request, res: Response, next: NextFunction)
 {
     try {
-        const { id, userId } = parseOrThrow(workspaceMemberParamsSchema, 'WorkspaceMemberParams', req.params);
-        const { role } = parseOrThrow(updateWorkspaceMemberRoleSchema, 'UpdateWorkspaceMemberRole', req.body);
-        const requesterMembership = await getWorkspaceMembership(id, req.user!.id);
-        ensureAdmin(requesterMembership.role);
+        const id = parseOrThrow(idSchema, 'WorkspaceID', req.params.id);
+        const userId = parseOrThrow(idSchema, 'UserID', req.params.userId);
+        const role = parseQueryEnum('role', req.body.role, WorkspaceRole, { isOptional: false });
 
         const targetMembership = await prisma.workspaceMember.findFirst({
             where: { workspaceId: id, userId }
@@ -424,9 +393,8 @@ export async function   updateWorkspaceMemberRole(req: Request, res: Response, n
 export async function deleteWorkspaceMember(req: Request, res: Response, next: NextFunction)
 {
     try {
-        const { id, userId } = parseOrThrow(workspaceMemberParamsSchema, 'WorkspaceMemberParams', req.params);
-        const requesterMembership = await getWorkspaceMembership(id, req.user!.id);
-        ensureAdmin(requesterMembership.role);
+        const id = parseOrThrow(idSchema, 'WorkspaceID', req.params.id);
+        const userId = parseOrThrow(idSchema, 'UserID', req.params.userId);
 
         const targetMembership = await prisma.workspaceMember.findFirst({
             where: { workspaceId: id, userId }
@@ -471,7 +439,6 @@ export async function deleteWorkspaceMember(req: Request, res: Response, next: N
 export async function getWorkspaceActivityLog(req: Request, res: Response, next: NextFunction) {
     try {
         const id = parseOrThrow(idSchema, 'WorkspaceID', req.params.id);
-        await getWorkspaceMembership(id, req.user!.id);
 		const skip = parseQueryInt('skip', req.query.skip, { default: 0, min: 0 });
 		const take = parseQueryInt('take', req.query.take, { default: 42, min: 1, max: 100 });
 
@@ -508,7 +475,6 @@ export async function getWorkspaceActivityLog(req: Request, res: Response, next:
 export async function createWorkspaceActivityLog(req: Request, res: Response, next: NextFunction) {
     try {
         const id = parseOrThrow(idSchema, 'WorkspaceID', req.params.id);
-        await getWorkspaceMembership(id, req.user!.id);
         const action: string = parseQueryString('action', req.body.action, { isOptional: false, minLength: 1, maxLength: ActivityLogActionMaxLength }) ?? "";
 
         const activityLog = await prisma.activityLog.create({

@@ -55,7 +55,7 @@ export async function   getUserProfile( req: Request, res: Response, next: NextF
 {
 	try
     {
-		const id = req.params.id ? parseOrThrow(idSchema, 'UserID', req.params.id):req.user!.id;
+		const id = req.params.id ? parseOrThrow(idSchema, 'UserID', req.params.id) : req.user!.id;
 
 		const user = await prisma.user.findUnique({
 			where: { id },
@@ -84,7 +84,7 @@ export async function   updateUserProfile( req: Request, res: Response, next: Ne
 {
 	try
     {
-		const id = req.params.id ? parseOrThrow(idSchema, 'UserID', req.params.id):req.user!.id;
+		const id = req.params.id ? parseOrThrow(idSchema, 'UserID', req.params.id) : req.user!.id;
 
 		if (req.user!.id !== id)
 			return (next(new ApiError(403, 'You can only update your own profile')));
@@ -123,7 +123,7 @@ export async function   deleteUserAccount( req: Request, res: Response, next: Ne
 {
 	try
     {
-		const id = req.params.id ? parseOrThrow(idSchema, 'UserID', req.params.id):req.user!.id;
+		const id = req.params.id ? parseOrThrow(idSchema, 'UserID', req.params.id) : req.user!.id;
 
 		if (req.user!.id !== id)
 			throw new ApiError(403, 'You can only delete your own account');

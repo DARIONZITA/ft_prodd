@@ -3,8 +3,8 @@ import crypto                                           from 'crypto';
 import { Prisma }                                       from '@prisma/client';
 import { prisma }                                       from '../../../lib/prisma';
 import { ApiError }                                     from '../../../utils/ApiError';
-import { createApiKeySchema, requestParamsIdSchema }    from '../../../validations/api';
 import { hashApiKey }                                   from '../../../utils/encryption';
+import { idSchema, parseOrThrow, parseQueryString }	from '../../../validations/utils';
 
 const   MAX_API_KEYS_PER_USER = 3;
 
@@ -25,13 +25,9 @@ export async function   listApiKeys( req : Request, res : Response, next : NextF
 
 export async function   createApiKey( req : Request, res : Response, next : NextFunction )
 {
-    const   zod_result = createApiKeySchema.safeParse( req.body );
-
-    if (!zod_result.success)
-        return (next( new ApiError( 400, zod_result.error.issues[0].message )));
-
     try
     {
+        const   name = parseQueryString('name', req.body.name, { isOptional: false, minLength: 1, maxLength: 50 })!;
         const   raw_key = `pk_${crypto.randomBytes(32).toString('hex')}`;
         const   keyHash = hashApiKey( raw_key );
 
@@ -52,7 +48,7 @@ export async function   createApiKey( req : Request, res : Response, next : Next
 
             const   apiKey = await tx.apiKey.create(
             {
-                data: { keyHash, name: zod_result.data.name, userId: req.user!.id },
+                data: { keyHash, name, userId: req.user!.id },
                 select: { id: true, name: true, createdAt: true },
             });
 
@@ -76,14 +72,9 @@ export async function   createApiKey( req : Request, res : Response, next : Next
 
 export async function   deleteApiKey( req : Request, res : Response, next : NextFunction )
 {
-    const   params_result = requestParamsIdSchema.safeParse( req.params );
-
-    if (!params_result.success)
-        return (next( new ApiError(400, `Invalid Key ID: ${params_result.error.issues[0].message}` )));
-
     try
     {
-        const   id = params_result.data.id;
+		const   id = parseOrThrow(idSchema, 'KeyID', req.params.id);
 
         await prisma.$transaction( async (tx) => {
 

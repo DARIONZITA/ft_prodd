@@ -1,20 +1,15 @@
-import type { Request, Response, NextFunction }	from 'express';
-import { prisma }								from '../../../lib/prisma';
-import { ApiError }								from '../../../utils/ApiError';
-import {
-	badgeIdParamsSchema,
-	badgeUserParamsSchema,
-	createBadgeSchema,
-	updateBadgeSchema,
-	assignBadgeSchema
-}												from '../../../validations/badge';
-import { parseOrThrow }							from '../../../utils/parsing';
+import type { Request, Response, NextFunction }		from 'express';
+import { prisma }									from '../../../lib/prisma';
+import { ApiError }									from '../../../utils/ApiError';
+import { idSchema, parseOrThrow, parseQueryString }	from '../../../validations/utils';
 
 export async function   createBadge(req: Request, res: Response, next: NextFunction)
 {
 	try
     {
-		const { name, description, iconUrl } = parseOrThrow(createBadgeSchema, req.body);
+		const name = parseQueryString('name', req.body.name, { isOptional: false, minLength: 1, maxLength: 255 })!;
+        const description = parseQueryString('description', req.body.description, { isOptional: false, minLength: 1, maxLength: 1000 })!;
+        const iconUrl = parseQueryString('iconUrl', req.body.iconUrl, { isOptional: false, minLength: 1, maxLength: 255 })!;
 
 		const badge = await prisma.badge.create({
 			data: {
@@ -53,7 +48,7 @@ export async function   getBadgeDetails(req: Request, res: Response, next: NextF
 {
 	try
     {
-		const { id } = parseOrThrow(badgeIdParamsSchema, req.params);
+		const id = parseOrThrow(idSchema, 'BadgeID', req.params.id);
 
 		const badge = await prisma.badge.findUnique({
 			where: { id },
@@ -88,12 +83,13 @@ export async function   updateBadge(req: Request, res: Response, next: NextFunct
 {
 	try
     {
-		const { id } = parseOrThrow(badgeIdParamsSchema, req.params);
-		const updateData = parseOrThrow(updateBadgeSchema, req.body);
+		const id = parseOrThrow(idSchema, 'BadgeID', req.params.id);
+		const name = parseQueryString('name', req.body.name, { isOptional: true, minLength: 1, maxLength: 255 })!;
+        const description = parseQueryString('description', req.body.description, { isOptional: true, minLength: 1, maxLength: 1000 })!;
+        const iconUrl = parseQueryString('iconUrl', req.body.iconUrl, { isOptional: true, minLength: 1, maxLength: 255 })!;
 
-		if (!updateData.name && !updateData.description && !updateData.iconUrl) {
+		if (name == undefined && description == undefined && iconUrl == undefined)
 			throw new ApiError(400, 'At least one field must be provided');
-		}
 
 		const badge = await prisma.badge.findUnique({ where: { id } });
 		if (!badge)
@@ -102,9 +98,9 @@ export async function   updateBadge(req: Request, res: Response, next: NextFunct
 		const updatedBadge = await prisma.badge.update({
 			where: { id },
 			data: {
-				...(updateData.name && { name: updateData.name }),
-				...(updateData.description && { description: updateData.description }),
-				...(updateData.iconUrl && { iconUrl: updateData.iconUrl })
+				...(name && { name }),
+				...(description && { description }),
+				...(iconUrl && { iconUrl })
 			}
 		});
 
@@ -121,7 +117,7 @@ export async function   deleteBadge(req: Request, res: Response, next: NextFunct
 {
 	try
     {
-		const { id } = parseOrThrow(badgeIdParamsSchema, req.params);
+		const id = parseOrThrow(idSchema, 'BadgeID', req.params.id);
 
 		const badge = await prisma.badge.findUnique({ where: { id } });
 		if (!badge)
@@ -151,8 +147,8 @@ export async function   assignBadge(req: Request, res: Response, next: NextFunct
 {
 	try
     {
-		const { id } = parseOrThrow(badgeIdParamsSchema, req.params);
-		const { userId } = parseOrThrow(assignBadgeSchema, req.body);
+		const id = parseOrThrow(idSchema, 'BadgeID', req.params.id);
+		const userId = parseOrThrow(idSchema, 'UserId', req.body.userId);
 
 		const badge = await prisma.badge.findUnique({ where: { id } });
 		if (!badge)
@@ -199,7 +195,7 @@ export async function   listUsersWithBadge(req: Request, res: Response, next: Ne
 {
 	try
     {
-		const { id } = parseOrThrow(badgeIdParamsSchema, req.params);
+		const id = parseOrThrow(idSchema, 'BadgeID', req.params.id);
 
 		const badge = await prisma.badge.findUnique({
 			where: { id },
@@ -247,7 +243,8 @@ export async function   removeBadgeFromUser(req: Request, res: Response, next: N
 {
 	try
     {
-		const { id, userId } = parseOrThrow(badgeUserParamsSchema, req.params);
+		const id = parseOrThrow(idSchema, 'BadgeID', req.params.id);
+		const userId = parseOrThrow(idSchema, 'UserId', req.params.userId);
 
 		const userBadge = await prisma.userBadge.findFirst({
 			where: { badgeId: id, userId }

@@ -1,25 +1,30 @@
 import type { Request, Response, NextFunction } from 'express';
 import { prisma }                               from '../../../lib/prisma';
 import { ApiError }                             from '../../../utils/ApiError';
-import { parseOrThrow, idSchema }               from '../../../validations/utils';
-import { createNotificationSchema }             from '../../../validations/notification';
+import { idSchema, parseOrThrow,
+    parseQueryString, parseQueryEnum }          from '../../../validations/utils';
+import { NotificationType }                     from '../../../types/constants';
+
 
 export async function createNotification(req: Request, res: Response, next: NextFunction)
 {
     try {
-        const payload = parseOrThrow(createNotificationSchema, 'CreateNotification', req.body);
+        const userId = parseOrThrow(idSchema, 'UserID', req.body.userId);
+        const message = parseQueryString('message', req.body.message, { isOptional: false, minLength: 1, maxLength: 500 })!;
+        const type = parseQueryEnum('type', req.body.type, NotificationType, { isOptional: false })!;
+        const relatedTaskId = parseOrThrow(idSchema, 'relatedTaskID', req.body.relatedTaskId);
+        const relatedWorkspaceId = parseOrThrow(idSchema, 'relatedWorkspaceID', req.body.relatedWorkspaceId);
 
-        const targetUserId = payload.userId ?? req.user!.id;
-        if (targetUserId !== req.user!.id)
+        if (userId !== req.user!.id)
             throw new ApiError(403, 'Not allowed');
 
         const created = await prisma.notification.create({
             data: {
-                userId: targetUserId,
-                message: payload.message,
-                type: payload.type,
-                relatedTaskId: payload.relatedTaskId,
-                relatedWorkspaceId: payload.relatedWorkspaceId
+                userId,
+                message,
+                type,
+                relatedTaskId,
+                relatedWorkspaceId
             }
         });
 

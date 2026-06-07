@@ -1,6 +1,7 @@
 import { Router }									from 'express';
 import { authenticate }								from '../../../middleware/auth';
-import {
+import { requireWorkspaceAdmin }    from '../../../middleware/rbac';
+	import {
 	createWorkspace, createWorkspaceMember,
 	deleteWorkspace, deleteWorkspaceMember,
 	getWorkspaceDetails, getWorkspaceMember,
@@ -95,7 +96,7 @@ router.get('/', listUserWorkspaces);
  *       404:
  *         description: Workspace not found
  */
-router.put('/:id', updateWorkspace);
+router.put('/:id', requireWorkspaceAdmin, updateWorkspace);
 
 /**
  * @swagger
@@ -118,7 +119,7 @@ router.put('/:id', updateWorkspace);
  *       404:
  *         description: Workspace not found
  */
-router.delete('/:id', deleteWorkspace);
+router.delete('/:id', requireWorkspaceAdmin, deleteWorkspace);
 
 
 /**
@@ -180,7 +181,7 @@ eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJqb2FvQGV4YW1wbGUuY29
  *       404:
  *         description: User not found
  */
-router.post('/:id/members', createWorkspaceMember);
+router.post('/:id/members', requireWorkspaceAdmin, createWorkspaceMember);
 
 
 /**
@@ -264,7 +265,7 @@ router.get('/:id/members/:userId', getWorkspaceMember);
  *       404:
  *         description: Member not found
  */
-router.put('/:id/members/:userId', updateWorkspaceMemberRole);
+router.put('/:id/members/:userId', requireWorkspaceAdmin, updateWorkspaceMemberRole);
 
 /**
  * @swagger
@@ -291,7 +292,7 @@ router.put('/:id/members/:userId', updateWorkspaceMemberRole);
  *       404:
  *         description: Member not found
  */
-router.delete('/:id/members/:userId', deleteWorkspaceMember);
+router.delete('/:id/members/:userId', requireWorkspaceAdmin, deleteWorkspaceMember);
 
 /**
  * @swagger

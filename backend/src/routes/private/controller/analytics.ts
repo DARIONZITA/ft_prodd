@@ -27,10 +27,7 @@ const parseAnalyticsRange = (req: Request) => {
 };
 
 const parseAnalyticsInterval = (req: Request) => {
-	return parseQueryEnum('interval', req.query.interval, ['hour', 'day', 'week', 'month'] as const, {
-		default: 'day',
-		isOptional: true
-	});
+	return parseQueryEnum('interval', req.query.interval, ['hour', 'day', 'week', 'month'] as const, { default: 'day', isOptional: true	})!;
 };
 
 const parseAnalyticsFilters = (req: Request) => {
