@@ -1,8 +1,18 @@
 export type AnalyticsInterval = 'hour' | 'day' | 'week' | 'month';
 
+export type AnalyticsPriority = 'LOW' | 'MEDIUM' | 'HIGH';
+
+export type AnalyticsTaskStatus = 'open' | 'done' | 'completed';
+
 export type AnalyticsDateRange = {
 	from:   Date;
 	to:     Date;
+};
+
+export type AnalyticsFilters = {
+	priority?:   AnalyticsPriority;
+	status?:     AnalyticsTaskStatus;
+	memberId?:   number;
 };
 
 export type AnalyticsOverview = {

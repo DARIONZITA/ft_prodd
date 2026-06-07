@@ -1,5 +1,6 @@
 import type { Request, Response, NextFunction }     from 'express';
-import { idSchema, parseOrThrow, parseQueryDate, parseQueryEnum }   from '../../../validations/utils';
+import { idSchema, parseOrThrow, parseQueryDate, parseQueryEnum, parseQueryInt }   from '../../../validations/utils';
+import { Priority }   from '../../../types/constants';
 import {
 	getWorkspaceAnalyticsOverview,
 	getWorkspaceMemberWorkload,
@@ -32,11 +33,20 @@ const parseAnalyticsInterval = (req: Request) => {
 	});
 };
 
+const parseAnalyticsFilters = (req: Request) => {
+	return {
+		priority: parseQueryEnum('priority', req.query.priority, Priority, { isOptional: true }),
+		status: parseQueryEnum('status', req.query.status, ['open', 'done', 'completed'] as const, { isOptional: true }),
+		memberId: parseQueryInt('memberId', req.query.memberId, { isOptional: true, min: 1 }),
+	};
+};
+
 export async function getWorkspaceOverview(req: Request, res: Response, next: NextFunction) {
 	try {
 		const id = parseOrThrow(idSchema, 'workspaceId', req.params.id);
 		const { from, to } = parseAnalyticsRange(req);
-		const overview = await getWorkspaceAnalyticsOverview(id, { from, to });
+		const filters = parseAnalyticsFilters(req);
+		const overview = await getWorkspaceAnalyticsOverview(id, { from, to }, filters);
 
 		res.json({
 			success: true,
@@ -52,7 +62,8 @@ export async function getWorkspaceTaskTrendHandler(req: Request, res: Response, 
 		const id = parseOrThrow(idSchema, 'workspaceId', req.params.id);
 		const { from, to } = parseAnalyticsRange(req);
 		const interval = parseAnalyticsInterval(req) ?? 'day';
-		const trend = await getWorkspaceTaskTrend(id, { from, to }, interval);
+		const filters = parseAnalyticsFilters(req);
+		const trend = await getWorkspaceTaskTrend(id, { from, to }, interval, filters);
 
 		res.json({ success: true, data: trend });
 	} catch (err) {
@@ -65,7 +76,8 @@ export async function getWorkspaceTaskCreationSeriesHandler(req: Request, res: R
 		const id = parseOrThrow(idSchema, 'workspaceId', req.params.id);
 		const { from, to } = parseAnalyticsRange(req);
 		const interval = parseAnalyticsInterval(req) ?? 'day';
-		const series = await getWorkspaceTaskCreationSeries(id, { from, to }, interval);
+		const filters = parseAnalyticsFilters(req);
+		const series = await getWorkspaceTaskCreationSeries(id, { from, to }, interval, filters);
 
 		res.json({ success: true, data: series });
 	} catch (err) {
@@ -78,7 +90,8 @@ export async function getWorkspaceTaskCompletionSeriesHandler(req: Request, res:
 		const id = parseOrThrow(idSchema, 'workspaceId', req.params.id);
 		const { from, to } = parseAnalyticsRange(req);
 		const interval = parseAnalyticsInterval(req) ?? 'day';
-		const series = await getWorkspaceTaskCompletionSeries(id, { from, to }, interval);
+		const filters = parseAnalyticsFilters(req);
+		const series = await getWorkspaceTaskCompletionSeries(id, { from, to }, interval, filters);
 
 		res.json({ success: true, data: series });
 	} catch (err) {
@@ -90,7 +103,8 @@ export async function getWorkspaceTaskPriorityDistributionHandler(req: Request, 
 	try {
 		const id = parseOrThrow(idSchema, 'workspaceId', req.params.id);
 		const { from, to } = parseAnalyticsRange(req);
-		const distribution = await getWorkspaceTaskPriorityDistribution(id, { from, to });
+		const filters = parseAnalyticsFilters(req);
+		const distribution = await getWorkspaceTaskPriorityDistribution(id, { from, to }, filters);
 
 		res.json({ success: true, data: distribution });
 	} catch (err) {
@@ -102,7 +116,8 @@ export async function getWorkspaceTaskStatusDistributionHandler(req: Request, re
 	try {
 		const id = parseOrThrow(idSchema, 'workspaceId', req.params.id);
 		const { from, to } = parseAnalyticsRange(req);
-		const distribution = await getWorkspaceTaskStatusDistribution(id, { from, to });
+		const filters = parseAnalyticsFilters(req);
+		const distribution = await getWorkspaceTaskStatusDistribution(id, { from, to }, filters);
 
 		res.json({ success: true, data: distribution });
 	} catch (err) {
@@ -114,7 +129,8 @@ export async function getWorkspaceMemberWorkloadHandler(req: Request, res: Respo
 	try {
 		const id = parseOrThrow(idSchema, 'workspaceId', req.params.id);
 		const { from, to } = parseAnalyticsRange(req);
-		const workload = await getWorkspaceMemberWorkload(id, { from, to });
+		const filters = parseAnalyticsFilters(req);
+		const workload = await getWorkspaceMemberWorkload(id, { from, to }, filters);
 
 		res.json({ success: true, data: workload });
 	} catch (err) {

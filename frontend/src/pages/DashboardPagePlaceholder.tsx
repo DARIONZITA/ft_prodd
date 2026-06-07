@@ -9,6 +9,7 @@ import CreateOrganizationModal from './organization/CreateOrganizationModal'
 import OrganizationSettingsPage from './organization/OrganizationSettingsPage.tsx'
 import OrganizationMembersPage from './organization/OrganizationMembersPage.tsx'
 import WorkspaceLogsPage from './organization/WorkspaceLogsPage.tsx'
+import AnalyticsPage from './organization/AnalyticsPage.tsx'
 import KanbanBoardPage from '../components/tasks/KanbanBoardPage.tsx'
 import NotificationsPage from './NotificationsPage.tsx'
 import LeaderboardPage from './gamification/LeaderboardPage.tsx'
@@ -135,6 +136,7 @@ type ActiveView =
   | `workspace-${string | number}`
   | `user-${string | number}`
   | 'kanbanBoard'
+  | 'analytics'
 
 // ─── Placeholder ─────────────────────────────────────────────────────────────
 
@@ -222,6 +224,13 @@ export default function DashboardPagePlaceholder() {
     if (view === 'workspace-logs' && payload != null) {
       nextParams.set('workspace', String(payload))
       nextParams.set('view', 'workspace-logs')
+      navigate(`/dashboard?${nextParams.toString()}`)
+      return
+    }
+
+    if (view === 'analytics' && payload != null) {
+      nextParams.set('workspace', String(payload))
+      nextParams.set('view', 'analytics')
       navigate(`/dashboard?${nextParams.toString()}`)
       return
     }
@@ -366,6 +375,7 @@ export default function DashboardPagePlaceholder() {
           onOpenMembers={() => handleNavigate('organization-members')}
           onSave={handleUpdateWorkspace}
           onDelete={handleDeleteWorkspace}
+          onOpenAnalytics={() => handleNavigate('analytics', currentWorkspace.id)}
         />
       ) : (
         <PlaceholderView title="Organization Settings" />
@@ -394,6 +404,23 @@ export default function DashboardPagePlaceholder() {
         />
       ) : (
         <PlaceholderView title="Workspace Logs" />
+      )
+    }
+
+    if (activeView === 'analytics') {
+      return currentWorkspace ? (
+        <AnalyticsPage
+          workspaceId={currentWorkspace.id}
+          workspaceName={currentWorkspace.name}
+          onBack={() => {
+            const nextParams = new URLSearchParams()
+            nextParams.set('workspace', String(currentWorkspace.id))
+            nextParams.set('view', 'kanbanBoard')
+            navigate(`/dashboard?${nextParams.toString()}`)
+          }}
+        />
+      ) : (
+        <PlaceholderView title="Analytics" />
       )
     }
 

@@ -1,6 +1,7 @@
 import { Prisma } from '@prisma/client';
 import { prisma } from '../lib/prisma';
 import {
+	AnalyticsFilters,
 	AnalyticsDateRange,
 	AnalyticsDistributionPoint,
 	AnalyticsInterval,
@@ -34,6 +35,39 @@ type MemberWorkloadRow = {
 	completionRate: number | null;
 };
 
+const taskStatusClause = (status: AnalyticsFilters['status']) => {
+	switch (status) {
+		case 'open':
+			return Prisma.sql`t."isDone" = false AND t."dateCompleted" IS NULL`;
+		case 'done':
+			return Prisma.sql`t."isDone" = true AND t."dateCompleted" IS NULL`;
+		case 'completed':
+			return Prisma.sql`t."dateCompleted" IS NOT NULL`;
+		default:
+			return Prisma.empty;
+	}
+};
+
+const buildTaskFilterClause = (filters: AnalyticsFilters = {}) => {
+	const clauses: Prisma.Sql[] = [];
+
+	if (filters.priority)
+		clauses.push(Prisma.sql`t.priority = ${filters.priority}`);
+
+	if (filters.status)
+		clauses.push(taskStatusClause(filters.status));
+
+	if (filters.memberId)
+		clauses.push(Prisma.sql`EXISTS (
+			SELECT 1
+			FROM "TaskAssignment" ta_filter
+			WHERE ta_filter."taskId" = t.id
+			  AND ta_filter."userId" = ${filters.memberId}
+		)`);
+
+	return clauses.length > 0 ? Prisma.sql` AND ${Prisma.join(clauses, ' AND ')}` : Prisma.empty;
+};
+
 const intervalToSql = (interval: AnalyticsInterval) => {
 	// Map the API interval to a Postgres interval literal used by generate_series().
 	switch (interval) {
@@ -62,7 +96,8 @@ const resolveTimeSeries = (
 
 export async function getWorkspaceAnalyticsOverview(
 	workspaceId: number,
-	range: AnalyticsDateRange
+	range: AnalyticsDateRange,
+	filters: AnalyticsFilters = {}
 ): Promise<AnalyticsOverview> {
 	const [totals, cycleRow, activeMembersRow, commentsRow, activityRow] = await prisma.$transaction([
 		prisma.$queryRaw<CountRow[]>`
@@ -74,6 +109,7 @@ export async function getWorkspaceAnalyticsOverview(
 			WHERE c."workspaceId" = ${workspaceId}
 			  AND t."createdAt" >= ${range.from}
 			  AND t."createdAt" <= ${range.to}
+			  ${buildTaskFilterClause(filters)}
 		`,
 		prisma.$queryRaw<CompletionCycleRow[]>`
 			SELECT
@@ -85,11 +121,19 @@ export async function getWorkspaceAnalyticsOverview(
 			WHERE c."workspaceId" = ${workspaceId}
 			  AND t."createdAt" >= ${range.from}
 			  AND t."createdAt" <= ${range.to}
+			  ${buildTaskFilterClause(filters)}
 		`,
 		prisma.$queryRaw<CountRow[]>`
 			SELECT COUNT(DISTINCT wm."userId") AS value
 			FROM "WorkspaceMember" wm
+			INNER JOIN "TaskAssignment" ta ON ta."userId" = wm."userId"
+			INNER JOIN "Task" t ON t.id = ta."taskId"
+			INNER JOIN "Column" c ON c.id = t."columnId"
 			WHERE wm."workspaceId" = ${workspaceId}
+			  AND c."workspaceId" = ${workspaceId}
+			  AND t."createdAt" >= ${range.from}
+			  AND t."createdAt" <= ${range.to}
+			  ${buildTaskFilterClause(filters)}
 		`,
 		prisma.$queryRaw<CountRow[]>`
 			SELECT COUNT(*) AS value
@@ -99,6 +143,7 @@ export async function getWorkspaceAnalyticsOverview(
 			WHERE c."workspaceId" = ${workspaceId}
 			  AND cm."createdAt" >= ${range.from}
 			  AND cm."createdAt" <= ${range.to}
+			  ${buildTaskFilterClause(filters)}
 		`,
 		prisma.$queryRaw<CountRow[]>`
 			SELECT COUNT(*) AS value
@@ -106,6 +151,7 @@ export async function getWorkspaceAnalyticsOverview(
 			WHERE al."workspaceId" = ${workspaceId}
 			  AND al."createdAt" >= ${range.from}
 			  AND al."createdAt" <= ${range.to}
+			  ${filters.memberId ? Prisma.sql`AND al."userId" = ${filters.memberId}` : Prisma.empty}
 		`
 	]);
 
@@ -132,7 +178,8 @@ export async function getWorkspaceAnalyticsOverview(
 export async function getWorkspaceTaskCompletionSeries(
 	workspaceId: number,
 	range: AnalyticsDateRange,
-	interval: AnalyticsInterval = 'day'
+	interval: AnalyticsInterval = 'day',
+	filters: AnalyticsFilters = {}
 ): Promise<AnalyticsSeriesPoint[]> {
 	const rows = await prisma.$queryRaw<TimeBucketRow[]>`
 		WITH time_buckets AS (
@@ -151,6 +198,7 @@ export async function getWorkspaceTaskCompletionSeries(
 			  AND t."dateCompleted" IS NOT NULL
 			  AND t."dateCompleted" >= ${range.from}
 			  AND t."dateCompleted" <= ${range.to}
+			  ${buildTaskFilterClause(filters)}
 			GROUP BY bucket
 		)
 		SELECT
@@ -167,7 +215,8 @@ export async function getWorkspaceTaskCompletionSeries(
 export async function getWorkspaceTaskCreationSeries(
 	workspaceId: number,
 	range: AnalyticsDateRange,
-	interval: AnalyticsInterval = 'day'
+	interval: AnalyticsInterval = 'day',
+	filters: AnalyticsFilters = {}
 ): Promise<AnalyticsSeriesPoint[]> {
 	const rows = await prisma.$queryRaw<TimeBucketRow[]>`
 		WITH time_buckets AS (
@@ -185,6 +234,7 @@ export async function getWorkspaceTaskCreationSeries(
 			WHERE c."workspaceId" = ${workspaceId}
 			  AND t."createdAt" >= ${range.from}
 			  AND t."createdAt" <= ${range.to}
+			  ${buildTaskFilterClause(filters)}
 			GROUP BY bucket
 		)
 		SELECT
@@ -200,7 +250,8 @@ export async function getWorkspaceTaskCreationSeries(
 
 export async function getWorkspaceTaskPriorityDistribution(
 	workspaceId: number,
-	range: AnalyticsDateRange
+	range: AnalyticsDateRange,
+	filters: AnalyticsFilters = {}
 ): Promise<AnalyticsDistributionPoint[]> {
 	const rows = await prisma.$queryRaw<CountRow[]>`
 		SELECT
@@ -211,6 +262,7 @@ export async function getWorkspaceTaskPriorityDistribution(
 		WHERE c."workspaceId" = ${workspaceId}
 		  AND t."createdAt" >= ${range.from}
 		  AND t."createdAt" <= ${range.to}
+		  ${buildTaskFilterClause(filters)}
 		GROUP BY t.priority
 		ORDER BY t.priority
 	`;
@@ -220,7 +272,8 @@ export async function getWorkspaceTaskPriorityDistribution(
 
 export async function getWorkspaceTaskStatusDistribution(
 	workspaceId: number,
-	range: AnalyticsDateRange
+	range: AnalyticsDateRange,
+	filters: AnalyticsFilters = {}
 ): Promise<AnalyticsDistributionPoint[]> {
 	const rows = await prisma.$queryRaw<CountRow[]>`
 		SELECT
@@ -235,6 +288,7 @@ export async function getWorkspaceTaskStatusDistribution(
 		WHERE c."workspaceId" = ${workspaceId}
 		  AND t."createdAt" >= ${range.from}
 		  AND t."createdAt" <= ${range.to}
+		  ${buildTaskFilterClause(filters)}
 		GROUP BY label
 		ORDER BY label
 	`;
@@ -244,8 +298,10 @@ export async function getWorkspaceTaskStatusDistribution(
 
 export async function getWorkspaceMemberWorkload(
 	workspaceId: number,
-	range: AnalyticsDateRange
+	range: AnalyticsDateRange,
+	filters: AnalyticsFilters = {}
 ): Promise<AnalyticsMemberWorkload[]> {
+	const { memberId, ...taskFilters } = filters;
 	const rows = await prisma.$queryRaw<MemberWorkloadRow[]>`
 		SELECT
 			wm."userId" AS "userId",
@@ -264,8 +320,10 @@ export async function getWorkspaceMemberWorkload(
 		LEFT JOIN "Task" t ON t.id = ta."taskId"
 		LEFT JOIN "Column" c ON c.id = t."columnId"
 		WHERE wm."workspaceId" = ${workspaceId}
+		  ${memberId ? Prisma.sql`AND wm."userId" = ${memberId}` : Prisma.empty}
 		  AND (t."createdAt" >= ${range.from} OR t.id IS NULL)
 		  AND (t."createdAt" <= ${range.to} OR t.id IS NULL)
+		  ${buildTaskFilterClause(taskFilters)}
 		GROUP BY wm."userId", u.username, u."avatarUrl"
 		ORDER BY "assignedTasks" DESC, u.username ASC
 	`;
@@ -284,11 +342,12 @@ export async function getWorkspaceMemberWorkload(
 export async function getWorkspaceTaskTrend(
 	workspaceId: number,
 	range: AnalyticsDateRange,
-	interval: AnalyticsInterval = 'day'
+	interval: AnalyticsInterval = 'day',
+	filters: AnalyticsFilters = {}
 ): Promise<{ created: AnalyticsSeriesPoint[]; completed: AnalyticsSeriesPoint[] }> {
 	const [created, completed] = await Promise.all([
-		getWorkspaceTaskCreationSeries(workspaceId, range, interval),
-		getWorkspaceTaskCompletionSeries(workspaceId, range, interval),
+		getWorkspaceTaskCreationSeries(workspaceId, range, interval, filters),
+		getWorkspaceTaskCompletionSeries(workspaceId, range, interval, filters),
 	]);
 
 	return { created, completed };

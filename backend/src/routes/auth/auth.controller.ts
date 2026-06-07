@@ -4,6 +4,10 @@ import { hashPassword, comparePassword }        from '../../utils/encryption';
 import { generateToken }                        from '../../utils/jwt';
 import { ApiError }                             from '../../utils/ApiError';
 import { signupSchema, signinSchema }           from '../../validations/auth';
+import { presenceStore }                        from '../../ws/store';
+import { wsEmitter }                            from '../../ws/emitter';
+import { getFriendIds,
+        getWorkspaceMembershipIds }             from '../../ws/ws.server';
 
 export async function   signupController( req : Request, res : Response, next : NextFunction )
 {
@@ -60,7 +64,34 @@ export async function   signinController( req : Request, res : Response, next : 
         const	token = generateToken( user.id, user.email );
         const	{ passwordHash, ...userWithoutPassword } = user;
 
+        if (presenceStore.connect( user.id )) //if it's the first login
+            wsEmitter.userOnline( user.id, user.username, user.avatarUrl, await getWorkspaceMembershipIds( user.id ), await getFriendIds( user.id ) );
+
         res.status(200).json( { success: true, message: "Signin successfully", token, user: userWithoutPassword } );
+    }
+    catch ( err ) { next( err ); }
+}
+
+export async function   signoutController( req : Request, res : Response, next : NextFunction )
+{
+    try
+    {
+        const   userId = req.user!.id;
+
+        if (presenceStore.disconnect( userId )) //if it's the last logout
+        {
+            const   user = await prisma.user.findUnique(
+            {
+                where: { id: userId },
+                select: { username: true, avatarUrl: true }
+            });
+
+            if (user)
+                wsEmitter.userOffline( userId, user.username, await getWorkspaceMembershipIds( userId ), await getFriendIds( userId ) );
+        }
+        console.log(`[Auth] User ${userId} logged out successfully`);
+
+        res.status(200).json({ success: true, message: "user logged out successfully. Token removed in the client's side"});
     }
     catch ( err ) { next( err ); }
 }

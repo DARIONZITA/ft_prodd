@@ -1,5 +1,6 @@
 import express, { Request, Response }	from 'express';
 import cors								from 'cors';
+import http								from 'http';
 import helmet							from 'helmet';
 import morgan							from 'morgan';
 import authRoutes						from './routes/auth/auth.router';
@@ -13,8 +14,10 @@ import { errorHandler }					from './middleware/errorHandler';
 import { setupSwagger }					from './swagger';
 import publicAPIRouter					from './routes/public/api.router';
 import apiKeyRouter						from './routes/private/router/keys';
+import { setupSocketIO }				from './ws/ws.server';
 
-export const app = express();
+const			app = express();
+export const	server = http.createServer( app );
 
 app.use(helmet());
 app.use(cors({ origin: 'http://localhost:3000', credentials: true }));
@@ -39,3 +42,5 @@ app.use('/api/friends', friendRoutes);
 app.use('/api/notifications', notificationsRouter);
 
 app.use(errorHandler);
+
+setupSocketIO( server );

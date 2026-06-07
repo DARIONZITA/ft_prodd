@@ -271,9 +271,13 @@ Write operations have a shorter limit of 10 requests per minute (POST, PUT, DELE
 					AnalyticsOverview: {
 						type: 'object',
 						properties: {
+							workspaceId: { type: 'integer' },
+							from: { type: 'string', format: 'date-time' },
+							to: { type: 'string', format: 'date-time' },
 							totalTasks: { type: 'integer' },
 							openTasks: { type: 'integer' },
 							completedTasks: { type: 'integer' },
+							completionRate: { type: 'number' },
 							avgCompletionTimeHours: { type: 'number' },
 							tasksCreatedLast7Days: { type: 'integer' },
 							tasksCompletedLast7Days: { type: 'integer' },
@@ -283,25 +287,27 @@ Write operations have a shorter limit of 10 requests per minute (POST, PUT, DELE
 					AnalyticsSeriesPoint: {
 						type: 'object',
 						properties: {
-							timestamp: { type: 'string', format: 'date-time' },
+							bucket: { type: 'string', format: 'date-time' },
 							value: { type: 'number' },
 						},
 					},
 					AnalyticsDistributionPoint: {
 						type: 'object',
 						properties: {
-							key: { type: 'string' },
-							count: { type: 'integer' },
-							percentage: { type: 'number' },
+							label: { type: 'string' },
+							value: { type: 'number' },
 						},
 					},
 					AnalyticsMemberWorkload: {
 						type: 'object',
 						properties: {
-							memberId: { type: 'string' },
+							userId: { type: 'integer' },
 							username: { type: 'string' },
+							avatarUrl: { type: 'string', format: 'uri' },
+							completedTasks: { type: 'integer' },
 							openTasks: { type: 'integer' },
 							assignedTasks: { type: 'integer' },
+							completionRate: { type: 'number' },
 						},
 					},
 					AnalyticsOverviewResponse: {

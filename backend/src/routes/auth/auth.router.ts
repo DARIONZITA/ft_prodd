@@ -1,6 +1,8 @@
 import { Router }                               from 'express';
 import { oauthRouter }                          from './oauth/oauth.router';
-import { signinController, signupController }   from './auth.controller';
+import { signinController, signoutController,
+        signupController }                      from './auth.controller';
+import { authenticate } from '../../middleware/auth';
 
 const	authRouter = Router( );
 
@@ -72,6 +74,30 @@ authRouter.post( '/signup', signupController );
  *         description: Invalid credentials
  */
 authRouter.post('/signin', signinController);
+
+/**
+ * @swagger
+ * /auth/signout:
+ *   post:
+ *     summary: Sign out
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: User logged out successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success: { type: boolean }
+ *                 message: { type: string }
+ *       401:
+ *         description: Unauthorized (missing or invalid token)
+*/
+
+authRouter.post('/signout', authenticate, signoutController);
 
 authRouter.use( '/42', oauthRouter ); // Rota para OAuth 42
 

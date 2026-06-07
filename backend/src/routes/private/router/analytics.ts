@@ -34,6 +34,18 @@ router.use(authenticate);
  *       - in: query
  *         name: to
  *         schema: { type: string, format: date-time }
+ *       - in: query
+ *         name: priority
+ *         description: Filter by task priority
+ *         schema: { type: string, enum: [LOW, MEDIUM, HIGH] }
+ *       - in: query
+ *         name: status
+ *         description: Filter by task status
+ *         schema: { type: string, enum: [open, done, completed] }
+ *       - in: query
+ *         name: memberId
+ *         description: Filter by assigned member
+ *         schema: { type: integer }
  *     responses:
  *       200:
  *         description: Workspace analytics overview
@@ -41,6 +53,7 @@ router.use(authenticate);
  *         description: Only admins can access analytics for this workspace
  */
 router.get('/workspaces/:id/overview', requireWorkspaceAdmin, getWorkspaceOverview);
+
 /**
  * @swagger
  * /analytics/workspaces/{id}/trend:
@@ -63,6 +76,18 @@ router.get('/workspaces/:id/overview', requireWorkspaceAdmin, getWorkspaceOvervi
  *       - in: query
  *         name: interval
  *         schema: { type: string, enum: [day, week, month] }
+ *       - in: query
+ *         name: priority
+ *         description: Filter by task priority
+ *         schema: { type: string, enum: [LOW, MEDIUM, HIGH] }
+ *       - in: query
+ *         name: status
+ *         description: Filter by task status
+ *         schema: { type: string, enum: [open, done, completed] }
+ *       - in: query
+ *         name: memberId
+ *         description: Filter by assigned member
+ *         schema: { type: integer }
  *     responses:
  *       200:
  *         description: Created and completed task trend series
@@ -74,6 +99,7 @@ router.get('/workspaces/:id/overview', requireWorkspaceAdmin, getWorkspaceOvervi
  *         description: Only admins can access analytics for this workspace
  */
 router.get('/workspaces/:id/trend', requireWorkspaceAdmin, getWorkspaceTaskTrendHandler);
+
 /**
  * @swagger
  * /analytics/workspaces/{id}/series/creation:
@@ -96,6 +122,18 @@ router.get('/workspaces/:id/trend', requireWorkspaceAdmin, getWorkspaceTaskTrend
  *       - in: query
  *         name: interval
  *         schema: { type: string, enum: [day, week, month] }
+ *       - in: query
+ *         name: priority
+ *         description: Filter by task priority
+ *         schema: { type: string, enum: [LOW, MEDIUM, HIGH] }
+ *       - in: query
+ *         name: status
+ *         description: Filter by task status
+ *         schema: { type: string, enum: [open, done, completed] }
+ *       - in: query
+ *         name: memberId
+ *         description: Filter by assigned member
+ *         schema: { type: integer }
  *     responses:
  *       200:
  *         description: Series of task creations
@@ -107,6 +145,7 @@ router.get('/workspaces/:id/trend', requireWorkspaceAdmin, getWorkspaceTaskTrend
  *         description: Only admins can access analytics for this workspace
  */
 router.get('/workspaces/:id/series/creation', requireWorkspaceAdmin, getWorkspaceTaskCreationSeriesHandler);
+
 /**
  * @swagger
  * /analytics/workspaces/{id}/series/completion:
@@ -129,6 +168,18 @@ router.get('/workspaces/:id/series/creation', requireWorkspaceAdmin, getWorkspac
  *       - in: query
  *         name: interval
  *         schema: { type: string, enum: [day, week, month] }
+ *       - in: query
+ *         name: priority
+ *         description: Filter by task priority
+ *         schema: { type: string, enum: [LOW, MEDIUM, HIGH] }
+ *       - in: query
+ *         name: status
+ *         description: Filter by task status
+ *         schema: { type: string, enum: [open, done, completed] }
+ *       - in: query
+ *         name: memberId
+ *         description: Filter by assigned member
+ *         schema: { type: integer }
  *     responses:
  *       200:
  *         description: Series of task completions
@@ -140,6 +191,7 @@ router.get('/workspaces/:id/series/creation', requireWorkspaceAdmin, getWorkspac
  *         description: Only admins can access analytics for this workspace
  */
 router.get('/workspaces/:id/series/completion', requireWorkspaceAdmin, getWorkspaceTaskCompletionSeriesHandler);
+
 /**
  * @swagger
  * /analytics/workspaces/{id}/distributions/priority:
@@ -153,6 +205,18 @@ router.get('/workspaces/:id/series/completion', requireWorkspaceAdmin, getWorksp
  *         name: id
  *         required: true
  *         schema: { type: integer }
+ *       - in: query
+ *         name: priority
+ *         description: Filter by task priority
+ *         schema: { type: string, enum: [LOW, MEDIUM, HIGH] }
+ *       - in: query
+ *         name: status
+ *         description: Filter by task status
+ *         schema: { type: string, enum: [open, done, completed] }
+ *       - in: query
+ *         name: memberId
+ *         description: Filter by assigned member
+ *         schema: { type: integer }
  *     responses:
  *       200:
  *         description: Priority distribution
@@ -164,6 +228,7 @@ router.get('/workspaces/:id/series/completion', requireWorkspaceAdmin, getWorksp
  *         description: Only admins can access analytics for this workspace
  */
 router.get('/workspaces/:id/distributions/priority', requireWorkspaceAdmin, getWorkspaceTaskPriorityDistributionHandler);
+
 /**
  * @swagger
  * /analytics/workspaces/{id}/distributions/status:
@@ -177,6 +242,18 @@ router.get('/workspaces/:id/distributions/priority', requireWorkspaceAdmin, getW
  *         name: id
  *         required: true
  *         schema: { type: integer }
+ *       - in: query
+ *         name: priority
+ *         description: Filter by task priority
+ *         schema: { type: string, enum: [LOW, MEDIUM, HIGH] }
+ *       - in: query
+ *         name: status
+ *         description: Filter by task status
+ *         schema: { type: string, enum: [open, done, completed] }
+ *       - in: query
+ *         name: memberId
+ *         description: Filter by assigned member
+ *         schema: { type: integer }
  *     responses:
  *       200:
  *         description: Status distribution
@@ -188,6 +265,7 @@ router.get('/workspaces/:id/distributions/priority', requireWorkspaceAdmin, getW
  *         description: Only admins can access analytics for this workspace
  */
 router.get('/workspaces/:id/distributions/status', requireWorkspaceAdmin, getWorkspaceTaskStatusDistributionHandler);
+
 /**
  * @swagger
  * /analytics/workspaces/{id}/workload:
@@ -200,6 +278,18 @@ router.get('/workspaces/:id/distributions/status', requireWorkspaceAdmin, getWor
  *       - in: path
  *         name: id
  *         required: true
+ *         schema: { type: integer }
+ *       - in: query
+ *         name: priority
+ *         description: Filter by task priority
+ *         schema: { type: string, enum: [LOW, MEDIUM, HIGH] }
+ *       - in: query
+ *         name: status
+ *         description: Filter by task status
+ *         schema: { type: string, enum: [open, done, completed] }
+ *       - in: query
+ *         name: memberId
+ *         description: Filter by assigned member
  *         schema: { type: integer }
  *     responses:
  *       200:

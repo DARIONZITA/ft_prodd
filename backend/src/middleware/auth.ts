@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
+import { TokenExpiredError, JsonWebTokenError } from 'jsonwebtoken';
 import { verifyToken } from '../utils/jwt';
 import { prisma } from '../lib/prisma';
 import { ApiError } from '../utils/ApiError';
@@ -23,10 +24,14 @@ export const	authenticate = async ( req : Request, res : Response, next : NextFu
 		if (!user)
 			return (next(new ApiError(401, 'User not found')));
 		req.user = user;
-		next();
+		next( );
 	}
 	catch ( err )
 	{
+		if (err instanceof TokenExpiredError)
+			return (next(new ApiError(401, "Token expired")));
+		if (err instanceof JsonWebTokenError)
+			return (next(new ApiError(401, "Invalid token")));
 		next( err );
 	}
 };
