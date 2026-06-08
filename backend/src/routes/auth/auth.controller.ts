@@ -6,8 +6,7 @@ import { ApiError }                             from '../../utils/ApiError';
 import { signupSchema, signinSchema }           from '../../validations/auth';
 import { presenceStore }                        from '../../ws/store';
 import { wsEmitter }                            from '../../ws/emitter';
-import { getFriendIds,
-        getWorkspaceMembershipIds }             from '../../ws/ws.server';
+import { getFriendAndWorkspaceMembersIds }      from '../../ws/ws.server';
 
 export async function   signupController( req : Request, res : Response, next : NextFunction )
 {
@@ -65,7 +64,10 @@ export async function   signinController( req : Request, res : Response, next : 
         const	{ passwordHash, ...userWithoutPassword } = user;
 
         if (presenceStore.connect( user.id )) //if it's the first login
-            wsEmitter.userOnline( user.id, user.username, user.avatarUrl, await getWorkspaceMembershipIds( user.id ), await getFriendIds( user.id ) );
+        {
+            const   { workspaceIds, friendIds } = await getFriendAndWorkspaceMembersIds( user.id );
+            wsEmitter.userOnline( user.id, user.username, user.avatarUrl, workspaceIds, friendIds );
+        }
 
         res.status(200).json( { success: true, message: "Signin successfully", token, user: userWithoutPassword } );
     }
@@ -87,7 +89,10 @@ export async function   signoutController( req : Request, res : Response, next :
             });
 
             if (user)
-                wsEmitter.userOffline( userId, user.username, await getWorkspaceMembershipIds( userId ), await getFriendIds( userId ) );
+            {
+                const   { workspaceIds, friendIds } = await getFriendAndWorkspaceMembersIds( userId );
+                wsEmitter.userOffline( userId, user.username, workspaceIds, friendIds );
+            }
         }
         console.log(`[Auth] User ${userId} logged out successfully`);
 

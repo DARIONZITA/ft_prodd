@@ -84,23 +84,26 @@ async function  findOrCreateUser( intraUser : IntraUser ) : Promise<OauthCallbac
 
         if (emailExists)
         {
-            if (emailExists.fortyTwoId)
-                return (new OauthCallbackResult(409, "This 42 account is already linked to another user"));
-
-            //Associar conta 42 à conta existente com mesmo email ou dar erro, ainda precisa decidir, mas resolvivel com 2FA
-            user = await prisma.user.update(
+            if (emailExists.fortyTwoId === null)
             {
-                where: { id: emailExists.id },
-                data: { fortyTwoId: intraUser.id },
-                select: { id: true, username: true, email: true, avatarUrl: true, fortyTwoId: true },
-            });
+                //Associar conta 42 à conta existente com mesmo email ou dar erro, ainda precisa decidir, mas resolvivel com 2FA
+                user = await prisma.user.update(
+                {
+                    where: { id: emailExists.id },
+                    data: { fortyTwoId: intraUser.id },
+                    select: { id: true, username: true, email: true, avatarUrl: true, fortyTwoId: true },
+                });
+            }
+            else if (emailExists.fortyTwoId === intraUser.id)
+                user = emailExists; // O usuário já tem esta conta 42 associada, pode logar normalmente
+            else
+                return (new OauthCallbackResult(409, 'Email already in use by another account'));
         }
         else
         {
             // Criar nova conta para usuário 42
             // if (await prisma.user.findFirst({ where: { intraUsername } }))
             //     username = `${intraUsername}_${intraID}`;
-
             user = await prisma.user.create(
             {
                 data: { username: intraUser.login, email: intraUser.email, avatarUrl: intraUser.image?.link ?? '', fortyTwoId: intraUser.id, passwordHash: '' },

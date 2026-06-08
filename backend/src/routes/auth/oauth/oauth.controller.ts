@@ -3,6 +3,9 @@ import { pkceStore }                                from '../../../middleware/pk
 import { handleOauthCallback }                      from './oauth.service';
 import { OauthCallbackSchema }                      from '../../../validations/auth';
 import { env }                                      from '../../../config/env';
+import { presenceStore }                            from '../../../ws/store';
+import { wsEmitter }                                from '../../../ws/emitter';
+import { getFriendAndWorkspaceMembersIds }          from '../../../ws/ws.server';
 
 export async function   oauthLoginController( req : Request, res : Response )
 {
@@ -43,13 +46,21 @@ export async function   oauthCallbackController( req : Request, res : Response, 
 
     const   callbackResult = await handleOauthCallback( data.code, codeVerifier );
 
-    if (!callbackResult.success || !callbackResult.token)
+    if (!callbackResult.user || !callbackResult.success || !callbackResult.token)
         return (res.redirect(`${env.FRONTEND_URL}/oauth/callback?error=${encodeURIComponent(callbackResult.message)}`));
 
     const   token = callbackResult.token; // assured by the service's return type
     const   redirectUrl = new URL( `${env.FRONTEND_URL}/oauth/callback` );
+    const   user = callbackResult.user;
 
     redirectUrl.searchParams.set( 'token', token );
+
     console.log("OAuth callback successful, redirecting to frontend with token...");
+
+    if (presenceStore.connect( user.id )) //if it's the first login
+    {
+        const   { workspaceIds, friendIds } = await getFriendAndWorkspaceMembersIds( user.id );
+        wsEmitter.userOnline( user.id, user.username, user.avatarUrl, workspaceIds, friendIds );
+    }
     res.redirect( redirectUrl.toString( ) );
 }

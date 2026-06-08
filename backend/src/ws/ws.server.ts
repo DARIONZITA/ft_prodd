@@ -20,32 +20,27 @@ type    AppSocket = Socket<ClientToServerEvents, ServerToClientEvents, Record<st
 
 //-------------------------------------------Helpers------------------------------------------------
 
-//Amigos aceites
-
-export async function  getFriendIds( userId : number ) : Promise<number[]>
+export async function   getFriendAndWorkspaceMembersIds( userId : number ) : Promise<{ workspaceIds: number[], friendIds: number[] }>
 {
-    const   rows = await prisma.friendRequest.findMany(
-    {
-        where:
+    const   [ workspaceMembers, friendRequests ] = await Promise.all(
+    [
+        prisma.workspaceMember.findMany(
         {
-            status: 'accepted',
-            OR : [{senderId: userId}, {receiverId: userId}]
-        },
-        select: { senderId: true, receiverId: true },
-    });
-
-    return (rows.map(r => r.senderId === userId ? r.receiverId : r.senderId));
-}
-
-export async function   getWorkspaceMembershipIds( userId : number ) : Promise<number[]>
-{
-    const   memberships = await prisma.workspaceMember.findMany(
-    {
-        where: { userId },
-        select: { workspaceId: true }
-    });
-
-    return (memberships.map(m => m.workspaceId));
+            where: { userId },
+            select: { workspaceId: true },
+        }),
+        prisma.friendRequest.findMany(
+        {
+            where:
+            {
+                status: 'accepted',
+                OR : [{senderId: userId}, {receiverId: userId}]
+            },
+            select: { senderId: true, receiverId: true },
+        }),
+    ]);
+    return ({ workspaceIds: workspaceMembers.map( m => m.workspaceId ),
+              friendIds:    friendRequests.map(r => r.senderId === userId ? r.receiverId : r.senderId) });
 }
 
 //-------------------------------------------Setup------------------------------------------------
@@ -75,7 +70,15 @@ async function  authWebSocket( socket : AppSocket, next : ( err? : Error ) => vo
                 where: { userId },
                 select: { workspaceId: true },
             }),
-            getFriendIds(userId),
+            prisma.friendRequest.findMany(
+            {
+                where:
+                {
+                    status: 'accepted',
+                    OR : [{senderId: userId}, {receiverId: userId}]
+                },
+                select: { senderId: true, receiverId: true },
+            }),
         ]);
 
         if (!user)
@@ -84,7 +87,7 @@ async function  authWebSocket( socket : AppSocket, next : ( err? : Error ) => vo
         // Persiste dados no socket — acessíveis em todos os handlers via socket.data
         socket.data.userId = userId;
         socket.data.workspaceIds = memberships.map( m => m.workspaceId );
-        socket.data.friendIds = friendIds;
+        socket.data.friendIds = friendIds.map(r => r.senderId === userId ? r.receiverId : r.senderId);
 
         next( );
     }
