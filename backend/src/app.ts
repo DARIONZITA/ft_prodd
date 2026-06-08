@@ -10,6 +10,9 @@ import userRoutes						from './routes/private/router/users';
 import friendRoutes						from './routes/private/router/friends';
 import notificationsRouter				from './routes/private/router/notifications';
 import analyticsRouter					from './routes/private/router/analytics';
+import columnsRouter					from './routes/private/router/columns';
+import tasksRouter						from './routes/private/router/tasks';
+import commentsRouter					from './routes/private/router/comments';
 import { errorHandler }					from './middleware/errorHandler';
 import { setupSwagger }					from './swagger';
 import publicAPIRouter					from './routes/public/api.router';
@@ -40,6 +43,9 @@ app.use('/api/badges', badgeRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/friends', friendRoutes);
 app.use('/api/notifications', notificationsRouter);
+app.use('/api/columns', columnsRouter);
+app.use('/api/tasks', tasksRouter);
+app.use('/api/comments', commentsRouter);
 
 app.use(errorHandler);
 

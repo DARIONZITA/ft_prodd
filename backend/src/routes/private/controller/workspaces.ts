@@ -3,8 +3,12 @@ import { prisma }									    from '../../../lib/prisma';
 import { ApiError }									    from '../../../utils/ApiError';
 import { getWorkspaceRole }                             from '../../../middleware/rbac';
 import { ActivityLogActionMaxLength, WorkspaceRole }    from '../../../types/constants';
-import { idSchema, parseOrThrow,
-    parseQueryEnum, parseQueryInt, parseQueryString }   from '../../../validations/utils';
+import { Priority }                                     from '../../../types/constants';
+import {
+    idSchema, parseOrThrow,
+    parseQueryEnum, parseQueryInt,
+    parseQueryString, parseQueryBool
+} from '../../../validations/utils';
 
 export async function createWorkspace(req: Request, res: Response, next: NextFunction)
 {
@@ -497,4 +501,51 @@ export async function createWorkspaceActivityLog(req: Request, res: Response, ne
         res.status(201).json({ success: true, data: activityLog });
     }
     catch (err) { next(err); }
+}
+
+export async function listWorkspaceColumns(req: Request, res: Response, next: NextFunction)
+{
+  try {
+    const workspaceId = parseOrThrow(idSchema, 'WorkspaceID', req.params.id);
+
+    const columns = await prisma.column.findMany({
+      where: { workspaceId },
+      include: {
+        _count: { select: { tasks: true } }
+      },
+      orderBy: { order: 'asc' }
+    });
+
+    res.json({ success: true, data: columns });
+  } catch (err) { next(err); }
+}
+
+export async function listWorkspaceTasks(req: Request, res: Response, next: NextFunction)
+{
+  try {
+    const workspaceId = parseOrThrow(idSchema, 'WorkspaceID', req.params.id);
+    const columnId = parseQueryInt('columnId', req.query.columnId, { isOptional: true, min: 1 });
+    const priority = parseQueryEnum('priority', req.query.priority, Priority, { isOptional: true });
+    const assigneeId = parseQueryInt('assignee', req.query.assignee, { isOptional: true, min: 1 });
+    const isDone = parseQueryBool('isDone', req.query.isDone, { isOptional: true });
+
+    const where: any = { column: { workspaceId } };
+    if (columnId !== undefined) where.columnId = columnId;
+    if (priority !== undefined) where.priority = priority;
+    if (isDone !== undefined) where.isDone = isDone;
+    if (assigneeId !== undefined) {
+      where.assignments = { some: { userId: assigneeId } };
+    }
+
+    const tasks = await prisma.task.findMany({
+      where,
+      include: {
+        assignments: { include: { user: { select: { id: true, username: true, avatarUrl: true } } } },
+        column: { select: { id: true, name: true } }
+      },
+      orderBy: [{ columnId: 'asc' }, { orderInColumn: 'asc' }]
+    });
+
+    res.json({ success: true, data: tasks });
+  } catch (err) { next(err); }
 }

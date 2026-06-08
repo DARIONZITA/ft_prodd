@@ -111,9 +111,3 @@ export function parseQueryDate( key: string, value: unknown, options: { default?
 
   return parseOrThrow(schema, key, value);
 }
-
-export const requireRole = ( currentRole: string, allowedRoles: string[] ): void =>
-{
-	if (!allowedRoles.includes(currentRole))
-		throw new ApiError( 403, `Required role: ${allowedRoles.join(' or ')}` );
-};

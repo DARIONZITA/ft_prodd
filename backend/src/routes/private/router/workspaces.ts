@@ -1,13 +1,26 @@
-import { Router }									from 'express';
-import { authenticate }								from '../../../middleware/auth';
-import { requireWorkspaceAdmin }    from '../../../middleware/rbac';
-	import {
+import { Router }				from 'express';
+import { authenticate }			from '../../../middleware/auth';
+import { listWorkspaceTasks }	from '../controller/workspaces';
+import {
+	requireWorkspaceAdmin,
+	requireWorkspaceMember,
+	requireWorkspaceAccess
+} from '../../../middleware/rbac';
+import {
 	createWorkspace, createWorkspaceMember,
 	deleteWorkspace, deleteWorkspaceMember,
 	getWorkspaceDetails, getWorkspaceMember,
 	listUserWorkspaces, listWorkspaceMembers,
 	updateWorkspace, updateWorkspaceMemberRole,
-	getWorkspaceActivityLog, createWorkspaceActivityLog } from '../controller/workspaces';
+	getWorkspaceActivityLog, createWorkspaceActivityLog,
+	listWorkspaceColumns
+} from '../controller/workspaces';
+import {
+	createColumn,
+	updateColumn,
+	deleteColumn,
+	reorderColumns
+} from '../controller/columns';
 
 const router = Router();
 
@@ -121,7 +134,6 @@ router.put('/:id', requireWorkspaceAdmin, updateWorkspace);
  */
 router.delete('/:id', requireWorkspaceAdmin, deleteWorkspace);
 
-
 /**
  * @swagger
  * /workspaces/{id}:
@@ -144,9 +156,10 @@ router.delete('/:id', requireWorkspaceAdmin, deleteWorkspace);
  *         description: Forbidden
  */
 router.get('/:id', getWorkspaceDetails);
-/*
-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJqb2FvQGV4YW1wbGUuY29tIiwiaWF0IjoxNzc5Nzk4NjI2LCJleHAiOjE3Nzk4ODUwMjZ9.FTP796yPtAjqRtvczKSCYsCdLxA_SMagNWg_AHHERlk
-*/
+
+
+
+/* MEMBERS */
 
 /**
  * @swagger
@@ -183,7 +196,6 @@ eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJqb2FvQGV4YW1wbGUuY29
  */
 router.post('/:id/members', requireWorkspaceAdmin, createWorkspaceMember);
 
-
 /**
  * @swagger
  * /workspaces/{id}/members:
@@ -206,7 +218,6 @@ router.post('/:id/members', requireWorkspaceAdmin, createWorkspaceMember);
  *         description: Workspace not found
  */
 router.get('/:id/members', listWorkspaceMembers);
-
 
 /**
  * @swagger
@@ -293,6 +304,207 @@ router.put('/:id/members/:userId', requireWorkspaceAdmin, updateWorkspaceMemberR
  *         description: Member not found
  */
 router.delete('/:id/members/:userId', requireWorkspaceAdmin, deleteWorkspaceMember);
+
+
+
+/* COLUMNS */
+
+/**
+ * @swagger
+ * /workspaces/{id}/columns:
+ *   get:
+ *     summary: List workspace columns (ordered by position)
+ *     tags: [Columns]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *     responses:
+ *       200:
+ *         description: Columns list ordered by position
+ *       403:
+ *         description: Forbidden
+ *       404:
+ *         description: Workspace not found
+ */
+router.get('/:id/columns', requireWorkspaceAccess, listWorkspaceColumns);
+
+/**
+ * @swagger
+ * /workspaces/{id}/columns:
+ *   post:
+ *     summary: Create a new column (admins only)
+ *     tags: [Columns]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [name]
+ *             properties:
+ *               name: { type: string, minLength: 1, maxLength: 255 }
+ *     responses:
+ *       201:
+ *         description: Column created
+ *       400:
+ *         description: Invalid input
+ *       403:
+ *         description: Only admins can perform this action
+ */
+router.post('/:id/columns', requireWorkspaceAdmin, createColumn);
+
+/**
+ * @swagger
+ * /workspaces/{id}/columns/reorder:
+ *   patch:
+ *     summary: Bulk reorder columns (admins and members only)
+ *     tags: [Columns]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [columns]
+ *             properties:
+ *               columns:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   required: [id, order]
+ *                   properties:
+ *                     id: { type: integer }
+ *                     order: { type: integer, minimum: 0 }
+ *     responses:
+ *       200:
+ *         description: Columns reordered
+ *       400:
+ *         description: Invalid payload
+ *       403:
+ *         description: Only admins can perform this action
+ */
+router.patch('/:id/columns/reorder', requireWorkspaceMember, reorderColumns);
+
+/**
+ * @swagger
+ * /workspaces/{id}/columns/{columnId}:
+ *   patch:
+ *     summary: Update column name or order (admins and members only)
+ *     tags: [Columns]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *       - in: path
+ *         name: columnId
+ *         required: true
+ *         schema: { type: integer }
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name: { type: string, minLength: 1, maxLength: 255 }
+ *               order: { type: integer, minimum: 0 }
+ *     responses:
+ *       200:
+ *         description: Column updated
+ *       400:
+ *         description: Invalid input
+ *       403:
+ *         description: Only admins and members can perform this action
+ *       404:
+ *         description: Column not found
+ */
+router.patch('/:id/columns/:columnId', requireWorkspaceMember, updateColumn);
+
+/**
+ * @swagger
+ * /workspaces/{id}/columns/{columnId}:
+ *   delete:
+ *     summary: Delete a column (admins only)
+ *     tags: [Columns]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *       - in: path
+ *         name: columnId
+ *         required: true
+ *         schema: { type: integer }
+ *     responses:
+ *       200:
+ *         description: Column deleted
+ *       403:
+ *         description: Only admins can perform this action
+ *       404:
+ *         description: Column not found
+ */
+router.delete('/:id/columns/:columnId', requireWorkspaceAdmin, deleteColumn);
+
+
+
+/* TASKS */
+
+/**
+ * @swagger
+ * /workspaces/{id}/tasks:
+ *   get:
+ *     summary: List all tasks in a workspace (filterable)
+ *     tags: [Tasks]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *       - in: query
+ *         name: columnId
+ *         schema: { type: integer }
+ *       - in: query
+ *         name: priority
+ *         schema: { type: string, enum: [LOW, MEDIUM, HIGH] }
+ *       - in: query
+ *         name: assignee
+ *         schema: { type: integer }
+ *       - in: query
+ *         name: isDone
+ *         schema: { type: boolean }
+ *     responses:
+ *       200:
+ *         description: Tasks list
+ *       403:
+ *         description: Forbidden
+ *       404:
+ *         description: Workspace not found
+ */
+router.get('/:id/tasks', requireWorkspaceAccess, listWorkspaceTasks);
 
 /**
  * @swagger

@@ -39,7 +39,8 @@ export function requireWorkspaceRole(requiredRoles: WorkspaceRole[])
 }
 
 export const requireWorkspaceAdmin = requireWorkspaceRole(['admin']);
-export const requireWorkspaceAdminMember = requireWorkspaceRole([ 'admin', 'member' ]);
+export const requireWorkspaceMember = requireWorkspaceRole([ 'admin', 'member' ]);
+export const requireWorkspaceAccess = requireWorkspaceRole([ 'admin', 'member', 'guest' ]);
 
 export async function getWorkspaceRole( workspaceId: number, userId: number ): Promise<WorkspaceRole>
 {
