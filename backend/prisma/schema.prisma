@@ -51,11 +51,9 @@ model User {
     notifications        Notification[]
     comments             Comment[]
     commentMentions      CommentMention[]
-    reactions            Reaction[]
     userBadges           UserBadge[]
     userXPs              UserXP[]
     activityLogs          ActivityLog[]
-    chatMessages        ChatMessage[]
     sentFriendRequests   FriendRequest[] @relation("sender")
     receivedFriendRequests FriendRequest[] @relation("receiver")
  
@@ -86,7 +84,6 @@ model Workspace {
     columns       Column[]
     notifications Notification[]
     activityLogs  ActivityLog[]
-    chatMessages  ChatMessage[]
     labels        Label[]
 }
 
@@ -192,7 +189,6 @@ model Comment {
     user User @relation(fields: [authorId], references: [id], onDelete: Cascade)
 
     commentMentions CommentMention[]
-    reactions       Reaction[]
 }
 
 model CommentMention {
@@ -217,35 +213,6 @@ model ActivityLog {
 
     workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
     user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
-
-model ChatMessage {
-    id          Int      @id @default(autoincrement())
-    workspaceId Int
-    senderId    Int
-    content     String
-    createdAt   DateTime @default(now())
-    updatedAt   DateTime @updatedAt
-
-    workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-    user      User      @relation(fields: [senderId], references: [id], onDelete: Cascade)
-
-    reactions Reaction[]
-}
-
-model Reaction {
-    id        Int      @id @default(autoincrement())
-    emoji     String
-    userId    Int
-    messageId Int?
-    commentId Int?
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
-
-    user    User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-    message ChatMessage? @relation(fields: [messageId], references: [id], onDelete: Cascade)
-    comment Comment?     @relation(fields: [commentId], references: [id], onDelete: Cascade)
 }
 
 model Label {
