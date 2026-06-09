@@ -7,6 +7,7 @@ import StatsRow from '../../components/profile/StatsRow'
 import Edit from './Edit'
 import type { Data } from '../../components/profile/Types'
 import { DEFAULT_ACHIEVEMENTS } from '../../components/profile/Achievements'
+import { updateUser, type UpdateUserProfilePayload } from '../../api/user'
 
 interface ProfileProps {
   profile: Data
@@ -14,16 +15,25 @@ interface ProfileProps {
   onProfileUpdate?: (updated: Partial<Data>) => void
 }
 
-export default function Profile({ profile: initialUser, onFriendsClick, onProfileUpdate }: ProfileProps) {
+export default function UserProfile({ profile: initialUser, onFriendsClick, onProfileUpdate }: ProfileProps) {
   const [user, setUser]         = useState(initialUser.user);
 
   const [profile, setProfile]       = useState(initialUser);
   const [editOpen, setEditOpen] = useState(false)
 
-  const handleSave = (updated: { name: string; bio: string; avatarUrl: string | null }) => {
-    setUser(u => ({ ...u, ...updated }))
-    onProfileUpdate?.(updated)
-    setEditOpen(false)
+  const handleSave = (updated: UpdateUserProfilePayload) => {
+    updateUser(updated).then(response => {
+      const updatedUser = response.data
+      const nextUser = { ...user, ...updatedUser }
+      const newProfile = { ...profile, user: nextUser }
+
+      setUser(nextUser)
+      setProfile(newProfile)
+      setEditOpen(false)
+      onProfileUpdate?.(newProfile)
+    }).catch(error => {
+      console.error('Failed to update profile:', error)
+    })
   }
 
   return (
@@ -33,10 +43,10 @@ export default function Profile({ profile: initialUser, onFriendsClick, onProfil
 
           {/* Header card */}
           <div className="bg-white border border-slate-200 rounded-xl p-5 flex items-center gap-5">
-            <Avatar name={user.name} avatarUrl={user.avatarUrl} size="lg" />
+            <Avatar name={user.username} avatarUrl={user.avatarUrl} size="lg" />
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
-                <h1 className="font-display font-bold text-xl text-slate-900">{user.name}</h1>
+                <h1 className="font-display font-bold text-xl text-slate-900">{user.username}</h1>
                 <button
                   onClick={() => setEditOpen(true)}
                   className="flex items-center gap-1 font-mono text-[10px] font-bold text-slate-400 uppercase hover:text-cyan-600 transition-colors duration-150"

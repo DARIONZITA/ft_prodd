@@ -336,7 +336,11 @@ export default function DashboardPagePlaceholder() {
   // ── Render main area ─────────────────────────────────────────────────────
   const renderMain = () => {
     if (activeView === 'dashboard') {return <PlaceholderView title="Dashboard" />}
-    if (activeView === 'profile') return <UserProfile profile={{ user: userDataQuery ? { ...MOCK_PROFILE, name: userDataQuery.username, bio: userDataQuery.bio, avatarUrl: userDataQuery.avatarUrl } : MOCK_PROFILE, isOnline: false, lastSeen: undefined, stats: { tasksCompleted: 0, tasksAssigned: 0, friends: 0 }, level: 1, xp: 0, xpRequired: 100 }} onFriendsClick={() => setFriendsOpen(true)} />
+    if (activeView === 'profile') {
+      if (!userDataQuery) {
+        return <PlaceholderView title="Loading profile..." />
+      }else
+        return <UserProfile profile={{ user: userDataQuery ? { ...MOCK_PROFILE, username: userDataQuery.username, bio: userDataQuery.bio, avatarUrl: userDataQuery.avatarUrl } : MOCK_PROFILE, isOnline: false, lastSeen: undefined, stats: { tasksCompleted: 0, tasksAssigned: 0, friends: 0 }, level: 1, xp: 0, xpRequired: 100 }} onFriendsClick={() => setFriendsOpen(true)} />}
     if (activeView === 'notifications') return <NotificationsPage />
     if (activeView === 'all-boards') return <PlaceholderView title="All Boards" />
     if (activeView === 'completed') return <PlaceholderView title="Completed Tasks" />

@@ -1,4 +1,4 @@
-import { User } from '../../types'
+import { User } from '../../types/user'
 export interface Stats {
   tasksCompleted: number
   tasksAssigned: number

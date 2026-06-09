@@ -1,37 +1,70 @@
-import { useRef, useState } from 'react'
+import { useRef, useState, type ChangeEvent } from 'react'
 import { X, UploadCloud } from 'lucide-react'
 import Avatar from '../../components/profile/Avatar'
-import type { Data } from '../../components/profile/Types'
+import type { UpdateUserProfilePayload } from '../../api/user'
+import type { User } from '../../types/user'
 
 const BIO_MAX = 200
 
+function normalizeAvatarUrl(value?: string | null): string | null {
+  const trimmed = value?.trim()
+  return trimmed ? trimmed : null
+}
+
 interface EditProps {
-  user: Data
+  user: User
   onClose: () => void
-  onSave: (updated: { name: string; bio: string; avatarUrl: string | null }) => void
+  onSave: (updated: UpdateUserProfilePayload) => void
 }
 
 export default function Edit({ user, onClose, onSave }: EditProps) {
-  const [name, setName]           = useState(user.name)
-  const [bio, setBio]             = useState(user.bio)
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(user.avatarUrl ?? null)
-  const fileInputRef              = useRef<HTMLInputElement>(null)
+  const initialAvatarUrl = normalizeAvatarUrl(user.avatarUrl)
+  const [name, setName] = useState(user.username)
+  const [bio, setBio] = useState(user.bio)
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(initialAvatarUrl)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const hasChanges =
-    name.trim() !== user.name ||
+    name.trim() !== user.username ||
     bio !== user.bio ||
-    avatarUrl !== (user.avatarUrl ?? null)
+    avatarUrl !== initialAvatarUrl
 
-  const initials = name.trim()[0]?.toUpperCase() ?? '?'
+  const handleAvatarChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) {
+      return
+    }
 
-  console.log(initials)
-
-  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
     const reader = new FileReader()
-    reader.onload = () => setAvatarUrl(reader.result as string)
+    reader.onload = () => {
+      if (typeof reader.result === 'string') {
+        setAvatarUrl(reader.result)
+      }
+    }
     reader.readAsDataURL(file)
+  }
+
+  const handleSave = () => {
+    if (!hasChanges) {
+      return
+    }
+
+    const payload: UpdateUserProfilePayload = {}
+    const trimmedName = name.trim()
+
+    if (trimmedName !== user.username) {
+      payload.username = trimmedName
+    }
+
+    if (bio !== user.bio) {
+      payload.bio = bio
+    }
+
+    if (avatarUrl !== initialAvatarUrl && avatarUrl) {
+      payload.avatarUrl = avatarUrl
+    }
+
+    onSave(payload)
   }
 
   return (
@@ -114,7 +147,7 @@ export default function Edit({ user, onClose, onSave }: EditProps) {
             Cancel
           </button>
           <button
-            onClick={() => hasChanges && onSave({ name: name.trim(), bio, avatarUrl })}
+            onClick={handleSave}
             disabled={!hasChanges}
             className={`px-6 py-2 rounded-lg font-display text-sm font-bold transition-colors duration-150 ${
               hasChanges

@@ -62,6 +62,35 @@ async function listUsersRequest(params?: UserListQueryParams): Promise<UserListR
   return response.data
 }
 
+export interface UpdateUserProfilePayload {
+  username?: string
+  bio?: string
+  avatarUrl?: string
+}
+
+function buildUpdateUserPayload(data: UpdateUserProfilePayload): UpdateUserProfilePayload {
+  const payload: UpdateUserProfilePayload = {}
+
+  if (data.username !== undefined) {
+    payload.username = data.username
+  }
+
+  if (data.bio !== undefined) {
+    payload.bio = data.bio
+  }
+
+  if (data.avatarUrl !== undefined && data.avatarUrl.trim() !== '') {
+    payload.avatarUrl = data.avatarUrl
+  }
+
+  return payload
+}
+
+async function updateUserRequest(data: UpdateUserProfilePayload): Promise<UserResponse> {
+  const response = await api.patch<UserResponse>('/api/users/me', buildUpdateUserPayload(data))
+  return response.data
+}
+
 export function useUsersQuery(
   params?: UserListQueryParams,
   options?: Omit<UseQueryOptions<UserListResponse, Error>, 'queryKey' | 'queryFn'>
@@ -78,5 +107,9 @@ export function useUsersQuery(
     queryFn: () => listUsersRequest(normalizedParams),
     ...options,
   })
+}
+
+export function updateUser(data: UpdateUserProfilePayload): Promise<UserResponse> {
+  return updateUserRequest(data)
 }
 
