@@ -9,7 +9,7 @@ import {
   type WorkspaceMember,
   type WorkspaceRole,
 } from '../../api/workspace'
-import { useUsersQuery, type UserListItem } from '../../api/user'
+import { useUsersQuery } from '../../api/user'
 
 interface WorkspaceMembersContext {
   id: string | number
@@ -25,6 +25,7 @@ type MemberRole = 'Admin' | 'Member' | 'Guest'
 
 interface MemberRow {
   id: string
+  name: string
   username: string
   initials: string
   role: MemberRole
@@ -53,6 +54,7 @@ export default function OrganizationMembersPage({ workspace, onBackToSettings }:
     { search: performSearchQuery, take: 10 },
     { refetchOnMount: false, enabled: performSearchQuery.trim().length > 0 }
   )
+ 
   const createMemberMutation = useCreateWorkspaceMemberMutation()
   const updateMemberRoleMutation = useUpdateWorkspaceMemberRoleMutation()
   const deleteMemberMutation = useDeleteWorkspaceMemberMutation()
@@ -77,6 +79,7 @@ export default function OrganizationMembersPage({ workspace, onBackToSettings }:
 
       return {
         id: String(member.userId),
+        name: username,
         username: username,
         initials: getInitials(member.user?.username ?? `U${member.userId}`),
         role,
@@ -89,8 +92,7 @@ export default function OrganizationMembersPage({ workspace, onBackToSettings }:
 
   const inviteCandidates = useMemo<InviteCandidate[]>(() => {
     const memberIds = new Set(workspaceMembers.map((member: WorkspaceMember) => String(member.userId)))
-
-    const users: UserListItem[] = usersQuery.data?.success ? usersQuery.data.data.users : []
+    const users = usersQuery.data?.data?.users ?? []
     const nextCandidates: InviteCandidate[] = []
 
     for (const user of users) {
@@ -100,6 +102,7 @@ export default function OrganizationMembersPage({ workspace, onBackToSettings }:
 
       nextCandidates.push({
         id: String(user.id),
+        name: user.username,
         username: user.username,
         email: user.email,
         initials: getInitials(user.username),
@@ -126,7 +129,20 @@ export default function OrganizationMembersPage({ workspace, onBackToSettings }:
     }
 
     setInviteSearch('')
-    setSelectedCandidateId(inviteCandidates[0]?.id ?? null)
+    setPerformSearchQuery('')
+    setSelectedCandidateId(null)
+  }, [inviteOpen])
+
+  useEffect(() => {
+    if (!inviteOpen || inviteCandidates.length === 0) {
+      return
+    }
+
+    setSelectedCandidateId(current =>
+      current && inviteCandidates.some(candidate => candidate.id === current)
+        ? current
+        : inviteCandidates[0].id
+    )
   }, [inviteCandidates, inviteOpen])
 
   const selectedCandidate = useMemo(
@@ -392,6 +408,7 @@ export default function OrganizationMembersPage({ workspace, onBackToSettings }:
         onSearchChange={setInviteSearch}
         onPerformSearch={handlePerformSearch}
         candidates={inviteCandidates}
+        isSearching={usersQuery.isFetching}
         selectedCandidateId={selectedCandidate?.id ?? null}
         onSelectCandidate={handleInviteSelect}
         roleLabel="Member (Can create & edit tasks)"

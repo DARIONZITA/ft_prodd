@@ -67,9 +67,15 @@ export function useUsersQuery(
   options?: Omit<UseQueryOptions<UserListResponse, Error>, 'queryKey' | 'queryFn'>
 )
 {
+  const normalizedParams: UserListQueryParams = {
+    search: params?.search?.trim() || undefined,
+    skip: params?.skip,
+    take: params?.take,
+  }
+
   return useQuery({
-    queryKey: [...userKeys.list, params],
-    queryFn: () => listUsersRequest(params),
+    queryKey: [...userKeys.list, normalizedParams],
+    queryFn: () => listUsersRequest(normalizedParams),
     ...options,
   })
 }

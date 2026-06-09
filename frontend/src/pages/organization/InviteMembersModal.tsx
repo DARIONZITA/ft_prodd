@@ -14,7 +14,9 @@ interface InviteMembersModalProps {
   isOpen: boolean
   search: string
   onSearchChange: (value: string) => void
+  onPerformSearch: (value: string) => void
   candidates: InviteCandidate[]
+  isSearching?: boolean
   selectedCandidateId: string | null
   onSelectCandidate: (candidate: InviteCandidate) => void
   roleLabel: string
@@ -26,7 +28,9 @@ export default function InviteMembersModal({
   isOpen,
   search,
   onSearchChange,
+  onPerformSearch,
   candidates,
+  isSearching = false,
   selectedCandidateId,
   onSelectCandidate,
   roleLabel,
@@ -58,19 +62,6 @@ export default function InviteMembersModal({
   if (!isOpen) {
     return null
   }
-
-  const normalizedSearch = search.trim().toLowerCase()
-  const filteredCandidates = candidates.filter(candidate => {
-    if (!normalizedSearch) {
-      return true
-    }
-
-    return (
-      candidate.name.toLowerCase().includes(normalizedSearch) ||
-      candidate.username.toLowerCase().includes(normalizedSearch) ||
-      candidate.email.toLowerCase().includes(normalizedSearch)
-    )
-  })
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
@@ -107,6 +98,10 @@ export default function InviteMembersModal({
               <input
                 value={search}
                 onChange={(e) => onSearchChange(e.target.value)}
+                onKeyUp={(e) => {
+                    if (e.key === 'Enter')
+                        onPerformSearch(search);
+                }}
                 placeholder="Enter username or email..."
                 className="w-full bg-transparent text-sm text-slate-700 outline-none placeholder:text-slate-400"
               />
@@ -119,8 +114,12 @@ export default function InviteMembersModal({
               Search Results
             </label>
             <div className="space-y-2">
-              {filteredCandidates.length > 0 ? (
-                filteredCandidates.map(candidate => {
+              {isSearching ? (
+                <p className="rounded-lg border border-dashed border-slate-200 px-3 py-4 text-sm text-slate-500">
+                  Searching users...
+                </p>
+              ) : candidates.length > 0 ? (
+                candidates.map(candidate => {
                   const isSelected = candidate.id === selectedCandidateId
 
                   return (
