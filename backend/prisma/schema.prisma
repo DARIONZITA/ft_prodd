@@ -34,31 +34,29 @@ enum Priority {
 }
 
 model User {
-    id           Int      @id @default(autoincrement())
-    username     String   //@unique
-    bio          String   @default("")
-    email        String   @unique
-    apiKeyCount  Int      @default(0)
-    fortyTwoId   Int?     @unique
-    totalXp      Int      @default(0)
+    id           Int        @id @default(autoincrement())
+    username     String     // @unique
+    bio          String     @default("")
+    email        String     @unique
+    avatarUrl    String     @default("")
+    apiKeyCount  Int        @default(0)
+    fortyTwoId   Int?       @unique
+    totalXp      Int        @default(0)
     passwordHash String
-    avatarUrl    String
-    createdAt    DateTime @default(now())
-    updatedAt    DateTime @updatedAt
+    createdAt    DateTime   @default(now())
+    updatedAt    DateTime   @updatedAt
 
-    workspaceMemberships WorkspaceMember[]
-    taskAssignments      TaskAssignment[]
-    notifications        Notification[]
-    comments             Comment[]
-    commentMentions      CommentMention[]
-    userBadges           UserBadge[]
-    userXPs              UserXP[]
-    activityLogs          ActivityLog[]
-    sentFriendRequests   FriendRequest[] @relation("sender")
-    receivedFriendRequests FriendRequest[] @relation("receiver")
- 
-    // Relação com ApiKey adicionda por jbofengo por causa do módulo da API pública
-    apiKeys             ApiKey[]
+    apiKeys                 ApiKey[]
+    userXPs                 UserXP[]
+    comments                Comment[]
+    userBadges              UserBadge[]
+    activityLogs            ActivityLog[]
+    notifications           Notification[]
+    taskAssignments         TaskAssignment[]
+    commentMentions         CommentMention[]
+    sentFriendRequests      FriendRequest[] @relation("sender")
+    workspaceMemberships    WorkspaceMember[]
+    receivedFriendRequests  FriendRequest[] @relation("receiver")
 }
 
 model   ApiKey {
