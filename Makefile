@@ -61,7 +61,7 @@ rebuild-%: ## Rebuild um serviço específico (ex: make rebuild-backend)
 health: ## Verificar saúde dos serviços
 	@./scripts/health-check.sh
 
-migrate: prisma-migrate-deploy ## Executar migrations do banco de dados
+migrate: prisma-migrate-deploy ## Aplicar migrations existentes (usar após git pull)
 
 prisma-migrate-deploy: ## Executar migrate deploy direto no container backend
 	@echo "🧩 Executando Prisma migrate deploy no backend..."
@@ -127,12 +127,22 @@ test-all: ## Executar todos os testes
 # ===========================
 
 prisma-generate: ## Gerar Prisma Client
+	@$(DOCKER) up -d postgres redis backend
 	@$(DOCKER) exec backend npm run prisma:generate
 
-prisma-migrate: ## Executar migrations do Prisma
-	@$(DOCKER) exec backend npm run prisma:migrate
+prisma-migrate: prisma-migrate-new ## Alias: criar nova migration (usar NAME=descricao)
+
+prisma-migrate-new: ## Criar nova migration após alterar schema.prisma (uso: make prisma-migrate-new NAME=add_foo)
+	@if [ -z "$(NAME)" ]; then \
+		echo "Erro: define um nome. Exemplo: make prisma-migrate-new NAME=add_user_bio"; \
+		exit 1; \
+	fi
+	@echo "🧩 Criando migration '$(NAME)' a partir de schema.prisma..."
+	@$(DOCKER) up -d postgres redis backend
+	@$(DOCKER) exec backend npx prisma migrate dev --name "$(NAME)"
 
 prisma-studio: ## Abrir Prisma Studio (GUI para DB)
+	@$(DOCKER) up -d postgres redis backend
 	@$(DOCKER) exec backend npm run prisma:studio
 
 # ===========================

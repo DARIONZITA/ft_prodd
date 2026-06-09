@@ -180,10 +180,39 @@ make logs-redis
 ```bash
 make db-shell
 make migrate
-make prisma-migrate
+make prisma-migrate-new NAME=descricao_da_alteracao
 make prisma-generate
 make prisma-studio
 ```
+
+#### Fluxo Prisma (importante para toda a equipa)
+
+**Depois de `git pull`** — aplicar migrations que alguém já criou:
+
+```bash
+make migrate
+```
+
+**Quando alteras `backend/prisma/schema.prisma`** — criar e commitar a nova migration:
+
+```bash
+make prisma-migrate-new NAME=descricao_curta
+git add backend/prisma/migrations/ backend/prisma/schema.prisma
+git commit -m "feat(db): descricao da alteracao"
+```
+
+**Se `make migrate` falhar com P3009** (migration falhada no teu banco local):
+
+```bash
+make reset-db   # apaga dados locais e reaplica tudo do zero
+```
+
+Regras para evitar problemas:
+
+- **Nunca apagar** pastas em `backend/prisma/migrations/` — isso partiu o projeto (só ficou uma migration incremental sem as tabelas base).
+- **Nunca usar** `prisma db push` em desenvolvimento partilhado — usa sempre `make prisma-migrate-new`.
+- **Sempre commitar** a pasta `migrations/` inteira (incluindo `migration_lock.toml`), não só o `schema.prisma`.
+- Usar **WSL Ubuntu** para correr o Makefile: `wsl -d Ubuntu` antes dos comandos `make`.
 
 ---
 
