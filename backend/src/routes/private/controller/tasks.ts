@@ -110,10 +110,6 @@ export async function updateTask(req: Request, res: Response, next: NextFunction
         }
       });
 
-      await tx.activityLog.create({
-        data: { workspaceId, userId: req.user!.id, action: `"${req.user!.username}" updated task "${t.title}" from column "${columnTask.column.name}"` }
-      });
-
       return t;
     });
 
@@ -138,10 +134,6 @@ export async function deleteTask(req: Request, res: Response, next: NextFunction
       await tx.notification.deleteMany({ where: { relatedTaskId: taskId } });
       await tx.taskLabel.deleteMany({ where: { taskId } });
       await tx.task.delete({ where: { id: taskId } });
-
-      await tx.activityLog.create({
-        data: { workspaceId, userId: req.user!.id, action: `"${req.user!.username}" deleted task "${task.title}" from column "${task.column.name}"` }
-      });
     });
 
     res.json({ success: true, message: 'Task deleted successfully' });
@@ -188,10 +180,6 @@ export async function moveTask(req: Request, res: Response, next: NextFunction) 
               column: { select: { id: true, name: true } },
               assignments: { include: { user: { select: { id: true, username: true, avatarUrl: true } } } }
           }
-      });
-
-      await tx.activityLog.create({
-        data: { workspaceId, userId: req.user!.id, action: `"${req.user!.username}" moved task "${t.title}" from column "${columnTask.column.name}" to column "${targetColumn.name}"` }
       });
 
       return t;
@@ -253,10 +241,6 @@ export async function createAssignment(req: Request, res: Response, next: NextFu
         include: { user: { select: { id: true, username: true, avatarUrl: true } } }
       });
 
-      await tx.activityLog.create({
-        data: { workspaceId, userId: req.user!.id, action: `"${req.user!.username}" assigned user "${user.username}" to task "${task.title}" from column "${task.column.name}"` }
-      });
-
       return a;
     });
 
@@ -290,10 +274,6 @@ export async function deleteAssignment(req: Request, res: Response, next: NextFu
 
     await prisma.$transaction(async (tx) => {
       await tx.taskAssignment.delete({ where: { id: assignment.id } });
-
-      await tx.activityLog.create({
-        data: { workspaceId, userId: req.user!.id, action: `"${req.user!.username}" unassigned user "${user.username}" from task "${task.title}" of column "${task.column.name}"` }
-      });
     });
 
     res.json({ success: true, message: 'User unassigned successfully' });

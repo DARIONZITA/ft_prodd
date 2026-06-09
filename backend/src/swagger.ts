@@ -16,8 +16,6 @@ const options = {
 			{ name: 'Workspaces', description: 'Manage workspaces and members' },
 			{ name: 'Friends', description: 'Manage friend relationships' },
 			{ name: 'Notifications', description: 'Manage notifications' },
-			{ name: 'Badges', description: 'Manage badges' },
-			{ name: 'Analytics', description: 'Workspace analytics and dashboard metrics' },
 			{ name: 'API Keys', description: 'Manage API keys for external access' },
 			{ name: 'Public API', description: `Public API endpoints secured with API key authentication.\n
 Read operations limited to 30 requests per minute (GET).\n
@@ -81,17 +79,6 @@ Write operations have a shorter limit of 10 requests per minute (POST, PUT, DELE
 						updatedAt: { type: 'string', format: 'date-time' },
 					},
 				},
-				Badge: {
-					type: 'object',
-					properties: {
-						id: { type: 'integer' },
-						name: { type: 'string' },
-						description: { type: 'string' },
-						iconUrl: { type: 'string', format: 'uri' },
-						createdAt: { type: 'string', format: 'date-time' },
-						updatedAt: { type: 'string', format: 'date-time' },
-					},
-				},
 				Notification: {
 					type: 'object',
 					properties: {
@@ -140,59 +127,6 @@ Write operations have a shorter limit of 10 requests per minute (POST, PUT, DELE
 					properties: {
 						success: { type: 'boolean', example: true },
 						data: { $ref: '#/components/schemas/Notification' },
-					},
-				},
-				BadgeWithEarnedAt: {
-					type: 'object',
-					properties: {
-						id: { type: 'integer' },
-						name: { type: 'string' },
-						description: { type: 'string' },
-						iconUrl: { type: 'string', format: 'uri' },
-						createdAt: { type: 'string', format: 'date-time' },
-						updatedAt: { type: 'string', format: 'date-time' },
-						earnedAt: { type: 'string', format: 'date-time' },
-					},
-				},
-				BadgeListResponse: {
-					type: 'object',
-					properties: {
-						success: { type: 'boolean', example: true },
-						data: {
-							type: 'object',
-							properties: {
-								badges: {
-									type: 'array',
-									items: { $ref: '#/components/schemas/BadgeWithEarnedAt' },
-								},
-								pagination: { $ref: '#/components/schemas/Pagination' },
-							},
-						},
-					},
-				},
-				XpHistoryItem: {
-					type: 'object',
-					properties: {
-						id: { type: 'integer' },
-						xp: { type: 'integer' },
-						createdAt: { type: 'string', format: 'date-time' },
-						updatedAt: { type: 'string', format: 'date-time' },
-					},
-				},
-				XpHistoryResponse: {
-					type: 'object',
-					properties: {
-						success: { type: 'boolean', example: true },
-						data: {
-							type: 'object',
-							properties: {
-								history: {
-									type: 'array',
-									items: { $ref: '#/components/schemas/XpHistoryItem' },
-								},
-								pagination: { $ref: '#/components/schemas/Pagination' },
-							},
-						},
 					},
 				},
 				NotificationReadAllResponse: {
@@ -247,15 +181,15 @@ Write operations have a shorter limit of 10 requests per minute (POST, PUT, DELE
 						},
 					},
 				},
-			UpdateUserProfileRequest: {
-				type: 'object',
-				properties: {
-					username: { type: 'string', minLength: 3, maxLength: 42 },
-					bio: { type: 'string', maxLength: 142 },
-					avatar: { type: 'string', format: 'binary', description: 'Avatar image file (image/*, max 5 MB)' },
+				UpdateUserProfileRequest: {
+					type: 'object',
+					properties: {
+						username: { type: 'string', minLength: 3, maxLength: 42 },
+						bio: { type: 'string', maxLength: 142 },
+						avatar: { type: 'string', format: 'binary', description: 'Avatar image file (image/*, max 5 MB)' },
+					},
+					additionalProperties: false,
 				},
-				additionalProperties: false,
-			},
 				ErrorResponse: {
 					type: 'object',
 					properties: {
@@ -269,104 +203,6 @@ Write operations have a shorter limit of 10 requests per minute (POST, PUT, DELE
 						},
 					},
 				},
-					AnalyticsOverview: {
-						type: 'object',
-						properties: {
-							workspaceId: { type: 'integer' },
-							from: { type: 'string', format: 'date-time' },
-							to: { type: 'string', format: 'date-time' },
-							totalTasks: { type: 'integer' },
-							openTasks: { type: 'integer' },
-							completedTasks: { type: 'integer' },
-							completionRate: { type: 'number' },
-							avgCompletionTimeHours: { type: 'number' },
-							tasksCreatedLast7Days: { type: 'integer' },
-							tasksCompletedLast7Days: { type: 'integer' },
-							membersCount: { type: 'integer' },
-						},
-					},
-					AnalyticsSeriesPoint: {
-						type: 'object',
-						properties: {
-							bucket: { type: 'string', format: 'date-time' },
-							value: { type: 'number' },
-						},
-					},
-					AnalyticsDistributionPoint: {
-						type: 'object',
-						properties: {
-							label: { type: 'string' },
-							value: { type: 'number' },
-						},
-					},
-					AnalyticsMemberWorkload: {
-						type: 'object',
-						properties: {
-							userId: { type: 'integer' },
-							username: { type: 'string' },
-							avatarUrl: { type: 'string', format: 'uri' },
-							completedTasks: { type: 'integer' },
-							openTasks: { type: 'integer' },
-							assignedTasks: { type: 'integer' },
-							completionRate: { type: 'number' },
-						},
-					},
-					AnalyticsOverviewResponse: {
-						type: 'object',
-						properties: {
-							success: { type: 'boolean', example: true },
-							data: { $ref: '#/components/schemas/AnalyticsOverview' },
-						},
-					},
-					AnalyticsSeriesResponse: {
-						type: 'object',
-						properties: {
-							success: { type: 'boolean', example: true },
-							data: {
-								type: 'array',
-								items: { $ref: '#/components/schemas/AnalyticsSeriesPoint' },
-							},
-						},
-					},
-					AnalyticsTrendResponse: {
-						type: 'object',
-						properties: {
-							success: { type: 'boolean', example: true },
-							data: {
-								type: 'object',
-								properties: {
-									created: {
-										type: 'array',
-										items: { $ref: '#/components/schemas/AnalyticsSeriesPoint' },
-									},
-									completed: {
-										type: 'array',
-										items: { $ref: '#/components/schemas/AnalyticsSeriesPoint' },
-									},
-								},
-							},
-						},
-					},
-					AnalyticsDistributionResponse: {
-						type: 'object',
-						properties: {
-							success: { type: 'boolean', example: true },
-							data: {
-								type: 'array',
-								items: { $ref: '#/components/schemas/AnalyticsDistributionPoint' },
-							},
-						},
-					},
-					AnalyticsWorkloadResponse: {
-						type: 'object',
-						properties: {
-							success: { type: 'boolean', example: true },
-							data: {
-								type: 'array',
-								items: { $ref: '#/components/schemas/AnalyticsMemberWorkload' },
-							},
-						},
-					},
 			},
 		},
 	},

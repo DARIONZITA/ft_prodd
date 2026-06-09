@@ -45,14 +45,6 @@ export async function createColumn(req: Request, res: Response, next: NextFuncti
         data: { workspaceId, name, order: nextOrder }
       });
 
-      await tx.activityLog.create({
-        data: {
-          workspaceId,
-          userId: req.user!.id,
-          action: `"${req.user!.username}" created column "${name}"`
-        }
-      });
-
       return col;
     });
 
@@ -82,14 +74,6 @@ export async function updateColumn(req: Request, res: Response, next: NextFuncti
         data: {
           ...(name !== undefined && { name }),
           ...(order !== undefined && { order })
-        }
-      });
-
-      await tx.activityLog.create({
-        data: {
-          workspaceId,
-          userId: req.user!.id,
-          action: `"${req.user!.username}" updated column "${existing.name}"`
         }
       });
 
@@ -127,14 +111,6 @@ export async function deleteColumn(req: Request, res: Response, next: NextFuncti
       });
       await tx.task.deleteMany({ where: { columnId } });
       await tx.column.delete({ where: { id: columnId } });
-
-      await tx.activityLog.create({
-        data: {
-          workspaceId,
-          userId: req.user!.id,
-          action: `"${req.user!.username}" deleted column "${column.name}"`
-        }
-      });
     });
 
     res.json({ success: true, message: 'Column deleted successfully' });
@@ -161,14 +137,6 @@ export async function reorderColumns(req: Request, res: Response, next: NextFunc
         })
       )
     );
-
-    await prisma.activityLog.create({
-      data: {
-        workspaceId,
-        userId: req.user!.id,
-        action: `"${req.user!.username}" reordered columns`
-      }
-    });
 
     const columns = await prisma.column.findMany({
       where: { workspaceId },
@@ -227,14 +195,6 @@ export async function createColumnTask(req: Request, res: Response, next: NextFu
         }
       });
 
-      await tx.activityLog.create({
-        data: {
-          workspaceId: column.workspaceId,
-          userId: req.user!.id,
-          action: `"${req.user!.username}" created task "${title}"`
-        }
-      });
-
       return t;
     });
 
@@ -263,10 +223,6 @@ export async function reorderColumnTasks(req: Request, res: Response, next: Next
         prisma.task.update({ where: { id: item.id }, data: { orderInColumn: item.order } })
       )
     );
-
-    await prisma.activityLog.create({
-      data: { workspaceId: column.workspaceId, userId: req.user!.id, action: `"${req.user!.username}" reordered tasks from column ${column.name}` }
-    });
 
     const tasks = await prisma.task.findMany({
       where: { columnId },

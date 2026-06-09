@@ -1,9 +1,9 @@
-import type { Request, Response, NextFunction }         from 'express';
-import { prisma }									    from '../../../lib/prisma';
-import { ApiError }									    from '../../../utils/ApiError';
-import { getWorkspaceRole }                             from '../../../middleware/rbac';
-import { ActivityLogActionMaxLength, WorkspaceRole }    from '../../../types/constants';
-import { Priority }                                     from '../../../types/constants';
+import type { Request, Response, NextFunction } from 'express';
+import { prisma }                               from '../../../lib/prisma';
+import { ApiError }                             from '../../../utils/ApiError';
+import { getWorkspaceRole }                     from '../../../middleware/rbac';
+import { WorkspaceRole }                        from '../../../types/constants';
+import { Priority }                             from '../../../types/constants';
 import {
     idSchema, parseOrThrow,
     parseQueryEnum, parseQueryInt,
@@ -30,14 +30,6 @@ export async function createWorkspace(req: Request, res: Response, next: NextFun
                     workspaceId: workspace.id,
                     userId: req.user!.id,
                     role: 'admin'
-                }
-            });
-
-            await tx.activityLog.create({
-                data: {
-                    workspaceId: workspace.id,
-                    userId: req.user!.id,
-                    action: `Created workspace "${name}"`
                 }
             });
 
@@ -102,14 +94,6 @@ export async function   updateWorkspace(req: Request, res: Response, next: NextF
                 }
             });
 
-            await tx.activityLog.create({
-                data: {
-                    workspaceId: id,
-                    userId: req.user!.id,
-                    action: 'Updated workspace details'
-                }
-            });
-
             return workspace;
         });
 
@@ -133,8 +117,6 @@ export async function   deleteWorkspace(req: Request, res: Response, next: NextF
 
         await prisma.$transaction(async (tx) => {
             
-            await tx.activityLog.deleteMany({ where: { workspaceId: id } });
-
             await tx.workspaceMember.deleteMany({ where: { workspaceId: id } });
 
             await tx.workspace.delete({ where: { id } });
@@ -170,19 +152,6 @@ export async function   getWorkspaceDetails(req: Request, res: Response, next: N
                     },
                     orderBy: [{ role: 'asc' }, { userId: 'asc' }]
                 },
-                activityLogs: {
-                    take: -4,
-                    orderBy: { createdAt: 'desc' },
-                    include: {
-                        user: {
-                            select: {
-                                id: true,
-                                username: true,
-                                avatarUrl: true
-                            }
-                        }
-                    }
-                },
                 columns: {
                     include: {
                         _count: {
@@ -206,8 +175,7 @@ export async function   getWorkspaceDetails(req: Request, res: Response, next: N
             updatedAt: workspace.updatedAt,
             role: requesterRole,
             taskCount: totalTaskCount,
-            members: workspace.members,
-            activityLogs: workspace.activityLogs.reverse()
+            members: workspace.members
         };
 
         res.json({ success: true, data: formattedData });
@@ -256,14 +224,6 @@ export async function   createWorkspaceMember(req: Request, res: Response, next:
             await tx.workspace.update({
                 where: { id },
                 data: { updatedAt: new Date() }
-            });
-
-            await tx.activityLog.create({
-                data: {
-                    workspaceId: id,
-                    userId: req.user!.id,
-                    action: `Added user ${userId} to workspace as ${role}`
-                }
             });
 
             return member;
@@ -378,14 +338,6 @@ export async function   updateWorkspaceMemberRole(req: Request, res: Response, n
                 data: { updatedAt: new Date() }
             });
 
-            await tx.activityLog.create({
-                data: {
-                    workspaceId: id,
-                    userId: req.user!.id,
-                    action: `Updated workspace role for user ${userId} to ${role}`
-                }
-            });
-
             return member;
         });
 
@@ -425,80 +377,9 @@ export async function deleteWorkspaceMember(req: Request, res: Response, next: N
                 where: { id },
                 data: { updatedAt: new Date() }
             });
-
-            await tx.activityLog.create({
-                data: {
-                    workspaceId: id,
-                    userId: req.user!.id,
-                    action: `Removed user ${userId} from workspace`
-                }
-            });
         });
 
         res.json({ success: true, message: 'Member successfully removed.' });
-    }
-    catch (err) { next(err); }
-}
-
-export async function getWorkspaceActivityLog(req: Request, res: Response, next: NextFunction) {
-    try {
-        const id = parseOrThrow(idSchema, 'WorkspaceID', req.params.id);
-		const skip = parseQueryInt('skip', req.query.skip, { default: 0, min: 0 });
-		const take = parseQueryInt('take', req.query.take, { default: 42, min: 1, max: 100 });
-
-        const where: any = { workspaceId: id, userId: req.user!.id };
-
-        const activityLogs = await prisma.activityLog.findMany({
-            where,
-            include: {
-                user: {
-                    select: {
-                        id: true,
-                        username: true,
-                        avatarUrl: true
-                    }
-                }
-            },
-            skip,
-            take,
-            orderBy: { createdAt: 'desc' }
-        });
-        const total = await prisma.activityLog.count({ where });
-
-		res.json({
-			success: true,
-			data: {
-				activityLogs,
-				pagination: { skip, take, total }
-			}
-		});
-    }
-    catch (err) { next(err); }
-}
-
-export async function createWorkspaceActivityLog(req: Request, res: Response, next: NextFunction) {
-    try {
-        const id = parseOrThrow(idSchema, 'WorkspaceID', req.params.id);
-        const action: string = parseQueryString('action', req.body.action, { isOptional: false, minLength: 1, maxLength: ActivityLogActionMaxLength }) ?? "";
-
-        const activityLog = await prisma.activityLog.create({
-            data: {
-                workspaceId: id,
-                userId: req.user!.id,
-                action
-            },
-            include: {
-                user: {
-                    select: {
-                        id: true,
-                        username: true,
-                        avatarUrl: true
-                    }
-                }
-            }
-        });
-
-        res.status(201).json({ success: true, data: activityLog });
     }
     catch (err) { next(err); }
 }

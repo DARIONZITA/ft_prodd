@@ -262,123 +262,6 @@ export async function	getUserFriends(req: Request, res: Response, next: NextFunc
         res.json({
             success: true,
             data: { friendRequests, pagination: { skip, take, total } }
-        });
-    }
-    catch (err) { next(err); }
-}
-
-export async function   getUserActivity( req: Request, res: Response, next: NextFunction )
-{
-	try
-    {
-		const id = parseOrThrow(idSchema, 'UserID', req.params.id);
-		const skip = parseQueryInt('skip', req.query.skip, { default: 0, min: 0 });
-		const take = parseQueryInt('take', req.query.take, { default: 42, min: 1, max: 100 });
-
-		const user = await prisma.user.findUnique({ where: { id } });
-		if (!user)
-			throw new ApiError(404, 'User not found');
-
-		const activities = await prisma.activityLog.findMany({
-			where: { userId: id },
-			include: {
-				workspace: {
-					select: { id: true, name: true }
-				}
-			},
-			skip,
-			take,
-			orderBy: { createdAt: 'desc' }
-		});
-
-		const total = await prisma.activityLog.count({ where: { userId: id } });
-
-		res.json({
-			success: true,
-			data: {
-				activities,
-				pagination: { skip, take, total }
-			}
-		});
-	}
-    catch (err) { next(err); }
-}
-
-
-
-export async function   getUserBadges( req: Request, res: Response, next: NextFunction )
-{
-	try
-    {
-		const id = parseOrThrow(idSchema, 'UserID', req.params.id);
-		const skip = parseQueryInt('skip', req.query.skip, { default: 0, min: 0 });
-		const take = parseQueryInt('take', req.query.take, { default: 42, min: 1, max: 100 });
-
-		const user = await prisma.user.findUnique({ where: { id } });
-		if (!user)
-			throw new ApiError(404, 'User not found');
-
-		const earnedBadges = await prisma.userBadge.findMany({
-			where: { userId: id },
-			include: {
-				badge: {
-					select: { id: true, name: true, description: true, iconUrl: true, createdAt: true, updatedAt: true }
-				}
-			},
-			skip,
-			take,
-			orderBy: { createdAt: 'desc' }
-		});
-
-		const total = await prisma.userBadge.count({ where: { userId: id } });
-
-		res.json({
-			success: true,
-			data: {
-				badges: earnedBadges.map((userBadge: (typeof earnedBadges)[number]) => ({
-					...userBadge.badge,
-					earnedAt: userBadge.createdAt
-				})),
-				pagination: { skip, take, total }
-			}
-		});
-	}
-    catch (err) { next(err); }
-}
-
-export async function   getUserXpHistory( req: Request, res: Response, next: NextFunction )
-{
-	try
-    {
-		const id = parseOrThrow(idSchema, 'UserID', req.params.id);
-		const skip = parseQueryInt('skip', req.query.skip, { default: 0, min: 0 });
-		const take = parseQueryInt('take', req.query.take, { default: 42, min: 1, max: 100 });
-
-		const user = await prisma.user.findUnique({ where: { id } });
-		if (!user)
-			throw new ApiError(404, 'User not found');
-
-		const xpHistory = await prisma.userXP.findMany({
-			where: { userId: id },
-			select: {
-				id: true,
-				xp: true,
-				createdAt: true,
-				updatedAt: true
-			},
-			skip,
-			take,
-			orderBy: { createdAt: 'desc' }
-		});
-
-		const total = await prisma.userXP.count({ where: { userId: id } });
-
-		res.json({
-			success: true,
-			data: {
-				history: xpHistory,
-				pagination: { skip, take, total }
-			}
 		});
 	}
     catch (err) { next(err); }
@@ -394,30 +277,6 @@ export async function   getUserStats( req: Request, res: Response, next: NextFun
 		if (!user)
 			throw new ApiError(404, 'User not found');
 
-		const userXP = await prisma.userXP.findFirst({
-            where: { userId: id },
-            orderBy: { createdAt: 'desc' }
-        });
-
-		const badges = await prisma.userBadge.findMany({
-			where: { userId: id },
-			include: {
-				badge: {
-					select: { id: true, name: true, description: true, iconUrl: true }
-				}
-			}
-		});
-
-		/*const leaderboardEntries = await prisma.leaderboardEntry.findMany({
-			where: { userId: id },
-			include: {
-				workspace: {
-					select: { id: true, name: true }
-				}
-			},
-			orderBy: { weekYear: 'desc' }
-		});*/
-
 		const totalComments = await prisma.comment.count({
 			where: { authorId: id }
 		});
@@ -428,15 +287,7 @@ export async function   getUserStats( req: Request, res: Response, next: NextFun
 
 		res.json({
 			success: true,
-			data: {
-				xp: userXP?.xp || 0,
-				badges: badges.map((ub: (typeof badges)[number]) => ub.badge),
-				//leaderboardEntries,
-				stats: {
-					totalComments,
-					totalTasks
-				}
-			}
+			data: { totalComments, totalTasks }
 		});
 	}
     catch (err) { next(err); }

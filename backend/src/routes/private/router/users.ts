@@ -1,8 +1,7 @@
 import { Router }											from 'express';
 import { authenticate }										from '../../../middleware/auth';
 import { uploadAvatar }										from '../../../middleware/uploadAvatar';
-import { deleteUserAccount, getUserActivity, getUserBadges,
-	getUserProfile, getUserStats, getUserXpHistory,
+import { deleteUserAccount, getUserProfile, getUserStats,
 	getUserNotifications, getUserFriends, listUsers,
 	markAllUserNotificationsRead, updateUserProfile }		from '../controller/users';
 
@@ -293,114 +292,6 @@ router.patch('/:id/notifications/read-all', markAllUserNotificationsRead);
  *         description: User not found
  */
 router.get('/:id/friends', getUserFriends);
-
-
-
-/**
- * @swagger
- * /users/{id}/activity:
- *   get:
- *     summary: Get user activity
- *     tags: [Users]
- *     security:
- *       - BearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema: { type: integer }
- *       - in: query
- *         name: skip
- *         schema: { type: integer, default: 0 }
- *       - in: query
- *         name: take
- *         schema: { type: integer, default: 50 }
- *     responses:
- *       200:
- *         description: User activity
- *       404:
- *         description: User not found
- */
-router.get('/:id/activity', getUserActivity);
-
-
-
-
-/**
- * @swagger
- * /users/{id}/badges:
- *   get:
- *     summary: Get user's earned badges
- *     tags: [Users]
- *     security:
- *       - BearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: integer
- *       - in: query
- *         name: skip
- *         schema:
- *           type: integer
- *           default: 0
- *       - in: query
- *         name: take
- *         schema:
- *           type: integer
- *           default: 42
- *     responses:
- *       200:
- *         description: User badges retrieved successfully
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/BadgeListResponse'
- *       404:
- *         description: User not found
- */
-router.get('/:id/badges', getUserBadges);
-
-
-
-/**
- * @swagger
- * /users/{id}/xp:
- *   get:
- *     summary: Get XP history
- *     tags: [Users]
- *     security:
- *       - BearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: integer
- *       - in: query
- *         name: skip
- *         schema:
- *           type: integer
- *           default: 0
- *       - in: query
- *         name: take
- *         schema:
- *           type: integer
- *           default: 42
- *     responses:
- *       200:
- *         description: XP history retrieved successfully
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/XpHistoryResponse'
- *       404:
- *         description: User not found
- */
-router.get('/:id/xp', getUserXpHistory);
-
-
 
 /**
  * @swagger
