@@ -51,18 +51,25 @@ export function useGetUserRequest(
   })
 }
 
-async function listUsersRequest(): Promise<UserListResponse> {
-  const response = await api.get<UserListResponse>('/api/users')
+export interface UserListQueryParams {
+  search?: string
+  skip?: number
+  take?: number
+}
+
+async function listUsersRequest(params?: UserListQueryParams): Promise<UserListResponse> {
+  const response = await api.get<UserListResponse>('/api/users', { params })
   return response.data
 }
 
 export function useUsersQuery(
+  params?: UserListQueryParams,
   options?: Omit<UseQueryOptions<UserListResponse, Error>, 'queryKey' | 'queryFn'>
 )
 {
   return useQuery({
-    queryKey: userKeys.list,
-    queryFn: listUsersRequest,
+    queryKey: [...userKeys.list, params],
+    queryFn: () => listUsersRequest(params),
     ...options,
   })
 }

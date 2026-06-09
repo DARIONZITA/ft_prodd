@@ -15,17 +15,20 @@ export async function   listUsers( req: Request, res: Response, next: NextFuncti
     {
 		const	skip = parseQueryInt('skip', req.query.skip, { default: 0, min: 0 });
 		const	take = parseQueryInt('take', req.query.take, { default: 42, min: 1, max: 100 });
-		let		email;
-		let		username;
-
-		if (typeof req.query.search === 'string')
+		let whereClause: any = {};
+		if (typeof req.query.search === 'string' && req.query.search.trim() !== '')
 		{
-			email = req.query.search.includes('@') ? req.query.search : undefined;
-			username = !email ? req.query.search : undefined;
+			const searchterm = req.query.search.trim();
+			whereClause = {
+				OR: [
+					{ email: { contains: searchterm, mode: 'insensitive' } },
+					{ username: { contains: searchterm, mode: 'insensitive' } }
+				]
+			};
 		}
 		const users = await prisma.user.findMany(
 		{
-			where: { email, username },
+			where: whereClause,
 			select: {
 				id: true,
 				username: true,

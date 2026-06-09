@@ -43,12 +43,16 @@ export default function OrganizationMembersPage({ workspace, onBackToSettings }:
   const [query, setQuery] = useState('')
   const [inviteOpen, setInviteOpen] = useState(false)
   const [inviteSearch, setInviteSearch] = useState('')
+  const [performSearchQuery, setPerformSearchQuery] = useState('')
   const [actionMember, setActionMember] = useState<MemberRow | null>(null)
   const [draftRole, setDraftRole] = useState<MemberRole>('Member')
   const [selectedCandidateId, setSelectedCandidateId] = useState<string | null>(null)
 
   const membersQuery = useWorkspaceMembersQuery(workspace.id, { refetchOnMount: false })
-  const usersQuery = useUsersQuery({ refetchOnMount: false })
+  const usersQuery = useUsersQuery(
+    { search: performSearchQuery, take: 10 },
+    { refetchOnMount: false, enabled: performSearchQuery.trim().length > 0 }
+  )
   const createMemberMutation = useCreateWorkspaceMemberMutation()
   const updateMemberRoleMutation = useUpdateWorkspaceMemberRoleMutation()
   const deleteMemberMutation = useDeleteWorkspaceMemberMutation()
@@ -129,6 +133,10 @@ export default function OrganizationMembersPage({ workspace, onBackToSettings }:
     () => inviteCandidates.find((candidate: InviteCandidate) => candidate.id === selectedCandidateId) ?? inviteCandidates[0] ?? null,
     [inviteCandidates, selectedCandidateId]
   )
+
+  const handlePerformSearch = (searchValue: string) => {
+    setPerformSearchQuery(searchValue)
+  }
 
   const handleSendInvite = async () => {
     if (!selectedCandidate) {
@@ -382,6 +390,7 @@ export default function OrganizationMembersPage({ workspace, onBackToSettings }:
         isOpen={inviteOpen}
         search={inviteSearch}
         onSearchChange={setInviteSearch}
+        onPerformSearch={handlePerformSearch}
         candidates={inviteCandidates}
         selectedCandidateId={selectedCandidate?.id ?? null}
         onSelectCandidate={handleInviteSelect}
