@@ -3,3 +3,4 @@ export const NotificationType = ['mention', 'taskAssignment', 'comment', 'invite
 export const FriendRequestStatus = ['pending', 'accepted', 'rejected'] as const;
 export const Priority = ['LOW', 'MEDIUM', 'HIGH'] as const;
 export const ActivityLogActionMaxLength = 242;
+export const avatarDir = '/uploads/avatars/';

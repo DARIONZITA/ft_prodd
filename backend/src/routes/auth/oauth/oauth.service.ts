@@ -1,8 +1,17 @@
-import { prisma } from '../../../lib/prisma';
-import { generateToken } from '../../../utils/jwt';
-import { env } from '../../../config/env';
-import { TokenResponseSchema, IntraUserSchema, IntraUser } from '../../../validations/auth';
-import { OauthCallbackResult } from '../../../types/auth.types';
+import { prisma }               from '../../../lib/prisma';
+import { generateToken }        from '../../../utils/jwt';
+import { env }                  from '../../../config/env';
+import { OauthCallbackResult }  from '../../../types/auth.types';
+import { avatarDir }            from '../../../types/constants';
+import {
+    TokenResponseSchema,
+    IntraUserSchema,
+    IntraUser
+} from '../../../validations/auth';
+
+// Add by efinda to test if the path to the default avatarUrl is correct (TODELETE)
+import fs   from 'fs';
+import path from 'path';
 
 /**
  * Passo crítico do OAuth: troca o code (que vem no callback URL)
@@ -104,9 +113,18 @@ async function  findOrCreateUser( intraUser : IntraUser ) : Promise<OauthCallbac
             // Criar nova conta para usuário 42
             // if (await prisma.user.findFirst({ where: { intraUsername } }))
             //     username = `${intraUsername}_${intraID}`;
+
+            // Add by efinda to test if the path to the default avatarUrl is correct (TODELETE)
+            const filePath = path.join(process.cwd(), 'uploads/avatars/default.svg');
+            console.log('checking avatar:', filePath);
+            if (!fs.existsSync(filePath))
+                console.log('❌ default avatar NOT FOUND');
+            else
+                console.log('✅ default avatar exists');
+
             user = await prisma.user.create(
             {
-                data: { username: intraUser.login, email: intraUser.email, avatarUrl: intraUser.image?.link ?? '', fortyTwoId: intraUser.id, passwordHash: '' },
+			    data: { username: intraUser.login, email: intraUser.email, avatarUrl: intraUser.image?.link ?? `${avatarDir}default.svg`, fortyTwoId: intraUser.id, passwordHash: '' },
                 select: { id: true, username: true, email: true, avatarUrl: true, fortyTwoId: true },
             });
         }

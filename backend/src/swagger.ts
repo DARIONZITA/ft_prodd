@@ -247,14 +247,15 @@ Write operations have a shorter limit of 10 requests per minute (POST, PUT, DELE
 						},
 					},
 				},
-				UpdateUserProfileRequest: {
-					type: 'object',
-					properties: {
-						username: { type: 'string', minLength: 3, maxLength: 42 },
-						bio: { type: 'string', maxLength: 142 },
-					},
-					additionalProperties: false,
+			UpdateUserProfileRequest: {
+				type: 'object',
+				properties: {
+					username: { type: 'string', minLength: 3, maxLength: 42 },
+					bio: { type: 'string', maxLength: 142 },
+					avatar: { type: 'string', format: 'binary', description: 'Avatar image file (image/*, max 5 MB)' },
 				},
+				additionalProperties: false,
+			},
 				ErrorResponse: {
 					type: 'object',
 					properties: {
@@ -369,7 +370,7 @@ Write operations have a shorter limit of 10 requests per minute (POST, PUT, DELE
 			},
 		},
 	},
-	apis: ['./src/routes/**/**/*.ts', './src/swagger.ts'],
+	apis: ['./src/routes/**/*.ts'],
 };
 
 export const specs = swaggerJsdoc(options);

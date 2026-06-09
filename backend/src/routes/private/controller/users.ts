@@ -1,4 +1,7 @@
 import type { Request, Response, NextFunction }     	from 'express';
+import fs												from 'fs';
+import path												from 'path';
+import { avatarDir }									from '../../../types/constants';
 import { prisma }										from '../../../lib/prisma';
 import { ApiError }										from '../../../utils/ApiError';
 import { NotificationType, FriendRequestStatus }		from '../../../types/constants';
@@ -97,6 +100,20 @@ export async function   updateUserProfile( req: Request, res: Response, next: Ne
 		if (updateData.bio !== undefined)
 			updateFields.bio = updateData.bio;
 
+		if (req.file)
+		{
+			const oldAvatarUrl = req.user!.avatarUrl;
+			if (oldAvatarUrl && oldAvatarUrl !== `${avatarDir}default.svg` && oldAvatarUrl.startsWith(avatarDir))
+			{
+				const oldPath = path.join(process.cwd(), 'uploads', 'avatars', path.basename(oldAvatarUrl));
+				fs.unlink(oldPath, () => {});
+			}
+			updateFields.avatarUrl = `${avatarDir}${req.file.filename}`;
+		}
+
+		if (!Object.keys(updateFields).length)
+			return (next(new ApiError(400, 'At least one field must be provided for update')));
+
 		const updatedUser = await prisma.user.update({
 			where: { id },
 			data: updateFields,
@@ -128,10 +145,16 @@ export async function   deleteUserAccount( req: Request, res: Response, next: Ne
 		if (req.user!.id !== id)
 			throw new ApiError(403, 'You can only delete your own account');
 
-		const user = await prisma.user.findUnique({ where: { id } });
+		const user = await prisma.user.findUnique({ where: { id }, select : { avatarUrl: true } });
 
         if (!user)
 			throw new ApiError(404, 'User not found');
+
+		if (user.avatarUrl && user.avatarUrl !== `${avatarDir}default.svg` && user.avatarUrl.startsWith(avatarDir))
+		{
+			const avatarUrlPath = path.join(process.cwd(), 'uploads', 'avatars', path.basename(user.avatarUrl));
+			fs.unlink(avatarUrlPath, () => {});
+		}
 
 		await prisma.user.delete({ where: { id } });
 

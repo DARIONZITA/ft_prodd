@@ -7,6 +7,7 @@ import { signupSchema, signinSchema }           from '../../validations/auth';
 import { presenceStore }                        from '../../ws/store';
 import { wsEmitter }                            from '../../ws/emitter';
 import { getFriendAndWorkspaceMembersIds }      from '../../ws/ws.server';
+import { avatarDir }                            from '../../types/constants';
 
 export async function   signupController( req : Request, res : Response, next : NextFunction )
 {
@@ -26,7 +27,7 @@ export async function   signupController( req : Request, res : Response, next : 
 
 		const	passwordHash = await hashPassword( password );
 		const	user = await prisma.user.create({
-			data: { username, email, passwordHash },
+			data: { username, email, passwordHash, avatarUrl: `${avatarDir}default.svg` },
 			select: { id: true, username: true, email: true, avatarUrl: true }
 		});
 		const	token = generateToken( user.id, user.email );
@@ -85,7 +86,7 @@ export async function   signoutController( req : Request, res : Response, next :
             const   user = await prisma.user.findUnique(
             {
                 where: { id: userId },
-                select: { username: true, avatarUrl: true }
+                select: { username: true }
             });
 
             if (user)

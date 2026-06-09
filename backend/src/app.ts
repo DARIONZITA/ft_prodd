@@ -34,6 +34,7 @@ app.get('/api/health', (_req: Request, res: Response) => {
 	res.status(200).json({ success: true, message: 'API is healthy' });
 });
 
+app.use('/uploads', express.static('uploads'));
 app.use('/api/auth', authRoutes);
 app.use('/api/public', publicAPIRouter);
 app.use('/api/keys', apiKeyRouter);

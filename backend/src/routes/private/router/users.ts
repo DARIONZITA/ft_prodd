@@ -1,9 +1,10 @@
 import { Router }											from 'express';
 import { authenticate }										from '../../../middleware/auth';
-import { deleteUserAccount, getUserActivity,
-	getUserBadges, getUserProfile, getUserStats,
-	getUserXpHistory, getUserNotifications, getUserFriends,
-	markAllUserNotificationsRead, listUsers, updateUserProfile }	from '../controller/users';
+import { uploadAvatar }										from '../../../middleware/uploadAvatar';
+import { deleteUserAccount, getUserActivity, getUserBadges,
+	getUserProfile, getUserStats, getUserXpHistory,
+	getUserNotifications, getUserFriends, listUsers,
+	markAllUserNotificationsRead, updateUserProfile }		from '../controller/users';
 
 const router = Router();
 router.use(authenticate);
@@ -116,7 +117,7 @@ router.get('/:id', getUserProfile);
  * @swagger
  * /users/{id}:
  *   patch:
- *     summary: Update user profile (username and bio only)
+ *     summary: Update user profile
  *     tags: [Users]
  *     security:
  *       - BearerAuth: []
@@ -130,7 +131,7 @@ router.get('/:id', getUserProfile);
  *     requestBody:
  *       required: true
  *       content:
- *         application/json:
+ *         multipart/form-data:
  *           schema:
  *             $ref: '#/components/schemas/UpdateUserProfileRequest'
  *     responses:
@@ -154,7 +155,7 @@ router.get('/:id', getUserProfile);
  *       404:
  *         $ref: '#/components/schemas/ErrorResponse'
  */
-router.patch('/:id', updateUserProfile);
+router.patch('/:id', uploadAvatar('avatar'), updateUserProfile);
 
 /**
  * @swagger

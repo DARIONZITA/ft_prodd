@@ -71,6 +71,7 @@ services:
     container_name: ft_prodd_frontend
     environment:
       - VITE_API_URL=${BACKEND_URL}
+      - VITE_UPLOADS_PROXY=http://ft_prodd_backend:3001
     ports:
       - "3000:3000"
     volumes:
