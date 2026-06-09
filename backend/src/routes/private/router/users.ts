@@ -66,6 +66,9 @@ router.get('/', listUsers);
 
 router.get('/me', getUserProfile);
 
+
+router.patch('/me', updateUserProfile);
+
 /**
  * @swagger
  * /users/{id}:

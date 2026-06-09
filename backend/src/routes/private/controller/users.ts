@@ -102,6 +102,8 @@ export async function   updateUserProfile( req: Request, res: Response, next: Ne
 			updateFields.username = updateData.username;
 		if (updateData.bio !== undefined)
 			updateFields.bio = updateData.bio;
+		if (updateData.avatarUrl !== undefined)
+			updateFields.avatarUrl = updateData.avatarUrl;
 
 		if (req.file)
 		{
