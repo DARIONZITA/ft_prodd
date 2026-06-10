@@ -3,20 +3,14 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import Sidebar from '../components/SideBar'
 import UserProfile from './profile/This'
 import OtherUserProfile from './profile/Other'
-import Friends, { MOCK_FRIENDS, MOCK_PENDING } from './profile/Friends'
-import type { Friend, PendingRequest } from '../components/friend/Types'
+import Friends from './profile/Friends'
+import { useFriendsQuery } from '../api/friends'
 import CreateOrganizationModal from './organization/CreateOrganizationModal'
 import OrganizationSettingsPage from './organization/OrganizationSettingsPage.tsx'
 import OrganizationMembersPage from './organization/OrganizationMembersPage.tsx'
-import WorkspaceLogsPage from './organization/WorkspaceLogsPage.tsx'
 import AnalyticsPage from './organization/AnalyticsPage.tsx'
 import KanbanBoardPage from '../components/tasks/KanbanBoardPage.tsx'
 import NotificationsPage from './NotificationsPage.tsx'
-import LeaderboardPage from './gamification/LeaderboardPage.tsx'
-import BadgesPage from './gamification/BadgesPage.tsx'
-import LevelUpToast from '../components/gamification/LevelUpToast.tsx'
-import { SHARED_BADGES } from '../components/gamification/SharedBadges.ts'
-import type { LeaderboardEntry, XpSummary } from '../components/gamification/Types.ts'
 import type { User, UserResponse } from '../types/user.ts'
 import { useGetUserRequest } from '../api/user.ts'
 import { useCreateWorkspaceMutation, useDeleteWorkspaceMutation, useUpdateWorkspaceMutation, useUserWorkspacesQuery } from '../api/workspace.ts'
@@ -37,89 +31,6 @@ interface dataSideBar{
   workspaces: Workspace[]
 }
 
-const MOCK_USER: User = {
-  name: 'Edson',
-  avatarUrl: null,
-  workspaces: [
-    {
-      id: 1,
-      name: 'ft_printf',
-      description: 'Core C project workspace for the ft_printf implementation.',
-      taskCount: 8,
-      memberCount: 3,
-      onlineCount: 2,
-      sprintDaysLeft: 4,
-      healthScore: 84,
-    },
-    {
-      id: 2,
-      name: 'get_next_line',
-      description: 'A focused organization for line-by-line parsing and file I/O tasks.',
-      taskCount: 11,
-      memberCount: 4,
-      onlineCount: 3,
-      sprintDaysLeft: 6,
-      healthScore: 90,
-    },
-    {
-      id: 3,
-      name: 'push_swap',
-      description: 'Optimization-driven workspace for the push_swap algorithm challenge.',
-      taskCount: 15,
-      memberCount: 5,
-      onlineCount: 3,
-      sprintDaysLeft: 2,
-      healthScore: 88,
-    },
-  ],
-}
-
-const MOCK_PROFILE = {
-  name: 'Edson',
-  bio: 'Full-stack developer at 42. Currently working on ft_transcendence. Love clean code and Unix philosophy.',
-  avatarUrl: null,
-  isOnline: true,
-  stats: { tasksCompleted: 47, tasksAssigned: 23, friends: 13 },
-  level: 5,
-  xp: 850,
-  xpRequired: 1000,
-}
-
-const MOCK_OTHER_USER = {
-  name: 'alice_42',
-  bio: 'Working on minishell and pipex. Interested in system programming and DevOps. Always happy to help with C projects!',
-  avatarUrl: null,
-  isOnline: false,
-  lastSeen: 'Last seen 2 hours ago',
-  isFriend: false,
-  stats: { tasksCompleted: 34, tasksAssigned: 18, friends: 8 },
-  level: 6,
-  xp: 600,
-  xpRequired: 1000,
-}
-
-const XP_SUMMARY: XpSummary = {
-  level: 8,
-  xp: 2340,
-  xpRequired: 3500,
-}
-
-const ALL_TIME_LEADERBOARD: LeaderboardEntry[] = [
-  { id: 'u-1', name: 'Alex K.', avatar: 'https://ui-avatars.com/api/?name=Alex+K&background=f59e0b&color=fff', level: 22, xp: 19880, progressPercent: 82 },
-  { id: 'u-2', name: 'Maria L.', avatar: 'https://ui-avatars.com/api/?name=Maria+L&background=4f46e5&color=fff', level: 19, xp: 17120, progressPercent: 76 },
-  { id: 'u-3', name: 'Sam T.', avatar: 'https://ui-avatars.com/api/?name=Sam+T&background=ea580c&color=fff', level: 18, xp: 15990, progressPercent: 71 },
-  { id: 'u-4', name: 'Priya R.', avatar: 'https://ui-avatars.com/api/?name=Priya+R&background=6366f1&color=fff', level: 16, xp: 14710, progressPercent: 68 },
-  { id: 'u-5', name: 'Tom B.', avatar: 'https://ui-avatars.com/api/?name=Tom+B&background=0ea5e9&color=fff', level: 15, xp: 13690, progressPercent: 61 },
-  { id: 'u-6', name: 'Leo N.', avatar: 'https://ui-avatars.com/api/?name=Leo+N&background=8b5cf6&color=fff', level: 14, xp: 12470, progressPercent: 54 },
-  { id: 'u-7', name: 'Chen W.', avatar: 'https://ui-avatars.com/api/?name=Chen+W&background=10b981&color=fff', level: 13, xp: 11090, progressPercent: 49 },
-  { id: 'u-8', name: 'Nina P.', avatar: 'https://ui-avatars.com/api/?name=Nina+P&background=f43f5e&color=fff', level: 12, xp: 10340, progressPercent: 46 },
-  { id: 'u-9', name: 'Ryan C.', avatar: 'https://ui-avatars.com/api/?name=Ryan+C&background=f97316&color=fff', level: 11, xp: 9520, progressPercent: 41 },
-  { id: 'u-10', name: 'Zara M.', avatar: 'https://ui-avatars.com/api/?name=Zara+M&background=64748b&color=fff', level: 10, xp: 8990, progressPercent: 38 },
-  { id: 'u-me', name: 'Edson', avatar: 'https://ui-avatars.com/api/?name=Edson&background=0891b2&color=fff', level: XP_SUMMARY.level, xp: 8340, progressPercent: 35, isCurrentUser: true, dailyDelta: 1 },
-]
-
-// Use shared badges data
-const BADGES = SHARED_BADGES
 
 // ─── View type ────────────────────────────────────────────────────────────────
 
@@ -182,12 +93,8 @@ export default function DashboardPagePlaceholder() {
 
   const [friendsOpen, setFriendsOpen] = useState(false)
   const [createOrganizationOpen, setCreateOrganizationOpen] = useState(false)
- 
- const [showLevelUpToast, setShowLevelUpToast] = useState(false)
-
-  // Friends state — in real app this comes from API
-  const [friends, setFriends] = useState<Friend[]>(MOCK_FRIENDS)
-  const [pendingRequests, setPending] = useState<PendingRequest[]>(MOCK_PENDING)
+  const friendsQuery = useFriendsQuery(userDataQuery?.id, { refetchOnMount: false })
+  const friendsCount = friendsQuery.data?.data?.pagination?.total ?? 0
 
   const selectedWorkspaceId = useMemo<string | number>(() => {
     return workspaceParam || workspaceDataQuery[0]?.id || 0
@@ -221,12 +128,6 @@ export default function DashboardPagePlaceholder() {
       return
     }
 
-    if (view === 'workspace-logs' && payload != null) {
-      nextParams.set('workspace', String(payload))
-      nextParams.set('view', 'workspace-logs')
-      navigate(`/dashboard?${nextParams.toString()}`)
-      return
-    }
 
     if (view === 'analytics' && payload != null) {
       nextParams.set('workspace', String(payload))
@@ -278,23 +179,6 @@ export default function DashboardPagePlaceholder() {
   }, [location, navigate])
   */
 
-  // ── Friends modal handlers ───────────────────────────────────────────────
-  const handleAccept = (id: string | number) => {
-    const req = pendingRequests.find(r => r.id === id)
-    if (req) {
-      setFriends(f => [...f, { id: req.id, name: req.name, isOnline: false }])
-      setPending(p => p.filter(r => r.id !== id))
-    }
-  }
-
-  const handleDecline = (id: string | number) => {
-    setPending(p => p.filter(r => r.id !== id))
-  }
-
-  const handleRemoveFriend = (id: string | number) => {
-    setFriends(f => f.filter(fr => fr.id !== id))
-  }
-
   const handleViewProfile = (id: string | number) => {
     setFriendsOpen(false)
     handleNavigate(`user-${id}`)
@@ -340,34 +224,30 @@ export default function DashboardPagePlaceholder() {
       if (!userDataQuery) {
         return <PlaceholderView title="Loading profile..." />
       }else
-        return <UserProfile profile={{ user: userDataQuery ? { ...MOCK_PROFILE, username: userDataQuery.username, bio: userDataQuery.bio, avatarUrl: userDataQuery.avatarUrl } : MOCK_PROFILE, isOnline: false, lastSeen: undefined, stats: { tasksCompleted: 0, tasksAssigned: 0, friends: 0 }, level: 1, xp: 0, xpRequired: 100 }} onFriendsClick={() => setFriendsOpen(true)} />}
+        return (
+          <UserProfile
+            profile={{
+              user: userDataQuery,
+              isOnline: false,
+              lastSeen: undefined,
+              stats: { tasksCompleted: 0, tasksAssigned: 0, friends: friendsCount },
+              level: 1,
+              xp: 0,
+              xpRequired: 100,
+            }}
+            onFriendsClick={() => setFriendsOpen(true)}
+          />
+        )}
     if (activeView === 'notifications') return <NotificationsPage />
     if (activeView === 'all-boards') return <PlaceholderView title="All Boards" />
     if (activeView === 'completed') return <PlaceholderView title="Completed Tasks" />
-    if (activeView === 'leaderboard') {
-      return (
-        <LeaderboardPage
-          entries={ALL_TIME_LEADERBOARD}
-          onOpenBadges={() => handleNavigate('badges')}
-          period="all-time"
-          onPeriodChange={() => {}}
-        />
-      )
-    }
-    if (activeView === 'badges') {
-      return (
-        <BadgesPage
-          badges={BADGES}
-          onOpenLeaderboard={() => handleNavigate('leaderboard')}
-          onShowLevelUp={() => setShowLevelUpToast(true)}
-        />
-      )
-    }
     if (activeView === 'kanbanBoard') {
+      console.log(workspaceQuery)
       return (
         <KanbanBoardPage
           onOpenSettings={() => handleNavigate('organization-settings')}
           onOpenMembers={() => handleNavigate('organization-members')}
+          dateWorkspace={currentWorkspace.createdAt}
         />
       )
     }
@@ -394,22 +274,6 @@ export default function DashboardPagePlaceholder() {
       )
     }
 
-    if (activeView === 'workspace-logs') {
-      return currentWorkspace ? (
-        <WorkspaceLogsPage
-          workspaceName={currentWorkspace.name}
-          onBack={() => {
-            // Navigate back to kanban preserving current workspace
-            const nextParams = new URLSearchParams()
-            nextParams.set('workspace', String(currentWorkspace.id))
-            nextParams.set('view', 'kanbanBoard')
-            navigate(`/dashboard?${nextParams.toString()}`)
-          }}
-        />
-      ) : (
-        <PlaceholderView title="Workspace Logs" />
-      )
-    }
 
     if (activeView === 'analytics') {
       return currentWorkspace ? (
@@ -432,21 +296,17 @@ export default function DashboardPagePlaceholder() {
     // Logs page is accessed via sidebar footer button
 
     if (activeView.startsWith('user-')) {
-      // In a real app, fetch the user by ID. For now show the mock other user.
-      return <OtherUserProfile user={{
-        user: {
-          name: MOCK_OTHER_USER.name,
-          bio: MOCK_OTHER_USER.bio,
-          avatarUrl: MOCK_OTHER_USER.avatarUrl,
-        },
-        isOnline: MOCK_OTHER_USER.isOnline,
-        lastSeen: MOCK_OTHER_USER.lastSeen,
-        stats: MOCK_OTHER_USER.stats,
-        level: MOCK_OTHER_USER.level,
-        xp: MOCK_OTHER_USER.xp,
-        xpRequired: MOCK_OTHER_USER.xpRequired,
-        isFriend: MOCK_OTHER_USER.isFriend,
-      }} />
+      const otherUserId = activeView.replace('user-', '')
+      if (!userDataQuery) {
+        return <PlaceholderView title="Loading profile..." />
+      }
+
+      return (
+        <OtherUserProfile
+          userId={otherUserId}
+          currentUserId={userDataQuery.id}
+        />
+      )
     }
 
     return <PlaceholderView title="Dashboard" />
@@ -462,7 +322,6 @@ export default function DashboardPagePlaceholder() {
         }}
         activeView={activeView}
         onNavigate={handleNavigate}
-        xpSummary={XP_SUMMARY}
         onLogout={handleLogout}
         onCreateWorkspace={() => setCreateOrganizationOpen(true)}
         activeWorkspace={currentWorkspace}
@@ -471,14 +330,10 @@ export default function DashboardPagePlaceholder() {
       {renderMain()}
 
       {/* Friends modal — opened from the Friends stat on the profile, or wherever you wire it */}
-      {friendsOpen && (
+      {friendsOpen && userDataQuery && (
         <Friends
-          friends={friends}
-          pendingRequests={pendingRequests}
+          userId={userDataQuery.id}
           onClose={() => setFriendsOpen(false)}
-          onAccept={handleAccept}
-          onDecline={handleDecline}
-          onRemoveFriend={handleRemoveFriend}
           onViewProfile={handleViewProfile}
         />
       )}
@@ -489,15 +344,7 @@ export default function DashboardPagePlaceholder() {
         onCreate={handleCreateOrganization}
       />
 
-      <LevelUpToast
-        open={showLevelUpToast}
-        onClose={() => setShowLevelUpToast(false)}
-        previousLevel={XP_SUMMARY.level}
-        newLevel={XP_SUMMARY.level + 1}
-        currentXp={XP_SUMMARY.xp}
-        nextLevelXp={XP_SUMMARY.xpRequired}
-        unlockedBadgeName="Sprint Hero"
-      />
+      
 
     </div>
   )

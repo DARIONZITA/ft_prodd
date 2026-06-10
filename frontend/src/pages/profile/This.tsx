@@ -1,12 +1,9 @@
 import { useState } from 'react'
 import { AlertTriangle, Pencil } from 'lucide-react'
-import XPbar from '../../components/profile/XPbar'
-import Achievements from '../../components/profile/Achievements'
 import Avatar from '../../components/profile/Avatar'
 import StatsRow from '../../components/profile/StatsRow'
 import Edit from './Edit'
 import type { Data } from '../../components/profile/Types'
-import { DEFAULT_ACHIEVEMENTS } from '../../components/profile/Achievements'
 import {
   resolveAvatarUrl,
   useDeleteUserRequest,
@@ -101,9 +98,7 @@ export default function UserProfile({ profile: initialUser, onFriendsClick, onPr
           </div>
 
           <StatsRow stats={profile.stats} onFriendsClick={onFriendsClick} />
-          <XPbar level={profile.level} xp={profile.xp} xpRequired={profile.xpRequired} />
-          <Achievements achievements={DEFAULT_ACHIEVEMENTS} />
-
+        
           <section className="bg-white border border-red-200 rounded-xl p-5">
             <div className="flex items-start gap-3">
               <span className="mt-0.5 flex h-9 w-9 items-center justify-center rounded-full bg-red-50 text-red-600">

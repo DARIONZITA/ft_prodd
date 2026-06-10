@@ -1,9 +1,13 @@
+import { resolveAvatarUrl } from '../../api/user'
+
 export default function Avatar({ name, avatarUrl, online }: { name: string; avatarUrl?: string | null; online?: boolean }) {
   const initials = name.trim()[0]?.toUpperCase() ?? '?'
+  const resolvedAvatarUrl = resolveAvatarUrl(avatarUrl)
+
   return (
     <div className="relative flex-shrink-0">
-      {avatarUrl ? (
-        <img src={avatarUrl} alt={name} className="w-12 h-12 rounded-full object-cover" />
+      {resolvedAvatarUrl ? (
+        <img src={resolvedAvatarUrl} alt={name} className="w-12 h-12 rounded-full object-cover" />
       ) : (
         <div
           className="w-12 h-12 rounded-full flex items-center justify-center font-display font-bold text-white text-lg"

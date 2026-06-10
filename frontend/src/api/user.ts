@@ -41,9 +41,36 @@ export interface UserListResponse {
   }
 }
 
+export interface PublicUserProfile {
+  id: number
+  username: string
+  bio: string
+  avatarUrl: string
+  createdAt: string
+  updatedAt?: string
+  email?: string
+}
+
+export interface UserProfileResponse {
+  success: boolean
+  data: PublicUserProfile
+}
+
+export interface UserStats {
+  totalComments: number
+  totalTasks: number
+}
+
+export interface UserStatsResponse {
+  success: boolean
+  data: UserStats
+}
+
 const userKeys = {
   me: ['user', 'me'] as const,
   list: ['users'] as const,
+  profile: (id: string | number) => ['user', id] as const,
+  stats: (id: string | number) => ['user-stats', id] as const,
 }
 
 async function userRequest(endpoint: string): Promise<UserResponse>
@@ -111,6 +138,40 @@ async function updateUserRequest(data: UpdateUserProfilePayload): Promise<UserRe
 async function deleteUserRequest(): Promise<DeleteUserResponse> {
   const response = await api.delete<DeleteUserResponse>('/api/users/me')
   return response.data
+}
+
+async function getUserProfileRequest(id: string | number): Promise<UserProfileResponse> {
+  const response = await api.get<UserProfileResponse>(`/api/users/${id}`)
+  return response.data
+}
+
+async function getUserStatsRequest(id: string | number): Promise<UserStatsResponse> {
+  const response = await api.get<UserStatsResponse>(`/api/users/${id}/stats`)
+  return response.data
+}
+
+export function useUserProfileQuery(
+  id: string | number | undefined,
+  options?: Omit<UseQueryOptions<UserProfileResponse, Error>, 'queryKey' | 'queryFn'>
+) {
+  return useQuery({
+    queryKey: userKeys.profile(id ?? 'unknown'),
+    queryFn: () => getUserProfileRequest(id!),
+    enabled: id != null,
+    ...options,
+  })
+}
+
+export function useUserStatsQuery(
+  id: string | number | undefined,
+  options?: Omit<UseQueryOptions<UserStatsResponse, Error>, 'queryKey' | 'queryFn'>
+) {
+  return useQuery({
+    queryKey: userKeys.stats(id ?? 'unknown'),
+    queryFn: () => getUserStatsRequest(id!),
+    enabled: id != null,
+    ...options,
+  })
 }
 
 export function useUsersQuery(

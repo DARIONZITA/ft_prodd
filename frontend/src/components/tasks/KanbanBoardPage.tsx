@@ -417,9 +417,10 @@ function ColumnCard({ column, tasks, isBacklog, onAddTask, onTaskClick, index }:
 interface KanbanBoardPageProps {
   onOpenSettings?: () => void
   onOpenMembers?: () => void
+  dateWorkspace: string
 }
 
-export default function KanbanBoardPage({ onOpenSettings, onOpenMembers }: KanbanBoardPageProps) {
+export default function KanbanBoardPage({ onOpenSettings, onOpenMembers, dateWorkspace }: KanbanBoardPageProps) {
   const [columns, setColumns] = useState<Column[]>(() => SORTED_DEFAULT_COLUMNS);
   const [tasks, setTasks] = useState<Task[]>(() => sortTasks(INITIAL_TASKS));
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
@@ -756,9 +757,10 @@ export default function KanbanBoardPage({ onOpenSettings, onOpenMembers }: Kanba
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
         completedTodayCount={completedTodayCount}
-        workspaceCreatedAt="15 Feb 2026"
+        workspaceCreatedAt={dateWorkspace}
         onOpenSettings={onOpenSettings}
         onOpenMembers={onOpenMembers}
+
       />
 
       <DragDropProvider

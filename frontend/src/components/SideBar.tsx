@@ -156,24 +156,7 @@ export default function Sidebar({ data, activeView, onNavigate, onLogout = () =>
         </div>
       </div>
 
-      {/* Navigation */}
-      <nav className="px-2 flex flex-col gap-0.5 mb-1" aria-label="Main navigation">
-        {navItems.map(({ id, label, Icon }) => (
-          <button
-            key={id}
-            onClick={() => onNavigate(id)}
-            aria-current={activeView === id ? 'page' : undefined}
-            className={`flex items-center gap-2.5 px-3 py-2 rounded-lg font-body text-sm font-medium w-full text-left transition-colors duration-150 ${
-              activeView === id
-                ? 'bg-cyan-50 text-cyan-700 font-semibold'
-                : 'text-slate-500 hover:bg-slate-100 hover:text-slate-800'
-            }`}
-          >
-            <Icon size={16} />
-            {label}
-          </button>
-        ))}
-      </nav>
+   
 
       {/* My Projects */}
       <p className="px-4 pt-3 pb-1.5 font-mono text-[10px] font-medium uppercase tracking-widest text-slate-400">
@@ -218,22 +201,7 @@ export default function Sidebar({ data, activeView, onNavigate, onLogout = () =>
 
       {/* Footer */}
       <div className="border-t border-slate-200 px-2 py-2.5 flex flex-col gap-0.5">
-        {/* Workspace Logs - only show when workspace is active */}
-        {activeWorkspace && (
-          <button
-            onClick={() => onNavigate('workspace-logs', activeWorkspace.id)}
-            className={`flex items-center gap-2.5 px-3 py-2 rounded-lg font-body text-sm font-medium w-full text-left transition-colors duration-150 cursor-pointer ${
-              activeView === 'workspace-logs' 
-                ? 'bg-cyan-50 text-cyan-700 font-semibold' 
-                : 'text-slate-500 hover:bg-slate-100 hover:text-slate-800'
-            }`}
-          >
-            <ScrollText size={14} />
-            <span className="flex-1 min-w-0 truncate">
-              Logs: {activeWorkspace.name}
-            </span>
-          </button>
-        )}
+        
         
         <button
           onClick={onLogout}
