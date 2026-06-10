@@ -1,10 +1,7 @@
 import { prisma }           from '../../../lib/prisma';
 import { ApiError }         from '../../../utils/ApiError';
 import { getWorkspaceRole } from '../../../middleware/rbac';
-import {
-  WorkspaceRole,
-  NotificationType
-} from '@prisma/client';
+import { WorkspaceRole }    from '@prisma/client';
 import type {
   Request,
   Response,
@@ -70,27 +67,9 @@ export async function deleteComment(req: Request, res: Response, next: NextFunct
       throw new ApiError(403, 'You can only delete your own comments');
 
     await prisma.$transaction(async (tx) => {
-      await tx.commentMention.deleteMany({ where: { commentId } });
       await tx.comment.delete({ where: { id: commentId } });
     });
 
     res.json({ success: true, message: 'Comment deleted' });
-  } catch (err) { next(err); }
-}
-
-export async function listMentions(req: Request, res: Response, next: NextFunction)
-{
-  try {
-    const commentId = parseOrThrow(idSchema, 'CommentID', req.params.id);
-    const taskComment = await resolveCommentWorkspace(commentId);
-    const workspaceId = taskComment.task.column.workspaceId;
-    await getWorkspaceRole(workspaceId, req.user!.id);
-
-    const mentions = await prisma.commentMention.findMany({
-      where: { commentId },
-      include: { user: { select: { id: true, username: true, avatarUrl: true } } }
-    });
-
-    res.json({ success: true, data: mentions });
   } catch (err) { next(err); }
 }

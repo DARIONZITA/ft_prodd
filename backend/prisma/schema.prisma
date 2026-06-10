@@ -50,9 +50,8 @@ model User {
     comments                Comment[]
     notifications           Notification[]
     taskAssignments         TaskAssignment[]
-    commentMentions         CommentMention[]
-    sentFriendRequests      FriendRequest[] @relation("sender")
     workspaceMemberships    WorkspaceMember[]
+    sentFriendRequests      FriendRequest[] @relation("sender")
     receivedFriendRequests  FriendRequest[] @relation("receiver")
 }
 
@@ -181,20 +180,6 @@ model Comment {
 
     task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
     user User @relation(fields: [authorId], references: [id], onDelete: Cascade)
-
-    commentMentions CommentMention[]
-}
-
-model CommentMention {
-    id        Int      @id @default(autoincrement())
-    commentId Int
-    userId    Int
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
-
-
-    comment Comment @relation(fields: [commentId], references: [id], onDelete: Cascade)
-    user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Label {
