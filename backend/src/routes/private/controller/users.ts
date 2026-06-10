@@ -15,6 +15,7 @@ export async function   listUsers( req: Request, res: Response, next: NextFuncti
     {
 		const	skip = parseQueryInt('skip', req.query.skip, { default: 0, min: 0 });
 		const	take = parseQueryInt('take', req.query.take, { default: 42, min: 1, max: 100 });
+
 		let whereClause: any = {};
 		if (typeof req.query.search === 'string' && req.query.search.trim() !== '')
 		{
@@ -35,7 +36,6 @@ export async function   listUsers( req: Request, res: Response, next: NextFuncti
 				bio: true,
 				email: true,
 				avatarUrl: true,
-				fortyTwoId: true,
 				createdAt: true,
 				updatedAt: true
 			},
@@ -161,7 +161,50 @@ export async function   deleteUserAccount( req: Request, res: Response, next: Ne
 			fs.unlink(avatarUrlPath, () => {});
 		}
 
-		await prisma.user.delete({ where: { id } });
+		await prisma.$transaction(async (tx) => {
+			const memberships = await tx.workspaceMember.findMany({
+				where: { userId: id },
+				include: {
+					workspace: {
+						include: {
+							members: {
+								orderBy: { createdAt: 'asc' }
+							}
+						}
+					}
+				}
+			});
+
+			for (const membership of memberships)
+			{
+				const members = membership.workspace.members;
+				const remainingMembers = members.filter( m => m.userId !== id );
+
+				if (!remainingMembers.length) {
+					await tx.workspace.delete({ where: { id: membership.workspaceId } });
+					continue;
+				}
+				if (membership.role !== 'admin')
+					continue;
+
+				const adminCount = members.filter( m => m.role === 'admin' ).length;
+				if (adminCount > 1)
+					continue;
+
+				const replacement = remainingMembers.find( m => m.role === 'member' );
+				if (!replacement) {
+					await tx.workspace.delete({ where: { id: membership.workspaceId } });
+					continue;
+				}
+
+				await tx.workspaceMember.update({
+					where: { id: replacement.id },
+					data: { role: 'admin' }
+				});
+			}
+
+			await tx.user.delete({ where: { id } });
+		});
 
 		res.json({
 			success: true,
@@ -262,8 +305,8 @@ export async function	getUserFriends(req: Request, res: Response, next: NextFunc
         res.json({
             success: true,
             data: { friendRequests, pagination: { skip, take, total } }
-		});
-	}
+        });
+    }
     catch (err) { next(err); }
 }
 
