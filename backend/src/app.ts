@@ -20,7 +20,11 @@ import { setupSocketIO }				from './ws/ws.server';
 const			app = express();
 export const	server = http.createServer( app );
 
-app.use(helmet());
+app.use(
+  helmet({
+    crossOriginResourcePolicy: { policy: "same-site" },
+  })
+);
 app.use(cors({ origin: 'http://localhost:3000', credentials: true }));
 app.use(morgan('combined'));
 app.use(express.json({ limit: '10mb' }));
