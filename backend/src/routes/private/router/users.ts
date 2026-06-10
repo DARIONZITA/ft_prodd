@@ -65,8 +65,57 @@ router.get('/', listUsers);
 
 router.get('/me', getUserProfile);
 
+/**
+ * @swagger
+ * /users/me:
+ *   patch:
+ *     summary: Update own user profile
+ *     tags: [Users]
+ *     security:
+ *       - BearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             $ref: '#/components/schemas/UpdateUserProfileRequest'
+ *     responses:
+ *       200:
+ *         description: User profile updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/User'   # ← Mudado para User (que existe)
+ *       400:
+ *         $ref: '#/components/schemas/ErrorResponse'
+ *       403:
+ *         $ref: '#/components/schemas/ErrorResponse'
+ *       500:
+ *         description: Internal server error
+ */
+router.patch('/me', uploadAvatar('avatar'), updateUserProfile);
 
-router.patch('/me', updateUserProfile);
+/**
+ * @swagger
+ * /users/me:
+ *   delete:
+ *     summary: Delete own user account
+ *     tags: [Users]
+ *     security:
+ *       - BearerAuth: []
+ *     responses:
+ *       200:
+ *         description: User account deleted successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/UserResponse'
+ *       401:
+ *         description: Unauthorized
+ *       500:
+ *         description: Internal server error
+ * */
+router.delete('/me', deleteUserAccount);
 
 /**
  * @swagger
