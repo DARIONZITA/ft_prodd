@@ -255,12 +255,6 @@ router.delete('/:id', deleteUserAccount);
  *         name: isRead
  *         schema: { type: boolean }
  *       - in: query
- *         name: relatedTaskId
- *         schema: { type: integer }
- *       - in: query
- *         name: relatedWorkspaceId
- *         schema: { type: integer }
- *       - in: query
  *         name: skip
  *         schema: { type: integer, default: 0 }
  *       - in: query

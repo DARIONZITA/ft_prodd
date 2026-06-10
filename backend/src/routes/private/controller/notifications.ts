@@ -12,8 +12,6 @@ export async function createNotification(req: Request, res: Response, next: Next
         const userId = parseOrThrow(idSchema, 'UserID', req.body.userId);
         const message = parseQueryString('message', req.body.message, { isOptional: false, minLength: 1, maxLength: 500 })!;
         const type = parseQueryEnum('type', req.body.type, NotificationType, { isOptional: false })!;
-        const relatedTaskId = parseOrThrow(idSchema, 'relatedTaskID', req.body.relatedTaskId);
-        const relatedWorkspaceId = parseOrThrow(idSchema, 'relatedWorkspaceID', req.body.relatedWorkspaceId);
 
         if (userId !== req.user!.id)
             throw new ApiError(403, 'Not allowed');
@@ -22,9 +20,7 @@ export async function createNotification(req: Request, res: Response, next: Next
             data: {
                 userId,
                 message,
-                type,
-                relatedTaskId,
-                relatedWorkspaceId
+                type
             }
         });
 

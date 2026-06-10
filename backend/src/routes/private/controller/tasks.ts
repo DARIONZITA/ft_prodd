@@ -131,7 +131,7 @@ export async function deleteTask(req: Request, res: Response, next: NextFunction
       await tx.taskAssignment.deleteMany({ where: { taskId } });
       await tx.checklistItem.deleteMany({ where: { taskId } });
       await tx.comment.deleteMany({ where: { taskId } });
-      await tx.notification.deleteMany({ where: { relatedTaskId: taskId } });
+      // await tx.notification.deleteMany({ where: { relatedTaskId: taskId } });
       await tx.taskLabel.deleteMany({ where: { taskId } });
       await tx.task.delete({ where: { id: taskId } });
     });
@@ -472,10 +472,7 @@ export async function listTaskComments(req: Request, res: Response, next: NextFu
     const [comments, total] = await prisma.$transaction([
         prisma.comment.findMany({
             where: { taskId },
-            include: {
-                user: { select: { id: true, username: true, avatarUrl: true } },
-                commentMentions: { include: { user: { select: { id: true, username: true, avatarUrl: true } } } }
-            },
+            include: { user: { select: { id: true, username: true, avatarUrl: true } } },
             orderBy: { createdAt: 'asc' },
             skip,
             take
@@ -516,20 +513,11 @@ export async function createTaskComment(req: Request, res: Response, next: NextF
 
       const mentionedUserIds = await resolveMentionUsers(mentionedUsernames, workspaceId);
       if (mentionedUserIds.length > 0) {
-        await tx.commentMention.createMany({
-          data: mentionedUserIds.map(userId => ({
-            commentId: c.id,
-            userId
-          }))
-        });
-
         await tx.notification.createMany({
             data: mentionedUserIds.map(userId => ({
               userId,
               message: `${req.user!.username} mentioned you in a comment on task "${task.title}" from column "${task.column.name}"`,
-              type: NotificationType.mention,
-              relatedTaskId: taskId,
-              relatedWorkspaceId: workspaceId
+              type: NotificationType.mention
             }))
         });
       }
@@ -539,10 +527,7 @@ export async function createTaskComment(req: Request, res: Response, next: NextF
 
     const result = await prisma.comment.findUnique({
       where: { id: comment.id },
-      include: {
-        user: { select: { id: true, username: true, avatarUrl: true } },
-        commentMentions: { include: { user: { select: { id: true, username: true, avatarUrl: true } } } }
-      }
+      include: { user: { select: { id: true, username: true, avatarUrl: true } } }
     });
 
     res.status(201).json({ success: true, data: result });

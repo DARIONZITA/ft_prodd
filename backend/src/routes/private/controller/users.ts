@@ -235,8 +235,6 @@ export async function getUserNotifications(req: Request, res: Response, next: Ne
 		const take = parseQueryInt('take', req.query.take, { default: 42, min: 1, max: 100 });
 		const isRead = parseQueryBool('isRead', req.query.isRead, { isOptional: true });
 		const type = parseQueryEnum('type', req.query.type, NotificationType, { isOptional: true });
-		const relatedTaskId = parseQueryInt('relatedTaskId', req.query.relatedTaskId, { min: 1, isOptional: true });
-		const relatedWorkspaceId =parseQueryInt('relatedWorkspaceId', req.query.relatedWorkspaceId, { min: 1, isOptional: true });
 
 		const user = await prisma.user.findUnique({ where: { id: userId } });
 		if (!user)
@@ -245,8 +243,6 @@ export async function getUserNotifications(req: Request, res: Response, next: Ne
 		const where: any = { userId };
 		if (type) where.type = type;
 		if (isRead !== undefined) where.isRead = isRead;
-		if (relatedTaskId) where.relatedTaskId = relatedTaskId;
-		if (relatedWorkspaceId) where.relatedWorkspaceId = relatedWorkspaceId;
 
 		const notifications = await prisma.notification.findMany({
 			where,

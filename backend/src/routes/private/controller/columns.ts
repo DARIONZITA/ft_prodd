@@ -106,9 +106,6 @@ export async function deleteColumn(req: Request, res: Response, next: NextFuncti
         where: { task: { columnId } }
       });
       const taskIds = (await tx.task.findMany({ where: { columnId }, select: { id: true } })).map((t: { id: number }) => t.id);
-      await tx.notification.deleteMany({
-        where: { relatedTaskId: { in: taskIds } }
-      });
       await tx.task.deleteMany({ where: { columnId } });
       await tx.column.delete({ where: { id: columnId } });
     });
