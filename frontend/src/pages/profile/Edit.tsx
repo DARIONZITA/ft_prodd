@@ -1,33 +1,38 @@
-import { useRef, useState, type ChangeEvent } from 'react'
+import { useEffect, useRef, useState, type ChangeEvent } from 'react'
 import { X, UploadCloud } from 'lucide-react'
 import Avatar from '../../components/profile/Avatar'
-import type { UpdateUserProfilePayload } from '../../api/user'
+import { resolveAvatarUrl, type UpdateUserProfilePayload } from '../../api/user'
 import type { User } from '../../types/user'
 
-const BIO_MAX = 200
-
-function normalizeAvatarUrl(value?: string | null): string | null {
-  const trimmed = value?.trim()
-  return trimmed ? trimmed : null
-}
+const BIO_MAX = 142
 
 interface EditProps {
   user: User
+  isSaving?: boolean
   onClose: () => void
   onSave: (updated: UpdateUserProfilePayload) => void
 }
 
-export default function Edit({ user, onClose, onSave }: EditProps) {
-  const initialAvatarUrl = normalizeAvatarUrl(user.avatarUrl)
+export default function Edit({ user, isSaving = false, onClose, onSave }: EditProps) {
+  const initialAvatarUrl = resolveAvatarUrl(user.avatarUrl)
   const [name, setName] = useState(user.username)
   const [bio, setBio] = useState(user.bio)
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(initialAvatarUrl)
+  const [avatarFile, setAvatarFile] = useState<File | null>(null)
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(initialAvatarUrl)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const hasChanges =
     name.trim() !== user.username ||
     bio !== user.bio ||
-    avatarUrl !== initialAvatarUrl
+    avatarFile !== null
+
+  useEffect(() => {
+    return () => {
+      if (avatarPreview?.startsWith('blob:')) {
+        URL.revokeObjectURL(avatarPreview)
+      }
+    }
+  }, [avatarPreview])
 
   const handleAvatarChange = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
@@ -35,17 +40,17 @@ export default function Edit({ user, onClose, onSave }: EditProps) {
       return
     }
 
-    const reader = new FileReader()
-    reader.onload = () => {
-      if (typeof reader.result === 'string') {
-        setAvatarUrl(reader.result)
+    setAvatarFile(file)
+    setAvatarPreview(previous => {
+      if (previous?.startsWith('blob:')) {
+        URL.revokeObjectURL(previous)
       }
-    }
-    reader.readAsDataURL(file)
+      return URL.createObjectURL(file)
+    })
   }
 
   const handleSave = () => {
-    if (!hasChanges) {
+    if (!hasChanges || isSaving) {
       return
     }
 
@@ -60,8 +65,8 @@ export default function Edit({ user, onClose, onSave }: EditProps) {
       payload.bio = bio
     }
 
-    if (avatarUrl !== initialAvatarUrl && avatarUrl) {
-      payload.avatarUrl = avatarUrl
+    if (avatarFile) {
+      payload.avatar = avatarFile
     }
 
     onSave(payload)
@@ -87,7 +92,7 @@ export default function Edit({ user, onClose, onSave }: EditProps) {
           <div>
             <span className="block font-mono text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-3">Avatar</span>
             <div className="flex items-center gap-4">
-              <Avatar name={name} avatarUrl={avatarUrl} size="md" />
+              <Avatar name={name} avatarUrl={avatarPreview} size="md" />
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
@@ -132,7 +137,7 @@ export default function Edit({ user, onClose, onSave }: EditProps) {
           <div>
             <span className="block font-mono text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">Preview</span>
             <div className="border border-slate-200 rounded-xl p-4 flex items-center gap-4 bg-slate-50/50">
-              <Avatar name={name} avatarUrl={avatarUrl} size="md" />
+              <Avatar name={name} avatarUrl={avatarPreview} size="md" />
               <div className="overflow-hidden">
                 <h4 className="font-display text-xs font-bold text-slate-900 leading-none mb-1">{name || '—'}</h4>
                 <p className="font-body text-[10px] text-slate-500 truncate">{bio || 'No bio yet...'}</p>
@@ -148,14 +153,14 @@ export default function Edit({ user, onClose, onSave }: EditProps) {
           </button>
           <button
             onClick={handleSave}
-            disabled={!hasChanges}
+            disabled={!hasChanges || isSaving}
             className={`px-6 py-2 rounded-lg font-display text-sm font-bold transition-colors duration-150 ${
-              hasChanges
+              hasChanges && !isSaving
                 ? 'bg-cyan-600 hover:bg-cyan-700 text-white cursor-pointer'
                 : 'bg-slate-200 text-slate-400 cursor-not-allowed'
             }`}
           >
-            Save Changes
+            {isSaving ? 'Saving...' : 'Save Changes'}
           </button>
         </div>
 

@@ -1,6 +1,21 @@
-import { useQuery, type UseQueryOptions } from '@tanstack/react-query'
+import { useQuery, useMutation, type UseMutationOptions, type UseQueryOptions } from '@tanstack/react-query'
 import api from './axios'
 import type { UserResponse } from '../types/user'
+import { queryClient } from '../main'
+
+export function resolveAvatarUrl(url?: string | null): string | null {
+  const trimmed = url?.trim()
+  if (!trimmed) {
+    return null
+  }
+
+  if (trimmed.startsWith('http') || trimmed.startsWith('data:') || trimmed.startsWith('blob:')) {
+    return trimmed
+  }
+
+  const base = (import.meta.env.VITE_API_URL ?? '').replace(/\/$/, '')
+  return `${base}${trimmed.startsWith('/') ? trimmed : `/${trimmed}`}`
+}
 
 export interface UserListItem {
   id: string | number
@@ -65,29 +80,36 @@ async function listUsersRequest(params?: UserListQueryParams): Promise<UserListR
 export interface UpdateUserProfilePayload {
   username?: string
   bio?: string
-  avatarUrl?: string
+  avatar?: File
 }
 
-function buildUpdateUserPayload(data: UpdateUserProfilePayload): UpdateUserProfilePayload {
-  const payload: UpdateUserProfilePayload = {}
-
-  if (data.username !== undefined) {
-    payload.username = data.username
-  }
-
-  if (data.bio !== undefined) {
-    payload.bio = data.bio
-  }
-
-  if (data.avatarUrl !== undefined && data.avatarUrl.trim() !== '') {
-    payload.avatarUrl = data.avatarUrl
-  }
-
-  return payload
+export interface DeleteUserResponse {
+  success: boolean
+  message: string
 }
 
 async function updateUserRequest(data: UpdateUserProfilePayload): Promise<UserResponse> {
-  const response = await api.patch<UserResponse>('/api/users/me', buildUpdateUserPayload(data))
+  const formData = new FormData()
+
+  if (data.username !== undefined) {
+    formData.append('username', data.username)
+  }
+
+  if (data.bio !== undefined) {
+    formData.append('bio', data.bio)
+  }
+
+  if (data.avatar) {
+    formData.append('avatar', data.avatar)
+  }
+
+  const response = await api.patch<UserResponse>('/api/users/me', formData)
+
+  return response.data
+}
+
+async function deleteUserRequest(): Promise<DeleteUserResponse> {
+  const response = await api.delete<DeleteUserResponse>('/api/users/me')
   return response.data
 }
 
@@ -109,7 +131,29 @@ export function useUsersQuery(
   })
 }
 
-export function updateUser(data: UpdateUserProfilePayload): Promise<UserResponse> {
-  return updateUserRequest(data)
+export function useUpdateUserRequest(
+  options?: Omit<UseMutationOptions<UserResponse, Error, UpdateUserProfilePayload>, 'mutationFn'>
+) {
+  return useMutation({
+    ...options,
+    mutationFn: updateUserRequest,
+    onSuccess: async (data, variables, context) => {
+      await queryClient.invalidateQueries({ queryKey: userKeys.me })
+      await options?.onSuccess?.(data, variables, context)
+    },
+  })
 }
 
+export function useDeleteUserRequest(
+  options?: Omit<UseMutationOptions<DeleteUserResponse, Error, void>, 'mutationFn'>
+) {
+  return useMutation({
+    ...options,
+    mutationFn: deleteUserRequest,
+    onSuccess: async (data, variables, context) => {
+      localStorage.removeItem('token')
+      queryClient.clear()
+      await options?.onSuccess?.(data, variables, context)
+    },
+  })
+}

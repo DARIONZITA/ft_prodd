@@ -1,3 +1,5 @@
+import { resolveAvatarUrl } from '../../api/user'
+
 interface ProfileAvatarProps {
   name: string
   avatarUrl?: string | null
@@ -7,10 +9,11 @@ interface ProfileAvatarProps {
 export default function ProfileAvatar({ name, avatarUrl, size = 'md' }: ProfileAvatarProps) {
   const initials = name?.trim()[0]?.toUpperCase() ?? '?'
   const dim = size === 'lg' ? 'w-32 h-32 text-5xl' : 'w-20 h-20 text-2xl'
+  const resolvedAvatarUrl = resolveAvatarUrl(avatarUrl)
 
-  return avatarUrl ? (
+  return resolvedAvatarUrl ? (
     <img
-      src={avatarUrl}
+      src={resolvedAvatarUrl}
       alt={name}
       className={`${dim} rounded-full object-cover flex-shrink-0`}
     />
