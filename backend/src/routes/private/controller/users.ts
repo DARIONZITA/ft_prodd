@@ -63,17 +63,27 @@ export async function   getUserProfile( req: Request, res: Response, next: NextF
     {
 		const id = req.params.id ? parseOrThrow(idSchema, 'UserID', req.params.id) : req.user!.id;
 
+		const isOwnProfile = req.user!.id === id;
+
 		const user = await prisma.user.findUnique({
 			where: { id },
-			select: {
-				id: true,
-				username: true,
-				email: true,
-				bio: true,
-				avatarUrl: true,
-				createdAt: true,
-				updatedAt: true
-			}
+			select: isOwnProfile
+				? {
+					id: true,
+					username: true,
+					email: true,
+					bio: true,
+					avatarUrl: true,
+					createdAt: true,
+					updatedAt: true
+				}
+				: {
+					id: true,
+					username: true,
+					bio: true,
+					avatarUrl: true,
+					createdAt: true
+				}
 		});
 		if (!user)
 			return (next( new ApiError(404, 'User not found') ));
