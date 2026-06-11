@@ -1,7 +1,10 @@
-import { Router }                                   from 'express';
-import { authenticate }                             from '../../../middleware/auth';
-import { createNotification, getNotification,
-	updateNotification, deleteNotification }         from '../controller/notifications';
+import { Router }		from 'express';
+import { authenticate }	from '../../../middleware/auth';
+import {
+	getNotifications,
+	markAllNotificationsAsRead,
+	markNotificationAsRead
+} from '../controller/notifications';
 
 const router = Router();
 router.use(authenticate);
@@ -9,63 +12,76 @@ router.use(authenticate);
 /**
  * @swagger
  * /notifications:
- *   post:
- *     summary: Create a notification for authenticated user
+ *   get:
+ *     summary: Get all notifications for the authenticated user
  *     tags: [Notifications]
  *     security:
  *       - BearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             $ref: '#/components/schemas/NotificationCreateRequest'
+ *     parameters:
+ *       - in: query
+ *         name: type
+ *         description: Filter notifications by type
+ *         schema:
+ *           type: string
+ *           enum: [friendship, workspace, task, mention]
+ *       - in: query
+ *         name: sort
+ *         description: Sort notifications by creation date
+ *         schema:
+ *           type: string
+ *           enum: [newest, oldest]
+ *           default: newest
+ *       - in: query
+ *         name: skip
+ *         description: Number of notifications to skip
+ *         schema:
+ *           type: integer
+ *           default: 0
+ *       - in: query
+ *         name: take
+ *         description: Maximum number of notifications to return
+ *         schema:
+ *           type: integer
+ *           default: 42
  *     responses:
- *       201:
- *         description: Notification created
+ *       200:
+ *         description: Notifications retrieved successfully
  *         content:
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/NotificationResponse'
  *       400:
- *         description: Invalid payload
- *       403:
- *         description: Not allowed
+ *         description: Invalid query parameters
+ *       401:
+ *         description: Unauthorized
  */
-router.post('/', createNotification);
+router.get('/', getNotifications);
 
 /**
  * @swagger
- * /notifications/{id}:
- *   get:
- *     summary: Get one notification by ID
+ * /notifications/read-all:
+ *   patch:
+ *     summary: Mark all notifications as read
  *     tags: [Notifications]
  *     security:
  *       - BearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema: { type: integer }
  *     responses:
  *       200:
- *         description: Notification found
+ *         description: All notifications marked as read
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/NotificationResponse'
+ *               $ref: '#/components/schemas/NotificationReadAllResponse'
  *       404:
- *         description: Notification not found
- *       403:
- *         description: Not allowed
+ *         description: User not found
  */
-router.get('/:id', getNotification);
+router.patch('/read-all', markAllNotificationsAsRead);
 
 /**
  * @swagger
- * /notifications/{id}:
+ * /notifications/{id}/read:
  *   patch:
- *     summary: Update a notification (mark as read)
+ *     summary: Mark a notification as read
  *     tags: [Notifications]
  *     security:
  *       - BearerAuth: []
@@ -86,29 +102,6 @@ router.get('/:id', getNotification);
  *       404:
  *         description: Notification not found
  */
-router.patch('/:id', updateNotification);
-
-/**
- * @swagger
- * /notifications/{id}:
- *   delete:
- *     summary: Delete a notification
- *     tags: [Notifications]
- *     security:
- *       - BearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema: { type: integer }
- *     responses:
- *       200:
- *         description: Notification deleted
- *       403:
- *         description: Not allowed
- *       404:
- *         description: Notification not found
- */
-router.delete('/:id', deleteNotification);
+router.patch('/:id/read', markNotificationAsRead);
 
 export default router;

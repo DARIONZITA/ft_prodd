@@ -15,10 +15,10 @@ enum WorkspaceRole {
 }
 
 enum NotificationType {
+    friendship
+    workspace
+    task
     mention
-    taskAssignment
-    comment
-    invite
 }
 
 enum FriendRequestStatus {

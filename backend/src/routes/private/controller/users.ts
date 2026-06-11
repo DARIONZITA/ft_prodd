@@ -226,51 +226,6 @@ export async function   deleteUserAccount( req: Request, res: Response, next: Ne
 
 
 
-/* USER-NOTIFICATIONS */
-export async function getUserNotifications(req: Request, res: Response, next: NextFunction)
-{
-	try {
-		const userId = parseOrThrow(idSchema, 'UserID', req.params.id);
-		const skip = parseQueryInt('skip', req.query.skip, { default: 0, min: 0 });
-		const take = parseQueryInt('take', req.query.take, { default: 42, min: 1, max: 100 });
-		const isRead = parseQueryBool('isRead', req.query.isRead, { isOptional: true });
-		const type = parseQueryEnum('type', req.query.type, NotificationType, { isOptional: true });
-
-		const user = await prisma.user.findUnique({ where: { id: userId } });
-		if (!user)
-			throw new ApiError(404, 'User not found');
-
-		const where: any = { userId };
-		if (type) where.type = type;
-		if (isRead !== undefined) where.isRead = isRead;
-
-		const notifications = await prisma.notification.findMany({
-			where,
-			orderBy: { createdAt: 'desc' },
-			skip,
-			take
-		});
-
-		const total = await prisma.notification.count({ where });
-
-		res.json({ success: true, data: { notifications, pagination: { skip, take, total } } });
-	} catch (err) { next(err); }
-}
-
-export async function markAllUserNotificationsRead(req: Request, res: Response, next: NextFunction) {
-	try {
-		const userId = parseOrThrow(idSchema, 'UserID', req.params.id);
-		if (req.user!.id !== userId)
-			throw new ApiError(403, 'Not allowed');
-
-		const updated = await prisma.notification.updateMany({ where: { userId, isRead: false }, data: { isRead: true } });
-
-		res.json({ success: true, data: { updatedCount: updated.count } });
-	} catch (err) { next(err); }
-}
-
-
-
 /* USER-FRIENDS */
 export async function	getUserFriends(req: Request, res: Response, next: NextFunction)
 {
