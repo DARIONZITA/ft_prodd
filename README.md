@@ -29,9 +29,6 @@ The application combines task management, collaboration tools, and real-time fea
 - **Testing Awareness**  
   Encourage early testing and validation during development to avoid unexpected issues during project evaluation.
 
-- **Gamification System**  
-  Users are rewarded for completing tasks, introducing a lightweight motivational layer to improve engagement and productivity.
-
 - **Multi-user Environment**  
   Designed to support concurrent users working on shared projects without conflicts or data inconsistency.
 
@@ -524,7 +521,7 @@ The combination of **React, Express, and PostgreSQL** provides a balanced archit
 # Database Schema
 
 The application uses **PostgreSQL** with **Prisma ORM**.
-The schema is designed to support task management, workspace collaboration, real-time communication, and gamification features.
+The schema is designed to support task management, workspace collaboration and real-time communication.
 
 ---
 
@@ -537,7 +534,7 @@ The database is organized around the following core concepts:
 * **Column**: Defines task organization within a workspace (Kanban structure)
 * **Task**: Central entity representing work items
 
-Additional tables handle relationships, communication, and gamification features.
+Additional tables handle relationships, communication, and public API features.
 
 ---
 
@@ -627,17 +624,6 @@ erDiagram
 
 ---
 
-### Gamification
-
-| Table              | Description            | Key Fields                                |
-| ------------------ | ---------------------- | ----------------------------------------- |
-| `Badge`            | Badge definitions      | `id`, `name`, `description`               |
-| `UserBadge`        | Badges earned by users | `userId`, `badgeId`                       |
-| `UserXP`           | User experience points | `userId`, `xp`                            |
-| `LeaderboardEntry` | Ranking per workspace  | `userId`, `workspaceId`, `xpWeek`, `rank` |
-
----
-
 ## Data Types
 
 The schema uses the following main data types:
@@ -650,7 +636,7 @@ The schema uses the following main data types:
 ### Enums
 
 * `WorkspaceRole`: `admin`, `member`, `guest`
-* `NotificationType`: `mention`, `taskAssignment`, `comment`, `invite`
+* `NotificationType`: `friendship`, `workspace`, `task`, `mention`
 
 ---
 
@@ -706,16 +692,6 @@ This section lists all implemented features of the project, along with their des
 
 ---
 
-## Gamification
-
-| Feature                    | Description                                          | Implemented By |
-| -------------------------- | ---------------------------------------------------- | -------------- |
-| **Experience Points (XP)** | Users earn XP based on completed tasks and activity. |                |
-| **Badges System**          | Users earn badges for achievements and milestones.   |                |
-| **Leaderboard**            | Displays rankings of users based on activity and XP. |                |
-
----
-
 ## System & Infrastructure
 
 | Feature                    | Description                                                               | Implemented By         |
@@ -754,11 +730,11 @@ This section lists all selected modules for the project, including their type, p
 |                            | A complete notification system for all creation, update, and deletion actions                                             | Minor               | 1      |
 |                            | Real-time collaborative features                                                                                          | Minor               | 1      |
 |                            | Custom-made design system with reusable components, including a proper color palette, typography, and icons               | Minor               | 1      |
-| User Management            | Implement remote authentication with OAuth 2.0                                                                            | Minor               | 1      |
+|                            | Implement advanced search functionality with filters, sorting, and pagination                                             | Minor               | 1      |
+| User Management            | Standard user management and authentication                                                                               | Major               | 2      |
+|                            | Implement remote authentication with OAuth 2.0                                                                            | Minor               | 1      |
 |                            | Advanced permissions system                                                                                               | Major               | 2      |
 |                            | An organization system                                                                                                    | Major               | 2      |
-| Gaming and user experience | A gamification system to reward users for their actions                                                                   | Minor               | 1      |
-| Data and Analytics         | Advanced analytics dashboard with data visualization                                                                      | Major               | 2      |
 | **Total**                  | 19                                                                                                                        | 7 Maj. / 6 Min.     | 20     |
 
 ---
@@ -785,42 +761,6 @@ This section lists all selected modules for the project, including their type, p
 
 ---
 
-### Use an ORM for the database
-
-* **Justification:**
-  Using an ORM simplifies database interaction by abstracting raw SQL queries into a structured and type-safe API. This reduces the risk of errors, improves code maintainability, and allows faster development, especially in a team environment.
-
-* **Implementation:**
-  The project uses **Prisma ORM** to define the database schema and handle all database operations.
-
-  * The schema is declared using Prisma’s declarative syntax
-  * Migrations are managed through Prisma to keep the database structure consistent
-  * All database queries (CRUD operations) are performed through Prisma Client, ensuring type safety and validation
-
-* **Team:** dnzita
-
----
-
-### Implement remote authentication with OAuth 2.0
-
-* **Justification:**
-  Implementing OAuth 2.0 allows users to authenticate using their existing accounts from popular providers (e.g., Google, GitHub), or in our case 42 API, improving user experience and security by leveraging trusted authentication systems.
-
-* **Implementation:**
-  The backend implements OAuth 2.0 authentication flow, allowing users to log in using their 42 credentials. The process includes:
-
-  * Redirecting users to the 42 authorization page, using the appropriate client ID and scopes to request necessary permissions.
-  * Handling the callback with the authorization code received from 42 API, using Zod to validate the incoming data and ensure it meets expected formats.
-  * Exchanging the code for an access token to authenticate requests to the 42 API
-  * Retrieving user information from the 42 API using the access token, and creating a local user session, and then redirecting the user to the frontend application with a JWT token for authenticated access, or an error message if authentication fails.
-
-* **Team:**
-
-  * efinda (Frontend)
-  * jbofengo (Backend)
-
----
-
 ### A public API to interact with the database with a secured API key, rate limiting, documentation, and at least 5 endpoints
 
 * **Justification:**
@@ -842,9 +782,64 @@ This section lists all selected modules for the project, including their type, p
   * efinda (Frontend)
   * jbofengo (Backend)
 
-## Notes
+---
 
-* Each module is updated as implementation progresses.
+### Use an ORM for the database
+
+* **Justification:**
+  Using an ORM simplifies database interaction by abstracting raw SQL queries into a structured and type-safe API. This reduces the risk of errors, improves code maintainability, and allows faster development, especially in a team environment.
+
+* **Implementation:**
+  The project uses **Prisma ORM** to define the database schema and handle all database operations.
+
+  * The schema is declared using Prisma’s declarative syntax
+  * Migrations are managed through Prisma to keep the database structure consistent
+  * All database queries (CRUD operations) are performed through Prisma Client, ensuring type safety and validation
+
+* **Team:** dnzita
+
+---
+
+### Implement advanced search functionality with filters, sorting, and pagination
+
+* **Justification:**
+  Advanced search functionality improves usability by allowing users to efficiently locate relevant information within large datasets. Combining filtering, sorting, and pagination provides a scalable and user-friendly way to browse notifications while reducing unnecessary data transfer between the backend and frontend.
+
+* **Implementation:**
+  The notification system implements advanced search capabilities through backend query parameters and frontend controls.
+
+  * **Filtering** is supported by allowing users to retrieve notifications by their type (e.g., mentions, task, workspaces, and friendships).
+
+  * **Sorting** is implemented by enabling notifications to be ordered chronologically, either **from newest to oldest** or **oldest to newest**, using configurable query parameters.
+
+  * **Pagination** is handled through skip and take parameters, allowing notifications to be retrieved in configurable batches while also returning pagination metadata such as the total number of matching notifications.
+
+  These operations are performed directly through Prisma queries, ensuring that filtering, sorting, and pagination are executed efficiently at the database level rather than in application memory.
+
+* **Team:**
+
+  * efinda (Backend)
+  * dnzita (Frontend)
+
+---
+
+### Implement remote authentication with OAuth 2.0
+
+* **Justification:**
+  Implementing OAuth 2.0 allows users to authenticate using their existing accounts from popular providers (e.g., Google, GitHub), or in our case 42 API, improving user experience and security by leveraging trusted authentication systems.
+
+* **Implementation:**
+  The backend implements OAuth 2.0 authentication flow, allowing users to log in using their 42 credentials. The process includes:
+
+  * Redirecting users to the 42 authorization page, using the appropriate client ID and scopes to request necessary permissions.
+  * Handling the callback with the authorization code received from 42 API, using Zod to validate the incoming data and ensure it meets expected formats.
+  * Exchanging the code for an access token to authenticate requests to the 42 API
+  * Retrieving user information from the 42 API using the access token, and creating a local user session, and then redirecting the user to the frontend application with a JWT token for authenticated access, or an error message if authentication fails.
+
+* **Team:**
+
+  * efinda (Frontend)
+  * jbofengo (Backend)
 
 
 
