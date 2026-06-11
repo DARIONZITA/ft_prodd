@@ -1,9 +1,11 @@
-import { Router }											from 'express';
-import { authenticate }										from '../../../middleware/auth';
-import { uploadAvatar }										from '../../../middleware/uploadAvatar';
-import { deleteUserAccount, getUserProfile, getUserStats,
-	getUserNotifications, getUserFriends, listUsers,
-	markAllUserNotificationsRead, updateUserProfile }		from '../controller/users';
+import { Router }		from 'express';
+import { authenticate }	from '../../../middleware/auth';
+import { uploadAvatar }	from '../../../middleware/uploadAvatar';
+import {
+	deleteUserAccount, getUserProfile,
+	getUserStats, getUserFriends,
+	listUsers, updateUserProfile
+} from '../controller/users';
 
 const router = Router();
 router.use(authenticate);
@@ -164,139 +166,6 @@ router.delete('/me', deleteUserAccount);
  */
 router.get('/:id', getUserProfile);
 
-/**
- * @swagger
- * /users/{id}:
- *   patch:
- *     summary: Update user profile
- *     tags: [Users]
- *     security:
- *       - BearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: integer
- *         description: ID of the user to update
- *     requestBody:
- *       required: true
- *       content:
- *         multipart/form-data:
- *           schema:
- *             $ref: '#/components/schemas/UpdateUserProfileRequest'
- *     responses:
- *       200:
- *         description: User profile updated successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                 message:
- *                   type: string
- *                 data:
- *                   $ref: '#/components/schemas/User'
- *       400:
- *         $ref: '#/components/schemas/ErrorResponse'
- *       403:
- *         $ref: '#/components/schemas/ErrorResponse'
- *       404:
- *         $ref: '#/components/schemas/ErrorResponse'
- */
-router.patch('/:id', uploadAvatar('avatar'), updateUserProfile);
-
-/**
- * @swagger
- * /users/{id}:
- *   delete:
- *     summary: Delete user account
- *     tags: [Users]
- *     security:
- *       - BearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema: { type: integer }
- *     responses:
- *       200:
- *         description: User deleted successfully
- *       403:
- *         description: Forbidden - can only delete own account
- *       404:
- *         description: User not found
- */
-router.delete('/:id', deleteUserAccount);
-
-
-
-/* USER-NOTIFICATIONS */
-
-/**
- * @swagger
- * /users/{id}/notifications:
- *   get:
- *     summary: Get all notifications for a user
- *     tags: [Users]
- *     security:
- *       - BearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema: { type: integer }
- *       - in: query
- *         name: type
- *         schema: { type: string, enum: [mention, taskAssignment, comment, invite] }
- *       - in: query
- *         name: isRead
- *         schema: { type: boolean }
- *       - in: query
- *         name: skip
- *         schema: { type: integer, default: 0 }
- *       - in: query
- *         name: take
- *         schema: { type: integer, default: 42 }
- *     responses:
- *       200:
- *         description: Notifications list
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/NotificationListResponse'
- *       404:
- *         description: User not found
- */
-router.get('/:id/notifications', getUserNotifications);
-
-/**
- * @swagger
- * /users/{id}/notifications/read-all:
- *   patch:
- *     summary: Mark all notifications as read for a user
- *     tags: [Users]
- *     security:
- *       - BearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema: { type: integer }
- *     responses:
- *       200:
- *         description: All notifications marked as read
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/NotificationReadAllResponse'
- *       403:
- *         description: Forbidden
- */
-router.patch('/:id/notifications/read-all', markAllUserNotificationsRead);
-
 
 
 /* USER-FRIENDS */
@@ -340,7 +209,7 @@ router.get('/:id/friends', getUserFriends);
  * @swagger
  * /users/{id}/stats:
  *   get:
- *     summary: Get gamification statistics
+ *     summary: Get user statistics
  *     tags: [Users]
  *     security:
  *       - BearerAuth: []
@@ -351,7 +220,7 @@ router.get('/:id/friends', getUserFriends);
  *         schema: { type: integer }
  *     responses:
  *       200:
- *         description: User gamification stats
+ *         description: User user stats
  *       404:
  *         description: User not found
  */

@@ -1,13 +1,16 @@
-import type { Request, Response, NextFunction }     	from 'express';
-import fs												from 'fs';
-import path												from 'path';
-import { avatarDir }									from '../../../types/constants';
-import { prisma }										from '../../../lib/prisma';
-import { ApiError }										from '../../../utils/ApiError';
-import { NotificationType, FriendRequestStatus }		from '../../../types/constants';
-import { idSchema, parseOrThrow, parseQueryInt,
-	parseQueryBool, parseQueryEnum, parseQueryString }	from '../../../validations/utils';
-import { updateUserProfileSchema }						from '../../../validations/user';
+import type { Request, Response, NextFunction }	from 'express';
+import fs										from 'fs';
+import path										from 'path';
+import { avatarDir }							from '../../../types/constants';
+import { prisma }								from	 '../../../lib/prisma';
+import { ApiError }								from '../../../utils/ApiError';
+import { NotificationType }						from '@prisma/client';
+import { FriendRequestStatus }					from '../../../types/constants';
+import {
+	idSchema, parseOrThrow, parseQueryInt,
+	parseQueryEnum, parseQueryString
+}	from '../../../validations/utils';
+import { updateUserProfileSchema }				from '../../../validations/user';
 
 export async function   listUsers( req: Request, res: Response, next: NextFunction )
 {
@@ -62,7 +65,6 @@ export async function   getUserProfile( req: Request, res: Response, next: NextF
 	try
     {
 		const id = req.params.id ? parseOrThrow(idSchema, 'UserID', req.params.id) : req.user!.id;
-
 		const isOwnProfile = req.user!.id === id;
 
 		const user = await prisma.user.findUnique({
@@ -85,6 +87,7 @@ export async function   getUserProfile( req: Request, res: Response, next: NextF
 					createdAt: true
 				}
 		});
+
 		if (!user)
 			return (next( new ApiError(404, 'User not found') ));
 
@@ -160,29 +163,24 @@ export async function   deleteUserAccount( req: Request, res: Response, next: Ne
 		if (req.user!.id !== id)
 			throw new ApiError(403, 'You can only delete your own account');
 
-		const user = await prisma.user.findUnique({ where: { id }, select : { avatarUrl: true } });
+		const user = await prisma.user.findUnique({ where: { id }, select : { username: true, avatarUrl: true } });
 
         if (!user)
 			throw new ApiError(404, 'User not found');
 
-		if (user.avatarUrl && user.avatarUrl !== `${avatarDir}default.svg` && user.avatarUrl.startsWith(avatarDir))
-		{
-			const avatarUrlPath = path.join(process.cwd(), 'uploads', 'avatars', path.basename(user.avatarUrl));
-			fs.unlink(avatarUrlPath, () => {});
-		}
-
 		await prisma.$transaction(async (tx) => {
 			const memberships = await tx.workspaceMember.findMany({
 				where: { userId: id },
-				include: {
-					workspace: {
-						include: {
-							members: {
-								orderBy: { createdAt: 'asc' }
-							}
+				include: { workspace: {
+					select: {
+						id: true,
+						name: true,
+						members: {
+							orderBy: { createdAt: 'asc' },
+							include: { user: { select: { id: true, username: true } } }
 						}
 					}
-				}
+				}}
 			});
 
 			for (const membership of memberships)
@@ -194,6 +192,15 @@ export async function   deleteUserAccount( req: Request, res: Response, next: Ne
 					await tx.workspace.delete({ where: { id: membership.workspaceId } });
 					continue;
 				}
+
+				await tx.notification.createMany({
+					data: remainingMembers.map(member => ({
+					userId: member.userId,
+					type: NotificationType.workspace,
+					message: `${user.username} has left workspace "${membership.workspace.name}"`
+					}))
+				});
+
 				if (membership.role !== 'admin')
 					continue;
 
@@ -203,6 +210,13 @@ export async function   deleteUserAccount( req: Request, res: Response, next: Ne
 
 				const replacement = remainingMembers.find( m => m.role === 'member' );
 				if (!replacement) {
+					await tx.notification.createMany({
+						data: remainingMembers.map(member => ({
+							userId: member.userId,
+							type: NotificationType.workspace,
+							message: `Workspace "${membership.workspace.name}" was deleted because its last administrator left.`
+						}))
+					});
 					await tx.workspace.delete({ where: { id: membership.workspaceId } });
 					continue;
 				}
@@ -211,10 +225,34 @@ export async function   deleteUserAccount( req: Request, res: Response, next: Ne
 					where: { id: replacement.id },
 					data: { role: 'admin' }
 				});
+
+				await tx.notification.create({
+					data: {
+						userId: replacement.userId,
+						type: NotificationType.workspace,
+						message: `You have been promoted to admin in workspace "${membership.workspace.name}" because the previous administrator left.`
+					}
+				});
+
+				await tx.notification.createMany({
+					data: remainingMembers
+						.filter(member => member.userId !== replacement.userId)
+						.map(member => ({
+							userId: member.userId,
+							type: NotificationType.workspace,
+							message: `${replacement.user.username} has been promoted to admin in workspace "${membership.workspace.name}".`
+						}))
+				});
 			}
 
 			await tx.user.delete({ where: { id } });
 		});
+
+		if (user.avatarUrl && user.avatarUrl !== `${avatarDir}default.svg` && user.avatarUrl.startsWith(avatarDir))
+		{
+			const avatarUrlPath = path.join(process.cwd(), 'uploads', 'avatars', path.basename(user.avatarUrl));
+			fs.unlink(avatarUrlPath, () => {});
+		}
 
 		res.json({
 			success: true,
