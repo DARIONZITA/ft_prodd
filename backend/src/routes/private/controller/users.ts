@@ -1,16 +1,12 @@
-import type { Request, Response, NextFunction }	from 'express';
-import fs										from 'fs';
-import path										from 'path';
-import { avatarDir }							from '../../../types/constants';
-import { prisma }								from	 '../../../lib/prisma';
-import { ApiError }								from '../../../utils/ApiError';
-import { NotificationType }						from '@prisma/client';
-import { FriendRequestStatus }					from '../../../types/constants';
-import {
-	idSchema, parseOrThrow, parseQueryInt,
-	parseQueryEnum, parseQueryString
-}	from '../../../validations/utils';
-import { updateUserProfileSchema }				from '../../../validations/user';
+import type { Request, Response, NextFunction }		from 'express';
+import fs											from 'fs';
+import path											from 'path';
+import { avatarDir }								from '../../../types/constants';
+import { prisma }									from	 '../../../lib/prisma';
+import { ApiError }									from '../../../utils/ApiError';
+import { NotificationType }							from '@prisma/client';
+import { idSchema, parseOrThrow, parseQueryInt }	from '../../../validations/utils';
+import { updateUserProfileSchema }					from '../../../validations/user';
 
 export async function   listUsers( req: Request, res: Response, next: NextFunction )
 {
@@ -259,49 +255,5 @@ export async function   deleteUserAccount( req: Request, res: Response, next: Ne
 			message: 'User account deleted successfully'
 		});
 	}
-    catch (err) { next(err); }
-}
-
-export async function	getUserFriends(req: Request, res: Response, next: NextFunction)
-{
-    try {
-        const id = parseOrThrow(idSchema, 'UserID', req.params.id);
-        const skip = parseQueryInt('skip', req.query.skip, { default: 0, min: 0 });
-        const take = parseQueryInt('take', req.query.take, { default: 42, min: 1, max: 100 });
-        const status = parseQueryEnum('status', req.query.status, FriendRequestStatus, { default: 'accepted' });
-		const type = parseQueryString('type', req.query.type, { isOptional: true, minLength: 8, maxLength: 8 });
-
-        if (type !== undefined && type !== 'incoming' && type !== 'outgoing')
-            throw new ApiError(400, 'Query parameter "type" must be either incoming or outgoing');
-
-        const user = await prisma.user.findUnique({ where: { id } });
-        if (!user)
-            throw new ApiError(404, 'User not found');
-
-        const directionFilter = type === undefined
-            ? { OR: [{ senderId: id }, { receiverId: id }] }
-            : type === 'incoming' ? { receiverId: id } : { senderId: id };
-
-        const where = { status, ...directionFilter };
-
-        const [friendRequests, total] = await prisma.$transaction([
-            prisma.friendRequest.findMany({
-                where,
-                include: {
-                    sender:   { select: { id: true, username: true, email: true, avatarUrl: true, createdAt: true, updatedAt: true } },
-                    receiver: { select: { id: true, username: true, email: true, avatarUrl: true, createdAt: true, updatedAt: true } }
-                },
-                skip,
-                take,
-                orderBy: { updatedAt: 'desc' }
-            }),
-            prisma.friendRequest.count({ where })
-        ]);
-
-        res.json({
-            success: true,
-            data: { friendRequests, pagination: { skip, take, total } }
-        });
-    }
     catch (err) { next(err); }
 }

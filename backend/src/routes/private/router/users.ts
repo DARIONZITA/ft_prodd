@@ -3,8 +3,10 @@ import { authenticate }	from '../../../middleware/auth';
 import { uploadAvatar }	from '../../../middleware/uploadAvatar';
 import {
 	deleteUserAccount, getUserProfile,
-	getUserFriends,	listUsers, updateUserProfile
+	listUsers, updateUserProfile
 } from '../controller/users';
+import { listUserWorkspaces }	from '../controller/workspaces';
+import { listUserFriends }		from '../controller/friends';
 
 const router = Router();
 router.use(authenticate);
@@ -169,7 +171,7 @@ router.get('/:id', getUserProfile);
  * @swagger
  * /users/{id}/friends:
  *   get:
- *     summary: Get friends or friend requests for a user
+ *     summary: List friends or friend requests for a user
  *     tags: [Users]
  *     security:
  *       - BearerAuth: []
@@ -181,23 +183,53 @@ router.get('/:id', getUserProfile);
  *       - in: query
  *         name: status
  *         description: Filter by status - default to accepted
- *         schema: { type: string, enum: [pending, accepted, rejected], default: accepted }
+ *         schema: { type: string, enum: [accepted, pending], default: accepted }
  *       - in: query
  *         name: type
- *         description: Direction relative to the user. If omitted, returns both directions (OR)
+ *         description: Direction relative to the user (incoming/outgoing). Only usable when viewing your own pending requests
  *         schema: { type: string, enum: [incoming, outgoing] }
- *       - in: query
- *         name: skip
- *         schema: { type: integer, default: 0 }
- *       - in: query
- *         name: take
- *         schema: { type: integer, default: 42 }
  *     responses:
  *       200:
  *         description: Friend list retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/FriendListResponse'
+ *       403:
+ *         description: Not authorized to view this user's friends / pending requests
  *       404:
  *         description: User not found
  */
-router.get('/:id/friends', getUserFriends);
+router.get('/:id/friends', listUserFriends);
+
+/**
+ * @swagger
+ * /users/{id}/workspaces:
+ *   get:
+ *     summary: List workspaces for a user
+ *     tags: [Users]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *         description: Target user ID
+ *     responses:
+ *       200:
+ *         description: Workspace list retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/UserWorkspaceListResponse'
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Must be friends to view this user's workspaces
+ *       404:
+ *         description: User not found
+ */
+router.get('/:id/workspaces', listUserWorkspaces);
 
 export default router;

@@ -186,6 +186,57 @@ Write operations have a shorter limit of 10 requests per minute (POST, PUT, DELE
 					},
 					additionalProperties: false,
 				},
+			FriendRequestItem: {
+			type: 'object',
+			properties: {
+				id: { type: 'integer' },
+				senderId: { type: 'integer' },
+				receiverId: { type: 'integer' },
+				status: { type: 'string', enum: ['pending', 'accepted'] },
+				createdAt: { type: 'string', format: 'date-time' },
+				updatedAt: { type: 'string', format: 'date-time' },
+				sender: { $ref: '#/components/schemas/User' },
+				receiver: { $ref: '#/components/schemas/User' },
+			},
+		},
+		FriendListResponse: {
+			type: 'object',
+			properties: {
+				success: { type: 'boolean', example: true },
+				data: {
+					type: 'object',
+					properties: {
+						friendRequests: {
+							type: 'array',
+							items: { $ref: '#/components/schemas/FriendRequestItem' },
+						},
+						total: { type: 'integer' },
+					},
+				},
+			},
+		},
+		UserWorkspaceItem: {
+			type: 'object',
+			properties: {
+				id: { type: 'integer' },
+				name: { type: 'string' },
+				description: { type: 'string' },
+				createdAt: { type: 'string', format: 'date-time' },
+				updatedAt: { type: 'string', format: 'date-time' },
+				role: { type: 'string', enum: ['admin', 'member', 'guest'] },
+				memberCount: { type: 'integer' },
+			},
+		},
+		UserWorkspaceListResponse: {
+			type: 'object',
+			properties: {
+				success: { type: 'boolean', example: true },
+				data: {
+					type: 'array',
+					items: { $ref: '#/components/schemas/UserWorkspaceItem' },
+				},
+			},
+		},
 				ErrorResponse: {
 					type: 'object',
 					properties: {

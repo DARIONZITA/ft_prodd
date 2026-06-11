@@ -24,7 +24,6 @@ enum NotificationType {
 enum FriendRequestStatus {
     pending
     accepted
-    rejected
 }
 
 enum Priority {

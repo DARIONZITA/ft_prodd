@@ -4,6 +4,7 @@ import { ApiError }                             from '../../../utils/ApiError';
 import { getWorkspaceRole }                     from '../../../middleware/rbac';
 import { WorkspaceRole }                        from '../../../types/constants';
 import { Priority }                             from '../../../types/constants';
+import { requireFriendship }                    from './friends';
 import {
     idSchema, parseOrThrow,
     parseQueryEnum, parseQueryInt,
@@ -48,27 +49,40 @@ export async function createWorkspace(req: Request, res: Response, next: NextFun
 export async function   listUserWorkspaces(req: Request, res: Response, next: NextFunction)
 {
 	try {
-		const memberships = await prisma.workspaceMember.findMany({
-			where: { userId: req.user!.id },
-			include: {
-				workspace: {
-					select: {
-						id: true,
-						name: true,
-						description: true,
-						createdAt: true,
-						updatedAt: true
+        const targetUserId = req.params.id ? parseOrThrow(idSchema, 'UserID', req.params.id) : req.user!.id;
+
+		const memberships = await prisma.$transaction(async (tx) => {
+			if (targetUserId !== req.user!.id)
+				await requireFriendship(req.user!.id, targetUserId, "You must be friends to view this user's workspaces", tx);
+
+			return await tx.workspaceMember.findMany({
+				where: { userId: targetUserId },
+				include: {
+					workspace: {
+						select: {
+							id: true,
+							name: true,
+							description: true,
+							createdAt: true,
+							updatedAt: true,
+							_count: { select: { members: true } }
+						}
 					}
-				}
-			},
-			orderBy: { workspaceId: 'asc' }
+				},
+				orderBy: { workspaceId: 'asc' }
+			});
 		});
 
 		res.json({
 			success: true,
 			data: memberships.map((membership) => ({
-				...membership.workspace,
-				role: membership.role
+				id: membership.workspace.id,
+				name: membership.workspace.name,
+				description: membership.workspace.description,
+				createdAt: membership.workspace.createdAt,
+				updatedAt: membership.workspace.updatedAt,
+				role: membership.role,
+				memberCount: membership.workspace._count.members
 			}))
 		});
 	}
