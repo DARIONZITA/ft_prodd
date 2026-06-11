@@ -64,24 +64,23 @@ async function listFriendRequestsRequest(params: FriendListParams): Promise<Frie
   return response.data
 }
 
-async function sendFriendRequestRequest(userId: string | number, friendId: string | number): Promise<FriendActionResponse> {
-  const response = await api.post<FriendActionResponse>(`/api/friends/${userId}/${friendId}`)
+async function sendFriendRequestRequest(friendId: string | number): Promise<FriendActionResponse> {
+  const response = await api.post<FriendActionResponse>(`/api/friends/${friendId}`)
   return response.data
 }
 
 async function updateFriendRequestRequest(
-  userId: string | number,
   friendId: string | number,
   status: 'accepted' | 'rejected'
 ): Promise<FriendActionResponse> {
-  const response = await api.patch<FriendActionResponse>(`/api/friends/${userId}/${friendId}`, null, {
+  const response = await api.patch<FriendActionResponse>(`/api/friends/${friendId}`, null, {
     params: { status },
   })
   return response.data
 }
 
-async function removeFriendRequest(userId: string | number, friendId: string | number): Promise<FriendActionResponse> {
-  const response = await api.delete<FriendActionResponse>(`/api/friends/${userId}/${friendId}`)
+async function removeFriendRequest(friendId: string | number): Promise<FriendActionResponse> {
+  const response = await api.delete<FriendActionResponse>(`/api/friends/${friendId}`)
   return response.data
 }
 
@@ -155,7 +154,7 @@ export function useSendFriendRequestMutation(
 ) {
   return useMutation({
     ...options,
-    mutationFn: (friendId: string | number) => sendFriendRequestRequest(userId, friendId),
+    mutationFn: (friendId: string | number) => sendFriendRequestRequest(friendId),
     onSuccess: async (data, variables, context) => {
       await invalidateFriendQueries(userId)
       await options?.onSuccess?.(data, variables, context)
@@ -169,7 +168,7 @@ export function useRespondFriendRequestMutation(
 ) {
   return useMutation({
     ...options,
-    mutationFn: ({ friendId, status }) => updateFriendRequestRequest(userId, friendId, status),
+    mutationFn: ({ friendId, status }) => updateFriendRequestRequest(friendId, status),
     onSuccess: async (data, variables, context) => {
       await invalidateFriendQueries(userId)
       await options?.onSuccess?.(data, variables, context)
@@ -183,7 +182,7 @@ export function useRemoveFriendMutation(
 ) {
   return useMutation({
     ...options,
-    mutationFn: (friendId: string | number) => removeFriendRequest(userId, friendId),
+    mutationFn: (friendId: string | number) => removeFriendRequest(friendId),
     onSuccess: async (data, variables, context) => {
       await invalidateFriendQueries(userId)
       await options?.onSuccess?.(data, variables, context)

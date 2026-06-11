@@ -8,17 +8,13 @@ router.use(authenticate);
 
 /**
  * @swagger
- * /friends/{id}/{friendId}:
+ * /friends/{friendId}:
  *   post:
  *     summary: Send friend request
  *     tags: [Friends]
  *     security:
  *       - BearerAuth: []
  *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema: { type: integer }
  *       - in: path
  *         name: friendId
  *         required: true
@@ -31,21 +27,17 @@ router.use(authenticate);
  *       404:
  *         description: User not found
  */
-router.post('/:id/:friendId', sendFriendRequest);
+router.post('/:friendId', sendFriendRequest);
 
 /**
  * @swagger
- * /friends/{id}/{friendId}:
+ * /friends/{friendId}:
  *   patch:
  *     summary: Accept or reject friend request
  *     tags: [Friends]
  *     security:
  *       - BearerAuth: []
  *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema: { type: integer }
  *       - in: path
  *         name: friendId
  *         required: true
@@ -61,21 +53,17 @@ router.post('/:id/:friendId', sendFriendRequest);
  *       404:
  *         description: Request not found
  */
-router.patch('/:id/:friendId', updateFriendRequest);
+router.patch('/:friendId', updateFriendRequest);
 
 /**
  * @swagger
- * /friends/{id}/{friendId}:
+ * /friends/{friendId}:
  *   delete:
  *     summary: Remove a friend or cancel friend request
  *     tags: [Friends]
  *     security:
  *       - BearerAuth: []
  *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema: { type: integer }
  *       - in: path
  *         name: friendId
  *         required: true
@@ -88,6 +76,6 @@ router.patch('/:id/:friendId', updateFriendRequest);
  *       404:
  *         description: Friend not found
  */
-router.delete('/:id/:friendId', removeFriend);
+router.delete('/:friendId', removeFriend);
 
 export default router;
