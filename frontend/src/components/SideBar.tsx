@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
-import { Menu, Plus, Search, ChevronsLeft, LogOut, Grid2x2, FileText, ArrowLeftRight, Trophy, Medal, ScrollText } from 'lucide-react'
+import { Menu, Plus, Search, ChevronsLeft, LogOut, Grid2x2, FileText, ArrowLeftRight, Trophy, Medal, ScrollText, Users, Loader2 } from 'lucide-react'
 import NotificationsDropdown from './NotificationsDropdown'
+import { useUsersQuery } from '../api/user'
 
 interface Workspace {
   id: string | number
@@ -33,6 +34,7 @@ const WORKSPACE_ICONS = [Grid2x2, FileText, ArrowLeftRight]
 
 export default function Sidebar({ data, activeView, onNavigate, onLogout = () => {}, onCreateWorkspace = () => {}, className = '', activeWorkspace = null }: SidebarProps) {
   const [searchQuery, setSearchQuery] = useState('')
+  const [committedSearch, setCommittedSearch] = useState('')
   const [isOpen, setIsOpen] = useState(() => {
     const saved = localStorage.getItem('sidebar-open')
     return saved !== null ? saved === 'true' : true
@@ -42,6 +44,12 @@ export default function Sidebar({ data, activeView, onNavigate, onLogout = () =>
   useEffect(() => {
     localStorage.setItem('sidebar-open', String(isOpen))
   }, [isOpen])
+
+  const usersQuery = useUsersQuery(
+    { search: committedSearch, take: 10 },
+    { enabled: committedSearch.trim().length > 0 },
+  )
+  const userResults = usersQuery.data?.data?.users ?? []
 
   const filteredWorkspaces = data.workspaces.filter(ws => ws.name.toLowerCase().includes(searchQuery.toLowerCase()))
 
@@ -146,8 +154,16 @@ export default function Sidebar({ data, activeView, onNavigate, onLogout = () =>
             type="text"
             placeholder="Search"
             value={searchQuery}
-            onChange={e => setSearchQuery(e.target.value)}
-            aria-label="Search workspaces"
+            onChange={e => {
+              setSearchQuery(e.target.value)
+              if (committedSearch) setCommittedSearch('')
+            }}
+            onKeyDown={e => {
+              if (e.key === 'Enter' && searchQuery.trim()) {
+                setCommittedSearch(searchQuery.trim())
+              }
+            }}
+            aria-label="Search"
             className="w-full pl-8 pr-16 py-2 border border-slate-200 rounded-lg font-body text-sm text-slate-900 bg-slate-50 outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/15 placeholder:text-slate-400 transition-colors duration-150"
           />
           <span className="absolute right-2.5 top-1/2 -translate-y-1/2 font-mono text-[10px] text-slate-400 bg-slate-200 rounded px-1.5 py-0.5 pointer-events-none">
@@ -156,7 +172,29 @@ export default function Sidebar({ data, activeView, onNavigate, onLogout = () =>
         </div>
       </div>
 
-   
+      {/* User search results */}
+      {committedSearch && (
+        <div className="px-2 mb-2 max-h-48 overflow-y-auto border-b border-slate-100 pb-2">
+          {usersQuery.isLoading ? (
+            <div className="flex items-center justify-center py-3">
+              <Loader2 size={14} className="animate-spin text-slate-400" />
+            </div>
+          ) : userResults.length === 0 ? (
+            <p className="px-3 py-2 font-body text-xs text-slate-400 text-center">No users found</p>
+          ) : (
+            userResults.map(u => (
+              <button
+                key={u.id}
+                onClick={() => { setSearchQuery(''); setCommittedSearch(''); onNavigate('user', u.id) }}
+                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left transition-colors duration-150 cursor-pointer hover:bg-slate-100"
+              >
+                <Users size={14} className="text-slate-400 flex-shrink-0" />
+                <span className="font-body text-sm text-slate-700 truncate flex-1">{u.username}</span>
+              </button>
+            ))
+          )}
+        </div>
+      )}
 
       {/* My Projects */}
       <p className="px-4 pt-3 pb-1.5 font-mono text-[10px] font-medium uppercase tracking-widest text-slate-400">
