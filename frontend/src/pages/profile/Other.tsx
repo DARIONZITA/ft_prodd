@@ -1,164 +1,300 @@
-import { UserPlus, UserCheck } from 'lucide-react'
-import Avatar from '../../components/profile/Avatar'
-import StatsRow from '../../components/profile/StatsRow'
+import { useState } from 'react'
+import { UserPlus, UserCheck, Loader2, Lock, X } from 'lucide-react'
+import ProfileAvatar from '../../components/profile/Avatar'
+import WorkspaceCard from '../../components/profile/WorkspaceCard'
+import {
+  useUserProfileQuery,
+} from '../../api/user'
 import {
   useFriendsQuery,
   useIncomingFriendRequestsQuery,
   useOutgoingFriendRequestsQuery,
-  useRespondFriendRequestMutation,
   useSendFriendRequestMutation,
+  useRespondFriendRequestMutation,
+  useRemoveFriendMutation,
+  getOtherFriendUser,
 } from '../../api/friends'
-import { resolveAvatarUrl, useUserProfileQuery, useUserStatsQuery } from '../../api/user'
+import { useUserWorkspacesForUserQuery } from '../../api/workspace'
+import type { User } from '../../types/user'
+
+type Section = 'workspaces' | 'friends'
 
 interface OtherProfileProps {
   userId: string | number
   currentUserId: string | number
+  onNavigate?: (view: string, payload?: string | number) => void
 }
 
-export default function OtherProfile({ userId, currentUserId }: OtherProfileProps) {
-  const profileQuery = useUserProfileQuery(userId, { refetchOnMount: false })
-  const statsQuery = useUserStatsQuery(userId, { refetchOnMount: false })
-  const myFriendsQuery = useFriendsQuery(currentUserId, { refetchOnMount: false })
-  const theirFriendsQuery = useFriendsQuery(userId, { refetchOnMount: false })
-  const incomingQuery = useIncomingFriendRequestsQuery(currentUserId, { refetchOnMount: false })
-  const outgoingQuery = useOutgoingFriendRequestsQuery(currentUserId, { refetchOnMount: false })
+export default function OtherProfile({ userId, currentUserId, onNavigate }: OtherProfileProps) {
+  const [asideSection, setAsideSection] = useState<Section | null>(null)
 
-  const sendFriendMutation = useSendFriendRequestMutation(currentUserId)
-  const respondFriendMutation = useRespondFriendRequestMutation(currentUserId)
+  const profileNumeric = typeof userId === 'string' ? Number(userId) : userId
+  const meNumeric = typeof currentUserId === 'string' ? Number(currentUserId) : currentUserId
 
-  const profile = profileQuery.data?.data
-  const stats = statsQuery.data?.data
+  const profileQuery = useUserProfileQuery(profileNumeric, { enabled: !!userId })
+  const user: User | null = profileQuery.data?.data ?? null
 
-  const isFriend = (myFriendsQuery.data?.data?.friendRequests ?? []).some(request => {
-    return String(request.senderId) === String(userId) || String(request.receiverId) === String(userId)
-  })
+  const friendsQuery = useFriendsQuery(meNumeric)
+  const areFriends = friendsQuery.data?.data?.friendRequests?.some(
+    r => r.senderId === profileNumeric || r.receiverId === profileNumeric,
+  ) ?? false
 
-  const hasIncomingRequest = (incomingQuery.data?.data?.friendRequests ?? []).some(
-    request => String(request.senderId) === String(userId)
-  )
+  const outgoingQuery = useOutgoingFriendRequestsQuery(meNumeric)
+  const outgoingToThem = outgoingQuery.data?.data?.friendRequests?.find(r => r.receiverId === profileNumeric)
 
-  const hasOutgoingRequest = (outgoingQuery.data?.data?.friendRequests ?? []).some(
-    request => String(request.receiverId) === String(userId)
-  )
+  const incomingQuery = useIncomingFriendRequestsQuery(meNumeric)
+  const incomingFromThem = incomingQuery.data?.data?.friendRequests?.find(r => r.senderId === profileNumeric)
 
-  const handleAddFriend = () => {
-    sendFriendMutation.mutate(userId)
+  const friendshipStatus: 'none' | 'pending' | 'accepted' = areFriends ? 'accepted' : outgoingToThem ? 'pending' : 'none'
+  const isFriend = friendshipStatus === 'accepted'
+
+  const respondMutation = useRespondFriendRequestMutation(meNumeric)
+  const sendMutation = useSendFriendRequestMutation(meNumeric)
+  const removeMutation = useRemoveFriendMutation(meNumeric)
+
+  const workspacesQuery = useUserWorkspacesForUserQuery(profileNumeric, { enabled: isFriend })
+  const workspaces = workspacesQuery.data?.data ?? []
+
+  const theirFriendsQuery = useFriendsQuery(profileNumeric, { enabled: isFriend })
+  const theirFriends = (theirFriendsQuery.data?.data?.friendRequests ?? []).map(r => ({
+    ...getOtherFriendUser(r, profileNumeric),
+    requestId: r.id,
+  }))
+
+  const refreshAll = () => {
+    friendsQuery.refetch()
+    outgoingQuery.refetch()
+    incomingQuery.refetch()
+    workspacesQuery.refetch()
+    theirFriendsQuery.refetch()
   }
 
-  const handleAcceptRequest = () => {
-    respondFriendMutation.mutate({ friendId: userId, status: 'accepted' })
+  const isMutationPending =
+    sendMutation.isPending ||
+    removeMutation.isPending ||
+    respondMutation.isPending
+
+  const isLoading = profileQuery.isLoading || friendsQuery.isLoading || outgoingQuery.isLoading || incomingQuery.isLoading
+
+  const handleFriendAction = () => {
+    if (incomingFromThem && friendshipStatus === 'none') {
+      respondMutation.mutate(
+        { friendId: incomingFromThem.id, status: 'accepted' },
+        { onSuccess: () => refreshAll() },
+      )
+      return
+    }
+    if (friendshipStatus === 'none') {
+      sendMutation.mutate(profileNumeric, { onSuccess: () => refreshAll() })
+    } else if (friendshipStatus === 'pending') {
+      removeMutation.mutate(profileNumeric, { onSuccess: () => refreshAll() })
+    } else if (friendshipStatus === 'accepted') {
+      removeMutation.mutate(profileNumeric, { onSuccess: () => refreshAll() })
+    }
   }
 
-  const handleDeclineRequest = () => {
-    respondFriendMutation.mutate({ friendId: userId, status: 'rejected' })
+  const renderFriendButton = () => {
+    const baseBtn = 'flex items-center gap-2 px-5 py-2.5 rounded-lg font-mono text-[11px] font-bold uppercase transition-all duration-200'
+
+    const hasIncoming = incomingFromThem && friendshipStatus === 'none'
+    if (hasIncoming) {
+      return (
+        <button
+          type="button"
+          onClick={handleFriendAction}
+          disabled={isMutationPending}
+          className={`${baseBtn} bg-cyan-600 text-white hover:bg-cyan-700 disabled:opacity-50`}
+        >
+          {isMutationPending ? <Loader2 size={15} className="animate-spin" /> : <UserCheck size={15} />}
+          {isMutationPending ? 'Accepting...' : 'Accept Request'}
+        </button>
+      )
+    }
+
+    switch (friendshipStatus) {
+      case 'none':
+        return (
+          <button
+            type="button"
+            onClick={handleFriendAction}
+            disabled={isMutationPending}
+            className={`${baseBtn} bg-cyan-600 text-white hover:bg-cyan-700 disabled:opacity-50`}
+          >
+            {isMutationPending ? <Loader2 size={15} className="animate-spin" /> : <UserPlus size={15} />}
+            {isMutationPending ? 'Sending...' : 'Add Friend'}
+          </button>
+        )
+      case 'pending':
+        return (
+          <button
+            type="button"
+            onClick={handleFriendAction}
+            disabled={isMutationPending}
+            className={`${baseBtn} bg-slate-100 text-slate-600 hover:bg-red-50 hover:text-red-600 hover:border-red-200 border border-slate-200 disabled:opacity-50`}
+          >
+            {isMutationPending ? <Loader2 size={15} className="animate-spin" /> : <X size={15} />}
+            {isMutationPending ? 'Cancelling...' : 'Cancel Request'}
+          </button>
+        )
+      case 'accepted':
+        return (
+          <button
+            type="button"
+            onClick={handleFriendAction}
+            disabled={isMutationPending}
+            className={`${baseBtn} bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-red-50 hover:text-red-600 hover:border-red-200 disabled:opacity-50`}
+          >
+            {isMutationPending ? <Loader2 size={15} className="animate-spin" /> : <UserCheck size={15} />}
+            {isMutationPending ? 'Removing...' : 'Friends'}
+          </button>
+        )
+    }
   }
 
-  if (profileQuery.isLoading) {
+  const toggleAside = (section: Section) => {
+    setAsideSection(prev => prev === section ? null : section)
+  }
+
+  if (isLoading) {
     return (
       <div className="flex-1 h-full flex items-center justify-center bg-slate-50">
-        <p className="font-body text-sm text-slate-400">Loading profile...</p>
+        <Loader2 size={24} className="animate-spin text-slate-400" />
       </div>
     )
   }
 
-  if (profileQuery.isError || !profile) {
+  if (!user) {
     return (
       <div className="flex-1 h-full flex items-center justify-center bg-slate-50">
-        <p className="font-body text-sm text-slate-400">User not found.</p>
+        <p className="font-body text-slate-500">User not found.</p>
       </div>
     )
-  }
-
-  const displayStats = {
-    tasksCompleted: stats?.totalComments ?? 0,
-    tasksAssigned: stats?.totalTasks ?? 0,
-    friends: theirFriendsQuery.data?.data?.pagination?.total ?? 0,
   }
 
   return (
     <div className="flex-1 h-full overflow-y-auto bg-slate-50">
-      <div className="max-w-[600px] mx-auto px-6 py-8 flex flex-col gap-4">
-
-        <div className="bg-white border border-slate-200 rounded-xl p-6 flex items-start gap-6">
-          <Avatar name={profile.username} avatarUrl={resolveAvatarUrl(profile.avatarUrl)} size="lg" />
-
+      <div className="max-w-[680px] mx-auto px-6 py-8 flex flex-col gap-5">
+        {/* Header card */}
+        <div className="bg-white border border-slate-200 rounded-xl p-6 flex items-start gap-5">
+          <ProfileAvatar name={user.username} avatarUrl={user.avatarUrl} size="lg" />
           <div className="flex-1 min-w-0 pt-1">
-            <div className="flex items-center gap-3 flex-wrap">
-              <h1 className="font-display font-extrabold text-3xl text-slate-900 tracking-tight">{profile.username}</h1>
-
-              {isFriend ? (
-                <span className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 border border-emerald-200 rounded-lg font-body text-xs font-bold text-emerald-700">
-                  <UserCheck size={14} />
-                  Friends
-                </span>
-              ) : hasOutgoingRequest ? (
-                <span className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg font-body text-xs font-bold text-slate-400">
-                  Request Sent
-                </span>
-              ) : hasIncomingRequest ? (
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={handleAcceptRequest}
-                    disabled={respondFriendMutation.isPending}
-                    className="flex items-center gap-1.5 px-3 py-1.5 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg font-body text-xs font-bold"
-                  >
-                    <UserCheck size={14} />
-                    Accept
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleDeclineRequest}
-                    disabled={respondFriendMutation.isPending}
-                    className="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg font-body text-xs font-bold text-slate-500 hover:bg-slate-100"
-                  >
-                    Decline
-                  </button>
-                </div>
-              ) : (
-                <button
-                  type="button"
-                  onClick={handleAddFriend}
-                  disabled={sendFriendMutation.isPending}
-                  className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg font-body text-xs font-bold text-slate-700 hover:bg-slate-100 hover:border-slate-300 transition-colors duration-150"
-                >
-                  <UserPlus size={14} className="text-slate-400" />
-                  Add Friend
-                </button>
-              )}
-            </div>
-
-            <p className="font-body text-[13px] text-slate-500 mt-3 leading-relaxed font-medium max-w-md">
-              {profile.bio || 'No bio yet.'}
-            </p>
-
-            <div className="flex items-center gap-1.5 mt-3">
-              <span className="w-2 h-2 rounded-full bg-slate-400" />
-              <span className="font-mono text-[11px] font-bold uppercase text-slate-400">Offline</span>
-            </div>
+            <h1 className="font-display font-bold text-2xl text-slate-900">{user.username}</h1>
+            {user.bio && (
+              <p className="font-body text-sm text-slate-500 mt-2 leading-relaxed max-w-lg">{user.bio}</p>
+            )}
+            <div className="mt-4">{renderFriendButton()}</div>
           </div>
         </div>
 
-        <StatsRow stats={displayStats} />
-
         {isFriend ? (
-          <div className="bg-white border border-slate-200 rounded-xl p-5">
-            <p className="font-body text-sm text-slate-600">
-              You are friends with <span className="font-bold text-slate-900">{profile.username}</span>.
-            </p>
-          </div>
-        ) : (
-          <div className="bg-white border border-slate-200 rounded-xl py-16 px-8 flex flex-col items-center justify-center text-center">
-            <div className="w-16 h-16 bg-slate-50 border border-slate-200 rounded-full flex items-center justify-center mb-4">
-              <UserPlus size={28} className="text-slate-300" />
+          <>
+            <div className="grid grid-cols-2 gap-3">
+              <StatBox
+                label="Friends"
+                count={theirFriends.length}
+                active={asideSection === 'friends'}
+                onClick={() => toggleAside('friends')}
+              />
+              <StatBox
+                label="Workspaces"
+                count={workspaces.length}
+                active={asideSection === 'workspaces'}
+                onClick={() => toggleAside('workspaces')}
+              />
             </div>
-            <p className="font-display text-sm font-bold text-slate-400 tracking-tight">
-              Add them as a friend to see more
-            </p>
-          </div>
-        )}
 
+            {asideSection === 'workspaces' && (
+              <section className="bg-white border border-slate-200 rounded-xl p-5">
+                <h2 className="font-display font-bold text-sm text-slate-900 mb-4">{user.username}'s Workspaces</h2>
+                {workspacesQuery.isLoading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 size={20} className="animate-spin text-slate-400" />
+                  </div>
+                ) : workspaces.length === 0 ? (
+                  <p className="font-body text-sm text-slate-400 py-6 text-center">No workspaces yet.</p>
+                ) : (
+                  <div className="space-y-2">
+                    {workspaces.map(ws => (
+                      <WorkspaceCard
+                        key={ws.id}
+                        name={ws.name}
+                        description={ws.description}
+                        memberCount={ws.memberCount}
+                        role={ws.role}
+                        onClick={() => onNavigate?.('workspace', ws.id)}
+                      />
+                    ))}
+                  </div>
+                )}
+              </section>
+            )}
+
+            {asideSection === 'friends' && (
+              <section className="bg-white border border-slate-200 rounded-xl p-5">
+                <h2 className="font-display font-bold text-sm text-slate-900 mb-4">{user.username}'s Friends</h2>
+                {theirFriendsQuery.isLoading ? (
+                  <div className="flex items-center justify-center py-6">
+                    <Loader2 size={20} className="animate-spin text-slate-400" />
+                  </div>
+                ) : theirFriends.length === 0 ? (
+                  <p className="font-body text-sm text-slate-400 py-6 text-center">No friends yet.</p>
+                ) : (
+                  <div className="space-y-2">
+                    {theirFriends.map(f => (
+                      <button
+                        key={f.requestId}
+                        type="button"
+                        onClick={() => onNavigate?.('user', f.id)}
+                        className="w-full flex items-center gap-3 px-3 py-2.5 bg-slate-50 hover:bg-slate-100 rounded-lg transition-colors text-left"
+                      >
+                        <div className="w-9 h-9 rounded-full bg-cyan-500 text-white text-xs font-bold flex items-center justify-center flex-shrink-0 font-display">
+                          {f.username.trim()[0]?.toUpperCase() ?? '?'}
+                        </div>
+                        <span className="font-display font-bold text-sm text-slate-900">{f.username}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </section>
+            )}
+          </>
+        ) : (
+          <section className="bg-white border border-slate-200 rounded-xl p-8 flex flex-col items-center gap-4 text-center">
+            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-slate-100 text-slate-400">
+              <Lock size={24} />
+            </div>
+            <h2 className="font-display font-bold text-lg text-slate-900">Private Profile</h2>
+            <p className="font-body text-sm text-slate-500 max-w-sm">
+              Add {user.username} as a friend to see their workspaces and friends.
+            </p>
+          </section>
+        )}
       </div>
     </div>
+  )
+}
+
+function StatBox({ label, count, active, onClick }: { label: string; count: number; active: boolean; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`bg-white border rounded-xl px-5 py-5 text-left transition-colors duration-200 cursor-pointer ${
+        active
+          ? 'border-cyan-400 ring-1 ring-cyan-400'
+          : 'border-slate-200 hover:border-cyan-300'
+      }`}
+    >
+      <div className={`text-3xl font-extrabold font-display transition-colors duration-200 ${
+        active ? 'text-cyan-600' : 'text-slate-900'
+      }`}>
+        {count}
+      </div>
+      <div className={`font-mono text-[9px] font-bold uppercase tracking-wider mt-1 transition-colors duration-200 ${
+        active ? 'text-cyan-600' : 'text-slate-400'
+      }`}>
+        {label}
+      </div>
+    </button>
   )
 }

@@ -1,8 +1,8 @@
 import { useMemo, useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import Sidebar from '../components/SideBar'
-import UserProfile from './profile/This'
-import OtherUserProfile from './profile/Other'
+import ThisProfile from './profile/This'
+import OtherProfile from './profile/Other'
 import Friends from './profile/Friends'
 import { useFriendsQuery } from '../api/friends'
 import CreateOrganizationModal from './organization/CreateOrganizationModal'
@@ -14,6 +14,7 @@ import NotificationsPage from './NotificationsPage.tsx'
 import type { User, UserResponse } from '../types/user.ts'
 import { useGetUserRequest } from '../api/user.ts'
 import { useCreateWorkspaceMutation, useDeleteWorkspaceMutation, useUpdateWorkspaceMutation, useUserWorkspacesQuery } from '../api/workspace.ts'
+
 interface Workspace {
   id: string | number
   name: string
@@ -128,6 +129,11 @@ export default function DashboardPagePlaceholder() {
       return
     }
 
+    if (view === 'user' && payload != null) {
+      nextParams.set('view', `user-${payload}`)
+      navigate(`/dashboard?${nextParams.toString()}`)
+      return
+    }
 
     if (view === 'analytics' && payload != null) {
       nextParams.set('workspace', String(payload))
@@ -225,17 +231,9 @@ export default function DashboardPagePlaceholder() {
         return <PlaceholderView title="Loading profile..." />
       }else
         return (
-          <UserProfile
-            profile={{
-              user: userDataQuery,
-              isOnline: false,
-              lastSeen: undefined,
-              stats: { tasksCompleted: 0, tasksAssigned: 0, friends: friendsCount },
-              level: 1,
-              xp: 0,
-              xpRequired: 100,
-            }}
-            onFriendsClick={() => setFriendsOpen(true)}
+          <ThisProfile
+            user={userDataQuery}
+            onNavigate={handleNavigate}
           />
         )}
     if (activeView === 'notifications') return <NotificationsPage />
@@ -302,9 +300,10 @@ export default function DashboardPagePlaceholder() {
       }
 
       return (
-        <OtherUserProfile
+        <OtherProfile
           userId={otherUserId}
           currentUserId={userDataQuery.id}
+          onNavigate={handleNavigate}
         />
       )
     }

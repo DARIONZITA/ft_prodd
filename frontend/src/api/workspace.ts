@@ -43,6 +43,7 @@ export interface Workspace {
   updatedAt: string
   role?: WorkspaceRole
   taskCount?: number
+  memberCount?: number
   members?: WorkspaceMember[]
   activityLogs?: WorkspaceActivityLog[]
 }
@@ -147,6 +148,24 @@ export function useUserWorkspacesQuery(
   return useQuery({
     queryKey: workspaceKeys.list,
     queryFn: listUserWorkspacesRequest,
+    ...options,
+  })
+}
+
+async function listUserWorkspacesForUserRequest(userId: string | number): Promise<ApiResponse<Workspace[]>> {
+  const response = await api.get<ApiResponse<Workspace[]>>(`/api/users/${userId}/workspaces`)
+  return response.data
+}
+
+export function useUserWorkspacesForUserQuery(
+  userId: string | number | undefined,
+  options?: Omit<UseQueryOptions<ApiResponse<Workspace[]>, Error>, 'queryKey' | 'queryFn'>
+)
+{
+  return useQuery({
+    queryKey: ['user-workspaces', userId],
+    queryFn: () => listUserWorkspacesForUserRequest(userId!),
+    enabled: userId != null,
     ...options,
   })
 }
