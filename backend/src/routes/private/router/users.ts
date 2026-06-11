@@ -3,8 +3,7 @@ import { authenticate }	from '../../../middleware/auth';
 import { uploadAvatar }	from '../../../middleware/uploadAvatar';
 import {
 	deleteUserAccount, getUserProfile,
-	getUserStats, getUserFriends,
-	listUsers, updateUserProfile
+	getUserFriends,	listUsers, updateUserProfile
 } from '../controller/users';
 
 const router = Router();
@@ -166,10 +165,6 @@ router.delete('/me', deleteUserAccount);
  */
 router.get('/:id', getUserProfile);
 
-
-
-/* USER-FRIENDS */
-
 /**
  * @swagger
  * /users/{id}/friends:
@@ -204,26 +199,5 @@ router.get('/:id', getUserProfile);
  *         description: User not found
  */
 router.get('/:id/friends', getUserFriends);
-
-/**
- * @swagger
- * /users/{id}/stats:
- *   get:
- *     summary: Get user statistics
- *     tags: [Users]
- *     security:
- *       - BearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema: { type: integer }
- *     responses:
- *       200:
- *         description: User user stats
- *       404:
- *         description: User not found
- */
-router.get('/:id/stats', getUserStats);
 
 export default router;

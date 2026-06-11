@@ -262,9 +262,6 @@ export async function   deleteUserAccount( req: Request, res: Response, next: Ne
     catch (err) { next(err); }
 }
 
-
-
-/* USER-FRIENDS */
 export async function	getUserFriends(req: Request, res: Response, next: NextFunction)
 {
     try {
@@ -306,31 +303,5 @@ export async function	getUserFriends(req: Request, res: Response, next: NextFunc
             data: { friendRequests, pagination: { skip, take, total } }
         });
     }
-    catch (err) { next(err); }
-}
-
-export async function   getUserStats( req: Request, res: Response, next: NextFunction )
-{
-	try
-    {
-		const id = parseOrThrow(idSchema, 'UserID', req.params.id);
-
-		const user = await prisma.user.findUnique({ where: { id } });
-		if (!user)
-			throw new ApiError(404, 'User not found');
-
-		const totalComments = await prisma.comment.count({
-			where: { authorId: id }
-		});
-
-		const totalTasks = await prisma.taskAssignment.count({
-			where: { userId: id }
-		});
-
-		res.json({
-			success: true,
-			data: { totalComments, totalTasks }
-		});
-	}
     catch (err) { next(err); }
 }
