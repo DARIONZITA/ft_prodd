@@ -761,21 +761,64 @@ This section lists all selected modules for the project, including their type, p
 
 ---
 
-### A public API to interact with the database with a secured API key, rate limiting, documentation, and at least 5 endpoints
+### Implement Real-Time Features Using WebSockets or Similar Technology
 
 * **Justification:**
-  Providing a public API allows external applications to interact with the database securely. Implementing API key authentication and rate limiting ensures that access is controlled and prevents abuse, while documentation facilitates integration by third-party developers.
+  Real-time communication enhances collaboration by allowing users to receive updates instantly without manually refreshing the application. This creates a more interactive and responsive experience, particularly in a collaborative task management platform where multiple users may be working simultaneously.
 
 * **Implementation:**
-  The backend exposes a RESTful API with the following features:
+  The project implements real-time communication using **Socket.IO**, enabling the server to push updates directly to connected clients.
 
-  * **API Key Authentication:** Each request to the API must include a valid API key in the headers. The backend validates the key before processing the request, but to get the API key, users must authenticate through the standard login flow, ensuring that only authorized users can access the API, the keys can also be revoked by the user if necessary, each user can have a maximum limit of active API keys, the keys are generated randomly using crypto, and each key has a unique identifier, the API key, which is stored hashed on DB, the hashing is done using bcrypt, and the API key is never stored in plaintext, when a user creates an API key, they are shown the plaintext value only once, and they are responsible for storing it securely, if they lose it, they will have to create a new one.
+  * **Presence System:** Users can view the online or offline status of their friends in real time.
 
-  * **Rate Limiting:** The API implements rate limiting provided by the `express-rate-limit` middleware to restrict the number of requests from a single API key within a specified time frame, preventing abuse and ensuring fair usage, while read operations have a more generous limit, of up to three times more, compared to write operations per minute, and that's based on the assumption that read operations are more common than write operations, and that write operations typically have a greater impact on the system's resources, and if a user exceeds the rate limit, they receive a clear error message with the http code of 429 indicating that they have made too many requests and should try again later.
+  * **Task Comments:** Comments added to workspace tasks are immediately displayed to all connected users without requiring a page refresh.
 
-  * **Documentation:** The API is documented using Swagger, providing clear information about available endpoints and their usage.
+  * **Notifications:** User notifications are delivered and updated instantly in the browser, ensuring that important events are communicated as they occur.
 
-  * **Endpoints:** The API includes 5 endpoints for managing workspaces — create, list, get details, update, and delete. Through the API, external applications can perform CRUD operations on workspaces.
+  By relying on persistent connections rather than periodic polling, the application provides a more efficient and responsive collaborative experience.
+
+* **Team:**
+
+  * dnzita (Frontend)
+  * jbofengo (Backend)
+
+---
+
+### Allow Users to Interact with Other Users
+
+* **Justification:**
+  Enabling user interaction is a core requirement for collaborative platforms, as it allows users to communicate, share information, and build connections within the application. This improves engagement and supports teamwork within and across workspaces.
+
+* **Implementation:**
+
+  The project implements full user interaction capabilities, covering chat, profile, and friends systems.
+
+  * **Basic Chat System:** A real-time messaging system allows users to send and receive direct messages within the workspace task comments, where they can mention other workspace users about updates on the task. These comments are delivered instantly using **Socket.IO**, ensuring real-time communication between connected users.
+
+  * **Profile System:** Each user has a dedicated profile page displaying their information, including username, avatar, and social relationships.
+
+  * **Friends System:** Users can send, accept, and remove friend requests. The friends list is visible on each user profile, and online status is displayed when applicable.
+
+* **Team:**
+
+  * Profile & Friends System: efinda (Frontend + Backend)
+  * Basic Chat System: efinda (Backend), dnzita (Frontend)
+
+---
+
+### A Public API to Interact with the Database with a Secured API Key, Rate Limiting, Documentation, and at Least 5 Endpoints
+
+* **Justification:**
+  Providing a public API allows external applications to interact with the database securely. API key authentication and rate limiting ensure controlled access and prevent abuse, while proper documentation simplifies integration for third-party developers.
+
+* **Implementation:**
+  The backend exposes a RESTful API for workspace management, including **create**, **list**, **retrieve**, **update**, and **delete** operations.
+
+  * **API Key Authentication:** Access is protected through user-generated API keys obtained after authentication. Keys are securely stored as **bcrypt hashes**, displayed only once upon creation, and can be revoked or regenerated by the user.
+
+  * **Rate Limiting:** Requests are limited using the *express-rate-limit* middleware, with separate quotas for read and write operations. When the limit is exceeded, the API responds with **HTTP 429 (Too Many Requests)**.
+
+  * **Documentation:** The API is documented using Swagger, providing interactive documentation and usage examples.
 
 * **Team:**
 
@@ -784,7 +827,7 @@ This section lists all selected modules for the project, including their type, p
 
 ---
 
-### Use an ORM for the database
+### Use an ORM for the Database
 
 * **Justification:**
   Using an ORM simplifies database interaction by abstracting raw SQL queries into a structured and type-safe API. This reduces the risk of errors, improves code maintainability, and allows faster development, especially in a team environment.
@@ -800,7 +843,69 @@ This section lists all selected modules for the project, including their type, p
 
 ---
 
-### Implement advanced search functionality with filters, sorting, and pagination
+### A Complete Notification System for All Creation, Update, and Deletion Actions
+
+* **Justification:**
+  A notification system improves user awareness by providing real-time updates about important changes in the application.
+
+* **Implementation:**
+
+  The project implements a notification system that tracks creation, update, and deletion events across the platform, including tasks, workspaces, and comments.
+
+  Notifications are generated on the backend and delivered in real time using **Socket.IO**.
+
+  On the frontend, users can view and track notifications in a dedicated interface, with updates appearing instantly without page refresh.
+
+* **Team:**
+  * efinda (Backend)
+  * dnzita (Frontend)
+
+---
+
+### Real-time Collaborative Features
+
+* **Justification:**
+  Real-time collaboration enables multiple users to work simultaneously within shared environments, improving coordination and responsiveness in a team-based application.
+
+* **Implementation:**
+
+  The project implements real-time collaborative features within shared workspaces.
+
+  Shared workspaces allow multiple users to collaborate on tasks simultaneously. Real-time updates are applied to task comments, ensuring that any change is immediately reflected for all connected users.
+
+  This is achieved using **Socket.IO**, enabling live synchronization of comments without requiring page refresh.
+
+  The system focuses on live collaboration within workspace task discussions, providing a responsive and synchronized editing experience.
+
+* **Team:**
+  * efinda, cgama (Backend)
+  * dnzita (Frontend)
+
+---
+
+### Custom-made Design System with Reusable Components
+
+* **Justification:**
+  A custom design system ensures visual consistency across the application and improves development efficiency by promoting reusable UI components.
+
+* **Implementation:**
+
+  The project implements a custom design system on the frontend using **React reusable components**.
+
+  It includes:
+    * A consistent color palette applied across all pages
+    * Defined typography rules for headings, text, and UI elements
+    * A shared icon system used throughout the application
+    * A library of reusable components (minimum 10), such as buttons, modals, inputs, cards, navigation elements, and layout components
+
+  These components are reused across multiple pages of the application, ensuring a consistent user interface and reducing duplication of code.
+
+* **Team:**
+  - efinda, dnzita (Frontend)
+
+---
+
+### Implement Advanced Search Functionality with Filters, Sorting, and Pagination
 
 * **Justification:**
   Advanced search functionality improves usability by allowing users to efficiently locate relevant information within large datasets. Combining filtering, sorting, and pagination provides a scalable and user-friendly way to browse notifications while reducing unnecessary data transfer between the backend and frontend.
@@ -823,7 +928,27 @@ This section lists all selected modules for the project, including their type, p
 
 ---
 
-### Implement remote authentication with OAuth 2.0
+### Standard User Management and Authentication
+
+* **Justification:**
+  Standard user management provides the foundation for a collaborative application by allowing users to maintain their identity, personalize their profile, and interact with other members of the platform. The friendship system further encourages collaboration by helping users discover projects through their connections and request to join workspaces that match their interests.
+
+* **Implementation:**
+  The project implements a complete user management system with profile customization and social features.
+
+  * **Profile Management:** Users can update their personal information through a dedicated profile page.
+
+  * **Avatar Support:** Users may upload a custom avatar, while a default avatar is automatically assigned at signup.
+
+  * **Friendship System:** Users can send and manage friendship requests, maintain a friends list, and view the online status of their friends.
+
+  * **Social Discovery:** Each user profile displays the workspaces in which that user's friends are members, together with workspace descriptions, allowing users to discover projects and request to join them as collaborators or guests.
+
+* **Team:** efinda
+
+---
+
+### Implement Remote Authentication with OAuth 2.0
 
 * **Justification:**
   Implementing OAuth 2.0 allows users to authenticate using their existing accounts from popular providers (e.g., Google, GitHub), or in our case 42 API, improving user experience and security by leveraging trusted authentication systems.
@@ -840,6 +965,52 @@ This section lists all selected modules for the project, including their type, p
 
   * efinda (Frontend)
   * jbofengo (Backend)
+
+---
+
+### Advanced Permissions System
+
+* **Justification:**
+  An advanced permission system is essential for collaborative workspaces, ensuring that each user can only perform actions appropriate to their responsibilities. By assigning different roles, the application maintains organization, prevents unauthorized modifications, and supports effective team collaboration.
+
+* **Implementation:**
+  The project implements a role-based access control system within each workspace, defining different permissions and views according to the user's role.
+
+  * **Role Management:** Each workspace member is assigned one of three roles: **admin**, **member**, or **guest**.
+
+  * **Administrative Permissions:** Workspace admins can manage membership by inviting or removing users and are responsible for administering the workspace.
+
+  * **Role-Based Views and Actions:** The interface and available actions are dynamically adjusted according to the user's role, ensuring that only authorized operations are accessible.
+
+  * **Workspace Visibility:** Members and guests can view the list of workspace participants, promoting transparency and facilitating collaboration among team members.
+
+* **Team:**
+
+  * efinda, cgama (Backend)
+  * dnzita (Frontend)
+
+---
+
+### Organization System
+
+* **Justification:**
+  An organization system is fundamental to a collaborative task management platform, as it allows users to work together within shared spaces. By grouping members into workspaces, the application supports project coordination, task distribution, and collaborative development.
+
+* **Implementation:**
+  The project implements organizations through **workspaces**, which serve as collaborative environments for teams.
+
+  * **Workspace Management:** Users can create, update, and delete workspaces, each with its own name and description.
+
+  * **Membership Management:** Workspace administrators can invite users to join or remove existing members, enabling teams to evolve throughout the project's lifecycle.
+
+  * **Organization Views:** Users can browse available workspaces, view their descriptions and members, and, depending on their permissions, perform actions such as creating, viewing, or updating workspace information.
+
+  * **Collaboration:** Each workspace acts as an independent environment where members collaborate on tasks and other project-related activities.
+
+* **Team:**
+
+  * efinda, cgama (Backend)
+  * dnzita (Frontend)
 
 
 
