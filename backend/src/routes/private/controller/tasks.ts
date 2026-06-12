@@ -21,12 +21,14 @@ import {
   parseQueryString, parseQueryDate,
   parseQueryBool
 } from '../../../validations/utils';
+import { wsEmitter }    from '../../../ws/emitter';
+import { notify } from '../../../utils/notify';
 
 async function resolveTaskWorkspace(taskId: number)
 {
   const task = await prisma.task.findUnique({
     where: { id: taskId },
-    select: { title: true, column: { select: { workspaceId: true, name: true } } }
+    select: { title: true, column: { select: { id: true, workspaceId: true, name: true, workspace: { select: { name: true } } } }, assignments: { select: { userId: true } } }
   });
   if (!task)
     throw new ApiError(404, 'Task not found');
@@ -113,6 +115,20 @@ export async function updateTask(req: Request, res: Response, next: NextFunction
       return t;
     });
 
+    //--------NOTIFICATION----------
+
+    await notify(
+    {
+        userIds: task.assignments.map(a => a.userId),
+        message: `${req.user!.username} updated task "${task.title}" from column "${columnTask.column.name}"`,
+        type: NotificationType.taskUpdated,
+        relatedTaskId: taskId,
+        relatedWorkspaceId: workspaceId,
+        data: { taskTitle: task.title, columnName: columnTask.column.name, workspaceName: columnTask.column.workspace.name }
+    });
+
+    //------------------------------
+
     res.json({ success: true, data: task });
   } catch (err) { next(err); }
 }
@@ -136,6 +152,20 @@ export async function deleteTask(req: Request, res: Response, next: NextFunction
       await tx.task.delete({ where: { id: taskId } });
     });
 
+    //--------NOTIFICATION----------
+
+    await notify(
+    {
+        userIds: task.assignments.map(a => a.userId),
+        message: `${req.user!.username} deleted task "${task.title}" from column "${task.column.name}" in workspace "${task.column.workspace.name}"`,
+        type: NotificationType.taskDeleted,
+        relatedTaskId: taskId,
+        relatedWorkspaceId: workspaceId,
+        data: { taskTitle: task.title, columnName: task.column.name, workspaceName: task.column.workspace.name }
+    });
+
+    //-----------------------------
+  
     res.json({ success: true, message: 'Task deleted successfully' });
   } catch (err) { next(err); }
 }
@@ -177,13 +207,27 @@ export async function moveTask(req: Request, res: Response, next: NextFunction) 
           where: { id: taskId },
           data: { columnId: targetColumnId, orderInColumn: afterIndex + 1 },
           include: {
-              column: { select: { id: true, name: true } },
+              column: { select: { id: true, name: true, workspace: { select: { id: true, name: true } } } },
               assignments: { include: { user: { select: { id: true, username: true, avatarUrl: true } } } }
           }
       });
 
       return t;
     });
+
+    //--------NOTIFICATION----------
+
+    await notify(
+    {
+      userIds: task.assignments.map(a => a.userId),
+      message: `${req.user!.username} moved task "${task.title}" from column "${columnTask.column.name}" to column "${task.column.name}" in workspace "${task.column.workspace.name}"`,
+      type: NotificationType.taskAssignment,
+      relatedTaskId: taskId,
+      relatedWorkspaceId: workspaceId,
+      data: { taskTitle: task.title, columnId: task.column.id, columnName: task.column.name, workspaceName: task.column.workspace.name, oldColumnName: columnTask.column.name, oldColumnId: columnTask.column.id }
+    });
+
+    //-----------------------------
 
     res.json({ success: true, data: task });
   } catch (err) { next(err); }
@@ -244,6 +288,20 @@ export async function createAssignment(req: Request, res: Response, next: NextFu
       return a;
     });
 
+    //--------NOTIFICATION----------
+
+    await notify(
+    {
+        userIds: [userId],
+        message: `${req.user!.username} assigned you to task "${task.title}" from column "${task.column.name}" in workspace "${task.column.workspace.name}"`,
+        type: NotificationType.taskAssignment,
+        relatedTaskId: taskId,
+        relatedWorkspaceId: workspaceId,
+        data: { taskTitle: task.title, columnName: task.column.name, workspaceName: task.column.workspace.name }
+    });
+
+    //------------------------------
+
     res.status(201).json({ success: true, data: assignment });
   } catch (err) { next(err); }
 }
@@ -275,6 +333,20 @@ export async function deleteAssignment(req: Request, res: Response, next: NextFu
     await prisma.$transaction(async (tx) => {
       await tx.taskAssignment.delete({ where: { id: assignment.id } });
     });
+
+    //--------NOTIFICATION----------
+
+    await notify(
+    {
+        userIds: [userId],
+        message: `${req.user!.username} unassigned you from task "${task.title}" of column "${task.column.name}" in workspace "${task.column.workspace.name}"`,
+        type: NotificationType.taskAssignment,
+        relatedTaskId: taskId,
+        relatedWorkspaceId: workspaceId,
+        data: { taskTitle: task.title, columnName: task.column.name, workspaceName: task.column.workspace.name }
+    });
+
+    //-----------------------------
 
     res.json({ success: true, message: 'User unassigned successfully' });
   } catch (err) { next(err); }
@@ -316,6 +388,16 @@ export async function createChecklistItem(req: Request, res: Response, next: Nex
       data: { taskId, text }
     });
 
+    await notify(
+    {
+      userIds: columnTask.assignments.map(a => a.userId),
+      message: `${req.user!.username} added a checklist item on task "${columnTask.title}" in column "${columnTask.column.name}" in workspace "${columnTask.column.workspace.name}"`,
+      type: NotificationType.taskUpdated,
+      relatedTaskId: taskId,
+      relatedWorkspaceId: columnTask.column.workspaceId,
+      data: { taskTitle: columnTask.title, columnName: columnTask.column.name, workspaceName: columnTask.column.workspace.name }
+    });
+
     res.status(201).json({ success: true, data: item });
   } catch (err) { next(err); }
 }
@@ -349,7 +431,15 @@ export async function updateChecklistItem(req: Request, res: Response, next: Nex
       where: { id: itemId },
       data
     });
-
+    await notify(
+    {
+      userIds: columnTask.assignments.map(a => a.userId),
+      message: `${req.user!.username} updated a checklist item on task "${columnTask.title}" in column "${columnTask.column.name}" in workspace "${columnTask.column.workspace.name}"`,
+      type: NotificationType.taskUpdated,
+      relatedTaskId: taskId,
+      relatedWorkspaceId: columnTask.column.workspaceId,
+      data: { taskTitle: columnTask.title, columnName: columnTask.column.name, workspaceName: columnTask.column.workspace.name }
+    });
     res.json({ success: true, data: item });
   } catch (err) { next(err); }
 }
@@ -371,6 +461,16 @@ export async function deleteChecklistItem(req: Request, res: Response, next: Nex
       throw new ApiError(404, 'Checklist item not found');
 
     await prisma.checklistItem.delete({ where: { id: itemId } });
+
+    await notify(
+    {
+      userIds: columnTask.assignments.map(a => a.userId),
+      message: `${req.user!.username} deleted a checklist item on task "${columnTask.title}" in column "${columnTask.column.name}" in workspace "${columnTask.column.workspace.name}"`,
+      type: NotificationType.taskUpdated,
+      relatedTaskId: taskId,
+      relatedWorkspaceId: columnTask.column.workspaceId,
+      data: { taskTitle: columnTask.title, columnName: columnTask.column.name, workspaceName: columnTask.column.workspace.name }
+    });
 
     res.json({ success: true, message: 'Checklist item deleted' });
   } catch (err) { next(err); }
@@ -424,6 +524,15 @@ export async function attachLabel(req: Request, res: Response, next: NextFunctio
       include: { label: true }
     });
 
+    await notify(
+    {
+      userIds: columnTask.assignments.map(a => a.userId),
+      message: `${req.user!.username} attached label "${taskLabel.label.name}" to task "${columnTask.title}" in column "${columnTask.column.name}" in workspace "${columnTask.column.workspace.name}"`,
+      type: NotificationType.taskUpdated,
+      relatedTaskId: taskId,
+      relatedWorkspaceId: workspaceId,
+      data: { taskTitle: columnTask.title, labelId: taskLabel.label.id, columnName: columnTask.column.name, workspaceName: columnTask.column.workspace.name }
+    });
     res.status(201).json({ success: true, data: taskLabel });
   } catch (err) { next(err); }
 }
@@ -442,13 +551,23 @@ export async function detachLabel(req: Request, res: Response, next: NextFunctio
     const labelId = parseOrThrow(idSchema, 'LabelID', req.params.labelId);
 
     const existing = await prisma.taskLabel.findUnique({
-      where: { taskId_labelId: { taskId, labelId } }
+      where: { taskId_labelId: { taskId, labelId } },
+      include: { label: { select: { id: true, name: true } } }
     });
     if (!existing)
       throw new ApiError(404, 'Label not attached to this task');
 
     await prisma.taskLabel.delete({ where: { id: existing.id } });
 
+    await notify(
+    {
+      userIds: columnTask.assignments.map(a => a.userId),
+      message: `${req.user!.username} detached label "${existing.label.name}" from task "${columnTask.title}" in column "${columnTask.column.name}" in workspace "${columnTask.column.workspace.name}"`,
+      type: NotificationType.taskUpdated,
+      relatedTaskId: taskId,
+      relatedWorkspaceId: workspaceId,
+      data: { taskTitle: columnTask.title, labelId: existing.label.id, columnName: columnTask.column.name, workspaceName: columnTask.column.workspace.name }
+    });
     res.json({ success: true, message: 'Label detached successfully' });
   } catch (err) { next(err); }
 }
@@ -499,7 +618,7 @@ export async function createTaskComment(req: Request, res: Response, next: NextF
 
     const mentionedUsernames = parseMentions(content);
 
-    const comment = await prisma.$transaction(async (tx) => {
+    const { comment, mentionedUserIds } = await prisma.$transaction(async (tx) => {
       const c = await tx.comment.create({
         data: {
           taskId,
@@ -522,7 +641,7 @@ export async function createTaskComment(req: Request, res: Response, next: NextF
         });
       }
 
-      return c;
+      return ({ comment: c, mentionedUserIds });
     });
 
     const result = await prisma.comment.findUnique({
@@ -530,6 +649,49 @@ export async function createTaskComment(req: Request, res: Response, next: NextF
       include: { user: { select: { id: true, username: true, avatarUrl: true } } }
     });
 
+    //--------NOTIFICATION----------
+
+
+    // 1. Broadcast do novo comentário ao workspace (excepto o autor)
+    wsEmitter.commentNew( workspaceId, taskId, comment, req.user!.id );
+
+    // 2. Notificação persistida para cada utilizador mencionado
+    //    (excepto o próprio autor)
+
+    let alreadyNotifiedIds = new Set<number>([req.user!.id]); // Exclude author
+
+    await notify(
+    {
+      userIds: mentionedUserIds as number[],
+      message: `${req.user!.username} mentioned you in a comment on task "${task.title}" from column "${task.column.name}" in workspace "${task.column.workspace.name}"`,
+      type: NotificationType.mention,
+      relatedTaskId: taskId,
+      relatedWorkspaceId: workspaceId,
+      data: { commentId: comment.id, taskTitle: task.title, columnName: task.column.name, workspaceName: task.column.workspace.name }
+    },
+      alreadyNotifiedIds, // Exclude author
+      true // Add mentioned users to the exclusion set to avoid duplicate notifications
+    );
+    // 3. Notificação para assignees da task que receberam um comentário
+    //    (excepto o autor e já mencionados)
+
+    const assigneeUserIds = task.assignments.map(a => a.userId);
+
+    await notify(
+    {
+      userIds: assigneeUserIds,
+      message: `${req.user!.username} commented on task "${task.title}" from column "${task.column.name}" in workspace "${task.column.workspace.name}"`,
+      type: NotificationType.comment,
+      relatedTaskId: taskId,
+      relatedWorkspaceId: workspaceId,
+      data: { commentId: comment.id, taskTitle: task.title, columnName: task.column.name, workspaceName: task.column.workspace.name }
+    },
+      alreadyNotifiedIds, // Exclude author and already mentioned
+    );
+
+    //-----------------------------
+
     res.status(201).json({ success: true, data: result });
-  } catch (err) { next(err); }
+  }
+  catch (err) { next(err); }
 }

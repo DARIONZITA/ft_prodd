@@ -1,5 +1,5 @@
-import { Server, Socket }                       from 'socket.io';
-import { Server as HttpServer }    from 'http';
+import { Server, Socket }               from 'socket.io';
+import { Server as HttpServer }         from 'http';
 import { verifyToken }                  from '../utils/jwt';
 import { prisma }                       from '../lib/prisma';
 import { presenceStore }                from './store';

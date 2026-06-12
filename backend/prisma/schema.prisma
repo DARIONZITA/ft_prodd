@@ -19,6 +19,16 @@ enum NotificationType {
     workspace
     task
     mention
+    taskAssignment
+    taskUpdated
+    taskDeleted
+    workspaceInvite
+    friendRequest
+    friendRequestAccepted
+    friendRequestRejected
+    friendRemoved
+    comment
+    invite
 }
 
 enum FriendRequestStatus {

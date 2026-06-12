@@ -1,6 +1,7 @@
-import type { Server }                      from 'socket.io';
+import type { Server }                  from 'socket.io';
 import type { ServerToClientEvents,
-    ClientToServerEvents, SocketData    }   from './types';
+    ClientToServerEvents, SocketData,
+    NotificationPayload }               from './types';
 
 type IO = Server<ClientToServerEvents, ServerToClientEvents, Record<string, never>, SocketData>;
 
@@ -42,33 +43,41 @@ export const    wsEmitter = {
         _io.to(`workspace:${workspaceId}`).except(`user:${authorId}`).emit('comment:new', { taskId, comment } );
     },
 
+    commentUpdated( workspaceId : number, taskId : number, comment : unknown )
+    {
+        _io.to(`workspace:${workspaceId}`).emit('comment:updated', { taskId, comment } );
+    },
+
     commentDeleted( workspaceId : number, taskId : number, commentId : number )
     {
         _io.to(`workspace:${workspaceId}`).emit('comment:deleted', { taskId, commentId })
     },
 
-    //-------------------------------------------------Tasks----------------------------------------------------------------------------
 
-    taskCreated( workspaceId : number, task : unknown )
+    //------------------------------------------------Notificações--------------------------------------------------------------------------
+
+    notification( userId : number, payload : NotificationPayload )
     {
-        _io.to(`workspace:${workspaceId}`).emit('task:created', { workspaceId, task });
+        _io.to(`user:${userId}`).emit('notification', { payload });
     },
 
-    taskUpdated( workspaceId : number, task : unknown )
+    notificationRead(userId: number, notificationId: number)
     {
-        _io.to(`workspace:${workspaceId}`).emit('task:updated', { workspaceId, task });
+        _io.to(`user:${userId}`).emit('notification:read', { notificationId });
     },
 
-    taskDeleted( workspaceId : number, taskId : number )
+    notificationReadAll(userId: number) //Não sei se esta rota é necessária, mas fica aqui para o caso de querer implementar um "Marcar todas como lidas" no futuro
     {
-        _io.to(`workspace:${workspaceId}`).emit('task:deleted', { workspaceId, taskId });
+        _io.to(`user:${userId}`).emit('notification:read_all', {});
     },
 
-    //-------------------------------------------------Notification----------------------------------------------------------------------------
-
-    notification( userId : number, notification : unknown )
+    notificationDeleted(userId: number, notificationId: number)
     {
-        // user:${userId} é a room privada — só os sockets deste user a recebem
-        _io.to(`user:${userId}`).emit('notification', { notification });
+        _io.to(`user:${userId}`).emit('notification:deleted', { notificationId });
+    },
+
+    notificationCleared(userId: number)
+    {
+        _io.to(`user:${userId}`).emit('notification:cleared', {});
     },
 };

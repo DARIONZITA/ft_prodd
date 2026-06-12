@@ -4,20 +4,37 @@
 
 export interface    ServerToClientEvents
 {
-    //É enviado à um cliente quando o Socket é authenticado
-    'authenticated'     :   (data : { userId : number; workspaceIds : number[] }) => void;
+    'authenticated'         :   (data : { userId : number; workspaceIds : number[] }) => void;
+    'presence:sync'         :   (data : | { type : 'workspace' ; workspaceId : number; onlineUserIds : number[] } | { type: 'friends'; onlineUserIds : number[] } ) => void;
+    'presence:online'       :   (data : { userId : number; username : string; avatarUrl : string; workspaceId? : number}) => void;
+    'presence:offline'      :   (data : { userId : number; username : string; workspaceId? : number}) => void;
+    'comment:new'           :   (data : { taskId : number; comment : unknown }) => void;
+    'comment:updated'       :   (data : { taskId : number; comment : unknown }) => void;
+    'comment:deleted'       :   (data : { taskId : number; commentId : number}) => void;
+    'notification'          :   (data : { payload : NotificationPayload }) => void;
+    'notification:read'     :   (data: { notificationId: number }) => void;
+    'notification:read_all' :   (data: Record<string, never>) => void;
+    'notification:deleted'  :   (data: { notificationId: number }) => void;
+    'notification:cleared'  :   (data: Record<string, never>) => void;
+    'error'                 :   (data : { message : string }) => void;
+};
 
-    //É enviado à um cliente quando o Socket se connecta, e no caso lista todos os seus amigos e membros do mesmo workspace que estão online
-    'presence:sync'     :   (data : | { type : 'workspace' ; workspaceId : number; onlineUserIds : number[] } | { type: 'friends'; onlineUserIds : number[] } ) => void;
-    'presence:online'   :   (data : { userId : number; username : string; avatarUrl : string; workspaceId? : number}) => void;
-    'presence:offline'  :   (data : { userId : number; username : string; workspaceId? : number}) => void;
-    'comment:new'       :   (data : { taskId : number; comment : unknown }) => void;
-    'comment:deleted'   :   (data : { taskId : number; commentId : number}) => void;
-    'task:created'      :   (data : { workspaceId : number; task : unknown }) => void;
-    'task:updated'      :   (data : { workspaceId : number; task : unknown }) => void;
-    'task:deleted'      :   (data : { workspaceId : number; taskId : number }) => void;
-    'notification'      :   (data : { notification : unknown }) => void;
-    'error'             :   (data : { message : string }) => void;
+export interface   NotificationPayload
+{
+    type        :   | 'mention'
+                    | 'invite'
+                    | 'comment'
+                    | 'taskAssignment'
+                    | 'taskUpdated'
+                    | 'taskDeleted'
+                    | 'workspaceInvite'
+                    | 'friendRequest'
+                    | 'friendRequestAccepted'
+                    | 'friendRequestRejected'
+                    | 'friendRemoved';
+    //message?     :   string;
+    data?       :   unknown; // payload específico do tipo (ex: o objecto FriendRequest)
+    persisted?  :   unknown; // o registo Notification da DB, quando existe
 };
 
 export interface    ClientToServerEvents
