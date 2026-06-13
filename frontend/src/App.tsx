@@ -6,6 +6,8 @@ import LandingPage                  from './pages/LandingPage'
 //import ProtectedRoute               from './components/ProtectedRoute'
 import OAuthCallbackPage            from "./pages/OauthCallbackPage"
 import DashboardPagePlaceholder     from './pages/DashboardPagePlaceholder'
+import PrivacyPolicy                from './pages/legal/PrivacyPolicy'
+import TermsOfService               from './pages/legal/TermsOfService'
 
 function App() {
   return (
@@ -14,6 +16,8 @@ function App() {
         <Route path="/" element={<LandingPage />} />
         <Route path="/signin" element={<SignInPage />} />
         <Route path="/signup" element={<SignUpPage />} />
+        <Route path="/privacy" element={<PrivacyPolicy />} />
+        <Route path="/terms" element={<TermsOfService />} />
         <Route path="/loading" element={<LoadingPage />} />
         <Route path="/oauth/callback" element={<OAuthCallbackPage />} />
         <Route
