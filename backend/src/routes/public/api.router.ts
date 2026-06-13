@@ -1,10 +1,11 @@
 import { Router }                               from 'express';
 import { apiKeyAuth }                           from '../../middleware/apiKey';
+import workspaceContext                         from '../../middleware/workspaceContext';
 import { readApiRateLimit, writeApiRateLimit }  from '../../middleware/rateLimit';
+import { requireWorkspaceAdmin }                from '../../middleware/rbac';
 import { createWorkspace, deleteWorkspace,
     getWorkspaceDetails, listUserWorkspaces,
     updateWorkspace }                           from '../private/controller/workspaces';
-
 const   publicAPIRouter = Router( );
 
 publicAPIRouter.use( apiKeyAuth );
@@ -40,7 +41,7 @@ publicAPIRouter.get('/workspaces', readApiRateLimit, listUserWorkspaces);
 
 /**
  * @swagger
- * /public/workspaces/{id}:
+ * /public/workspaces/{workspaceId}:
  *   get:
  *      summary: Get a public workspace details.
  *      tags: [Public API]
@@ -48,7 +49,7 @@ publicAPIRouter.get('/workspaces', readApiRateLimit, listUserWorkspaces);
  *          - ApiKeyAuth: []
  *      parameters:
  *          - in: path
- *            name: id
+ *            name: workspaceId
  *            required: true
  *            schema: { type: integer }
  *      responses:
@@ -64,7 +65,7 @@ publicAPIRouter.get('/workspaces', readApiRateLimit, listUserWorkspaces);
  *              description: Too many requests - Rate limit exceeded
 */
 
-publicAPIRouter.get('/workspaces/:id', readApiRateLimit, getWorkspaceDetails);
+publicAPIRouter.get('/workspaces/:workspaceId', readApiRateLimit, workspaceContext, getWorkspaceDetails);
 
 
 /**
@@ -101,7 +102,7 @@ publicAPIRouter.post('/workspaces', writeApiRateLimit, createWorkspace);
 
 /**
  * @swagger
- * /public/workspaces/{id}:
+ * /public/workspaces/{workspaceId}:
  *   put:
  *     summary: Update public workspace details.
  *     tags: [Public API]
@@ -109,7 +110,7 @@ publicAPIRouter.post('/workspaces', writeApiRateLimit, createWorkspace);
  *       - ApiKeyAuth: []
  *     parameters:
  *       - in: path
- *         name: id
+ *         name: workspaceId
  *         required: true
  *         schema: { type: integer }
  *     requestBody:
@@ -134,12 +135,12 @@ publicAPIRouter.post('/workspaces', writeApiRateLimit, createWorkspace);
  *         description: Too many requests - Rate limit exceeded
  */
 
-publicAPIRouter.put('/workspaces/:id', writeApiRateLimit, updateWorkspace);
+publicAPIRouter.put('/workspaces/:workspaceId', writeApiRateLimit, workspaceContext, requireWorkspaceAdmin, updateWorkspace);
 
 
 /**
  * @swagger
- * /public/workspaces/{id}:
+ * /public/workspaces/{workspaceId}:
  *   delete:
  *     summary: Delete a public workspace.
  *     tags: [Public API]
@@ -147,7 +148,7 @@ publicAPIRouter.put('/workspaces/:id', writeApiRateLimit, updateWorkspace);
  *       - ApiKeyAuth: []
  *     parameters:
  *       - in: path
- *         name: id
+ *         name: workspaceId
  *         required: true
  *         schema: { type: integer }
  *     responses:
@@ -163,6 +164,6 @@ publicAPIRouter.put('/workspaces/:id', writeApiRateLimit, updateWorkspace);
  *         description: Too many requests - Rate limit exceeded
  */
 
-publicAPIRouter.delete('/workspaces/:id', writeApiRateLimit, deleteWorkspace);
+publicAPIRouter.delete('/workspaces/:workspaceId', writeApiRateLimit, workspaceContext, requireWorkspaceAdmin, deleteWorkspace);
 
 export default  publicAPIRouter;
