@@ -49,6 +49,10 @@ coverage/
 *.sqlite
 *.sqlite3
 
+# Certificates (local development)
+config/certs/*.key
+config/certs/*.crt
+
 # Temporary files
 tmp/
 temp/
@@ -63,3 +67,5 @@ config/ssl/*.pem
 *.gz
 *.zip
 *.tar
+config/certs/*.key
+config/certs/*.crt
