@@ -1,13 +1,9 @@
-import { Request, Response, NextFunction }	from 'express';
-import { Prisma, NotificationType }         from '@prisma/client';
-import { prisma }                           from '../../../lib/prisma';
-import { ApiError }                         from '../../../utils/ApiError';
-import {
-    parseOrThrow,
-    parseQueryEnum,
-    idSchema
-} from '../../../validations/utils';
-import { FriendRequestStatus }  from '../../../types/constants';
+import { Request, Response, NextFunction }					from 'express';
+import { prisma }                           				from '../../../lib/prisma';
+import { ApiError }                         				from '../../../utils/ApiError';
+import { FriendRequestStatuses }							from '../../../types/constants';
+import { parseOrThrow, parseQueryEnum, idSchema }			from '../../../validations/utils';
+import { Prisma, NotificationType, FriendRequestStatus }	from '@prisma/client';
 
 export async function requireFriendship( userId: number, targetUserId: number, message?: string, tx?: Prisma.TransactionClient ): Promise<void>
 {
@@ -29,7 +25,7 @@ export async function	listUserFriends(req: Request, res: Response, next: NextFun
 {
     try {
         const id = parseOrThrow(idSchema, 'UserID', req.params.id);
-        const status = parseQueryEnum('status', req.query.status, FriendRequestStatus, { default: 'accepted' });
+        const status = parseQueryEnum('status', req.query.status, FriendRequestStatuses, { default: 'accepted' });
         const type = parseQueryEnum('type', req.query.type, ['incoming', 'outgoing'] as const, { isOptional: true });
 
         const user = await prisma.user.findUnique({ where: { id } });
@@ -164,9 +160,9 @@ export async function   updateFriendRequest(req: Request, res: Response, next: N
 	try {
 		const id = req.user!.id;
 		const friendId = parseOrThrow(idSchema, 'FriendID', req.params.friendId);
-		const status = parseQueryEnum('status', req.query.status, ['accepted', 'rejected']);
+		const status = parseQueryEnum('status', req.query.status, ['accepted', 'rejected'])!;
 
-		await prisma.$transaction(async (tx) => {
+		const result = await prisma.$transaction(async (tx) => {
 			const friendRequest = await tx.friendRequest.findUnique({
 				where: { senderId_receiverId: { senderId: friendId, receiverId: id } }
 			});
@@ -176,31 +172,44 @@ export async function   updateFriendRequest(req: Request, res: Response, next: N
 			if (friendRequest.status !== 'pending')
 				throw new ApiError(409, `Cannot update a request that is already ${friendRequest.status}`);
 
-			const updatedRequest = await tx.friendRequest.update({
-				where: { id: friendRequest.id },
-				data: { status },
-				include: {
-					sender: { select: { id: true, username: true, email: true, avatarUrl: true } },
-					receiver: { select: { id: true, username: true, email: true, avatarUrl: true } }
-				}
-			});
+			if (status === 'accepted') {
+				const updatedRequest = await tx.friendRequest.update({
+					where: { id: friendRequest.id },
+					data: { status: FriendRequestStatus.accepted },
+					include: {
+						sender: { select: { id: true, username: true, email: true, avatarUrl: true } },
+						receiver: { select: { id: true, username: true, email: true, avatarUrl: true } }
+					}
+				});
 
-			await tx.notification.create({
-				data: {
-					userId: friendId,
-					type: NotificationType.friendship,
-					message: status === 'accepted'
-						? `${req.user!.username} accepted your friend request`
-						: `${req.user!.username} rejected your friend request`
-				}
-			});
+				await tx.notification.create({
+					data: {
+						userId: friendId,
+						type: NotificationType.friendship,
+						message: `${req.user!.username} accepted your friend request`
+					}
+				});
 
-			res.json({
-				success: true,
-				message: `Friend request ${status}`,
-				data: updatedRequest
-			});
+				return { accepted: true, data: updatedRequest };
+			} else {
+				await tx.friendRequest.delete({ where: { id: friendRequest.id } });
+
+				await tx.notification.create({
+					data: {
+						userId: friendId,
+						type: NotificationType.friendship,
+						message: `${req.user!.username} rejected your friend request`
+					}
+				});
+
+				return { accepted: false };
+			}
 		});
+
+		if (result.accepted)
+			res.json({ success: true, message: 'Friend request accepted', data: result.data });
+		else
+			res.json({ success: true, message: 'Friend request rejected' });
 	}
     catch (err) { next(err); }
 }

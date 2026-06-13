@@ -28,7 +28,7 @@ const friendsRouter = Router();
  *       404:
  *         description: User not found
  */
-router.post('/:friendId', sendFriendRequest);
+friendsRouter.post('/:friendId', sendFriendRequest);
 
 /**
  * @swagger
@@ -54,7 +54,7 @@ router.post('/:friendId', sendFriendRequest);
  *       404:
  *         description: Request not found
  */
-router.patch('/:friendId', updateFriendRequest);
+friendsRouter.patch('/:friendId', updateFriendRequest);
 
 /**
  * @swagger
@@ -77,6 +77,6 @@ router.patch('/:friendId', updateFriendRequest);
  *       404:
  *         description: Friend not found
  */
-router.delete('/:friendId', removeFriend);
+friendsRouter.delete('/:friendId', removeFriend);
 
-export default router;
+export default friendsRouter;
