@@ -1,157 +1,15 @@
-import type { Request, Response, NextFunction } from 'express';
-import { prisma }                               from '../../../lib/prisma';
-import { ApiError }                             from '../../../utils/ApiError';
-import { getWorkspaceRole }                     from '../../../middleware/rbac';
-import { WorkspaceRole }                        from '../../../types/constants';
-import { Priority }                             from '../../../types/constants';
-import { requireFriendship }                    from './friends';
-import {
-    idSchema, parseOrThrow,
-    parseQueryEnum, parseQueryInt,
-    parseQueryString, parseQueryBool
-} from '../../../validations/utils';
-
-export async function createWorkspace(req: Request, res: Response, next: NextFunction)
-{
-    try {
-        const name = parseQueryString('name', req.body.name, { isOptional: false, minLength: 1, maxLength: 255 })!;
-        const description = parseQueryString('description', req.body.description, { default: '', isOptional: true, minLength: 1, maxLength: 1000 })!;
-
-        const newWorkspace = await prisma.$transaction(async (tx) => {
-            
-            const workspace = await tx.workspace.create({
-                data: {
-                    name,
-                    description
-                }
-            });
-
-            await tx.workspaceMember.create({
-                data: {
-                    workspaceId: workspace.id,
-                    userId: req.user!.id,
-                    role: 'admin'
-                }
-            });
-
-            return workspace;
-        });
-
-        res.status(201).json({
-            success: true,
-            message: 'Workspace created successfully',
-            data: newWorkspace
-        });
-    }
-    catch (err) { next(err); }
-}
-
-export async function   listUserWorkspaces(req: Request, res: Response, next: NextFunction)
-{
-	try {
-        const targetUserId = req.params.id ? parseOrThrow(idSchema, 'UserID', req.params.id) : req.user!.id;
-
-		const memberships = await prisma.$transaction(async (tx) => {
-			if (targetUserId !== req.user!.id)
-				await requireFriendship(req.user!.id, targetUserId, "You must be friends to view this user's workspaces", tx);
-
-			return await tx.workspaceMember.findMany({
-				where: { userId: targetUserId },
-				include: {
-					workspace: {
-						select: {
-							id: true,
-							name: true,
-							description: true,
-							createdAt: true,
-							updatedAt: true,
-							_count: { select: { members: true } }
-						}
-					}
-				},
-				orderBy: { workspaceId: 'asc' }
-			});
-		});
-
-		res.json({
-			success: true,
-			data: memberships.map((membership) => ({
-				id: membership.workspace.id,
-				name: membership.workspace.name,
-				description: membership.workspace.description,
-				createdAt: membership.workspace.createdAt,
-				updatedAt: membership.workspace.updatedAt,
-				role: membership.role,
-				memberCount: membership.workspace._count.members
-			}))
-		});
-	}
-    catch (err) { next(err); }
-}
-
-export async function   updateWorkspace(req: Request, res: Response, next: NextFunction)
-{
-    try {
-        const id = parseOrThrow(idSchema, 'UserID', req.params.id);
-        const name = parseQueryString('name', req.body.name, { isOptional: true, minLength: 1, maxLength: 255 });
-        const description = parseQueryString('description', req.body.description, { isOptional: true, minLength: 1, maxLength: 1000 });
-
-        if (name === undefined && description === undefined)
-            throw new ApiError(400, 'At least one field must be provided');
-
-        const updatedWorkspace = await prisma.$transaction(async (tx) => {
-            const workspace = await tx.workspace.update({
-                where: { id },
-                data: {
-                    ...(name !== undefined && { name }),
-                    ...(description !== undefined && { description })
-                }
-            });
-
-            return workspace;
-        });
-
-        res.json({
-            success: true,
-            message: 'Workspace updated successfully',
-            data: updatedWorkspace
-        });
-    }
-    catch (err) { next(err); }
-}
-
-export async function   deleteWorkspace(req: Request, res: Response, next: NextFunction)
-{
-    try {
-        const id = parseOrThrow(idSchema, 'UserID', req.params.id);
-
-        const workspace = await prisma.workspace.findUnique({ where: { id } });
-        if (!workspace)
-            throw new ApiError(404, 'Workspace not found');
-
-        await prisma.$transaction(async (tx) => {
-            
-            await tx.workspaceMember.deleteMany({ where: { workspaceId: id } });
-
-            await tx.workspace.delete({ where: { id } });
-        });
-
-        res.json({
-            success: true,
-            message: 'Workspace deleted successfully'
-        });
-    }
-    catch (err) { next(err); }
-}
+import type { Request, Response, NextFunction }     from 'express';
+import { NotificationType }                         from '@prisma/client';
+import { prisma }                                   from '../../../lib/prisma';
+import { ApiError }                                 from '../../../utils/ApiError';
+import { requireFriendship }                        from './friends';
+import { idSchema, parseOrThrow, parseQueryString } from '../../../validations/utils';
 
 export async function   getWorkspaceDetails(req: Request, res: Response, next: NextFunction)
 {
     try {
-        const id = parseOrThrow(idSchema, 'UserID', req.params.id);
-        const requesterRole = await getWorkspaceRole(id, req.user!.id);
-
         const workspace = await prisma.workspace.findUnique({
-            where: { id },
+            where: { id: req.workspace!.id },
             include: {
                 members: {
                     include: {
@@ -187,7 +45,7 @@ export async function   getWorkspaceDetails(req: Request, res: Response, next: N
             description: workspace.description,
             createdAt: workspace.createdAt,
             updatedAt: workspace.updatedAt,
-            role: requesterRole,
+            role: req.workspace!.role,
             taskCount: totalTaskCount,
             members: workspace.members
         };
@@ -197,250 +55,212 @@ export async function   getWorkspaceDetails(req: Request, res: Response, next: N
     catch (err) { next(err); }
 }
 
-export async function   createWorkspaceMember(req: Request, res: Response, next: NextFunction)
+export async function   getWorkspaceDashboard(req: Request, res: Response, next: NextFunction)
 {
     try {
-        const id = parseOrThrow(idSchema, 'WorkspaceID', req.params.id);
-        const userId = parseOrThrow(idSchema, 'UserID', req.body.userId);
-        const role = parseQueryEnum('role', req.body.role, WorkspaceRole, { default: WorkspaceRole[1], isOptional: true })!;
-
-        const targetUser = await prisma.user.findUnique({ where: { id: userId } });
-        if (!targetUser) {
-            throw new ApiError(404, 'User not found');
-        }
-
-        const existingMembership = await prisma.workspaceMember.findFirst({
-            where: { workspaceId: id, userId }
-        });
-        if (existingMembership) {
-            throw new ApiError(400, 'User is already a member of this workspace');
-        }
-
-        const newMembership = await prisma.$transaction(async (tx) => {
-            const member = await tx.workspaceMember.create({
-                data: {
-                    workspaceId: id,
-                    userId,
-                    role
-                },
-                include: {
-                    user: {
-                        select: {
-                            id: true,
-                            username: true,
-                            email: true,
-                            avatarUrl: true
+        const workspace = await prisma.workspace.findUnique({
+            where: { id: req.workspace!.id },
+            include: {
+                _count: { select: { members: true } },
+                columns: {
+                    orderBy: { order: 'asc' },
+                    include: {
+                        tasks: {
+                            orderBy: { orderInColumn: 'asc' },
+                            include: {
+                                taskLabels: { include: { label: { select: { name: true } } } },
+                                assignments: { include: { user: { select: { username: true } } } }
+                            }
                         }
                     }
                 }
+            }
+        });
+
+        if (!workspace)
+            throw new ApiError(404, 'Workspace not found');
+
+        const data = {
+            workspace: {
+                id: workspace.id,
+                name: workspace.name,
+                description: workspace.description,
+                createdAt: workspace.createdAt
+            },
+            totalMembers: workspace._count.members,
+            columns: workspace.columns.map(col => ({
+                id: col.id,
+                name: col.name,
+                order: col.order,
+                tasks: col.tasks.map(task => ({
+                    id: task.id,
+                    title: task.title,
+                    priority: task.priority,
+                    labels: task.taskLabels.map(tl => tl.label.name),
+                    assignments: task.assignments.map(a => a.user.username)
+                }))
+            }))
+        };
+
+        res.json({ success: true, data });
+    }
+    catch (err) { next(err); }
+}
+
+export async function createWorkspace(req: Request, res: Response, next: NextFunction)
+{
+    try {
+        const name = parseQueryString('createWorkspace() name', req.body.name, { isOptional: false, minLength: 1, maxLength: 255 })!;
+        const description = parseQueryString('createWorkspace() description', req.body.description, { default: '', isOptional: true, minLength: 1, maxLength: 1000 })!;
+
+        const newWorkspace = await prisma.$transaction(async (tx) => {
+            
+            const workspace = await tx.workspace.create({
+                data: {
+                    name,
+                    description
+                }
             });
 
-            await tx.workspace.update({
-                where: { id },
-                data: { updatedAt: new Date() }
+            await tx.workspaceMember.create({
+                data: {
+                    workspaceId: workspace.id,
+                    userId: req.user!.id,
+                    role: 'admin'
+                }
             });
 
-            return member;
+            return workspace;
         });
 
         res.status(201).json({
             success: true,
-            message: 'Member added successfully',
-            data: newMembership
+            message: 'Workspace created successfully',
+            data: newWorkspace
         });
     }
     catch (err) { next(err); }
 }
 
-export async function listWorkspaceMembers(req: Request, res: Response, next: NextFunction) {
-    try {
-        const id = parseOrThrow(idSchema, 'UserID', req.params.id);
-
-        const members = await prisma.workspaceMember.findMany({
-            where: { workspaceId: id },
-            include: {
-                user: {
-                    select: {
-                        id: true,
-                        username: true,
-                        email: true,
-                        avatarUrl: true
-                    }
-                }
-            },
-            orderBy: [{ role: 'asc' }, { userId: 'asc' }]
-        });
-
-        res.json({ success: true, data: members });
-    }
-    catch (err) { next(err); }
-}
-
-export async function   getWorkspaceMember(req: Request, res: Response, next: NextFunction)
+export async function   updateWorkspace(req: Request, res: Response, next: NextFunction)
 {
     try {
-        const id = parseOrThrow(idSchema, 'WorkspaceID', req.params.id);
-        const userId = parseOrThrow(idSchema, 'UserID', req.params.userId);
-        const requesterRole = await getWorkspaceRole(id, req.user!.id);
+        const name = parseQueryString('updateWorkspace() name', req.body.name, { isOptional: true, minLength: 1, maxLength: 255 });
+        const description = parseQueryString('updateWorkspace() description', req.body.description, { isOptional: true, minLength: 1, maxLength: 1000 });
 
-        if (requesterRole === 'guest' && req.user!.id !== userId)
-            throw new ApiError(403, 'Guests can only view their own profile');
+        if (name === undefined && description === undefined)
+            throw new ApiError(400, 'At least one field must be provided');
 
-        const member = await prisma.workspaceMember.findFirst({
-            where: { workspaceId: id, userId },
-            include: {
-                user: {
-                    select: {
-                        id: true,
-                        username: true,
-                        email: true,
-                        avatarUrl: true
-                    }
+        const updatedWorkspace = await prisma.$transaction(async (tx) => {
+            const workspace = await tx.workspace.update({
+                where: { id: req.workspace!.id },
+                data: {
+                    ...(name !== undefined && { name }),
+                    ...(description !== undefined && { description })
                 }
-            }
-        });
+            });
 
-        if (!member)
-            throw new ApiError(404, 'Member not found in workspace');
+            const changes: string[] = [];
+            if (name !== undefined) changes.push(`name changed to "${name}"`);
+            if (description !== undefined) changes.push(`description changed to "${description}"`);
 
-        res.json({ success: true, data: member });
-    }
-    catch (err) { next(err); }
-}
+            const members = await tx.workspaceMember.findMany({
+                where: { workspaceId: req.workspace!.id, userId: { not: req.user!.id } },
+                select: { userId: true }
+            });
 
-export async function   updateWorkspaceMemberRole(req: Request, res: Response, next: NextFunction)
-{
-    try {
-        const id = parseOrThrow(idSchema, 'WorkspaceID', req.params.id);
-        const userId = parseOrThrow(idSchema, 'UserID', req.params.userId);
-        const role = parseQueryEnum('role', req.body.role, WorkspaceRole, { isOptional: false });
-
-        const targetMembership = await prisma.workspaceMember.findFirst({
-            where: { workspaceId: id, userId }
-        });
-
-        if (!targetMembership)
-            throw new ApiError(404, 'Member not found in workspace');
-
-        const updatedMember = await prisma.$transaction(async (tx) => {
-            if (targetMembership.role === 'admin' && role !== 'admin') {
-                const adminCount = await tx.workspaceMember.count({
-                    where: { workspaceId: id, role: 'admin' }
+            if (members.length > 0) {
+                await tx.notification.createMany({
+                    data: members.map(m => ({
+                        userId: m.userId,
+                        type: NotificationType.workspace,
+                        message: `Workspace "${workspace.name}" updated: ${changes.join(', ')}`
+                    }))
                 });
-
-                if (adminCount <= 1)
-                    throw new ApiError(400, 'It is not possible to remove the last admin from the workspace.');
             }
 
-            const member = await tx.workspaceMember.update({
-                where: { id: targetMembership.id },
-                data: { role },
-                include: {
-                    user: {
-                        select: {
-                            id: true,
-                            username: true,
-                            email: true,
-                            avatarUrl: true
-                        }
-                    }
-                }
-            });
-
-            await tx.workspace.update({
-                where: { id },
-                data: { updatedAt: new Date() }
-            });
-
-            return member;
+            return workspace;
         });
 
-        res.json({ success: true, data: updatedMember });
+        res.json({
+            success: true,
+            message: 'Workspace updated successfully',
+            data: updatedWorkspace
+        });
     }
-    catch (err) { next(err);}
+    catch (err) { next(err); }
 }
 
-export async function deleteWorkspaceMember(req: Request, res: Response, next: NextFunction)
+export async function   deleteWorkspace(req: Request, res: Response, next: NextFunction)
 {
     try {
-        const id = parseOrThrow(idSchema, 'WorkspaceID', req.params.id);
-        const userId = parseOrThrow(idSchema, 'UserID', req.params.userId);
-
-        const targetMembership = await prisma.workspaceMember.findFirst({
-            where: { workspaceId: id, userId }
-        });
-
-        if (!targetMembership)
-            throw new ApiError(404, 'Member not found in workspace');
-
         await prisma.$transaction(async (tx) => {
-            if (targetMembership.role === 'admin') {
-                const adminCount = await tx.workspaceMember.count({
-                    where: { workspaceId: id, role: 'admin' }
-                });
+            const members = await tx.workspaceMember.findMany({
+                where: { workspaceId: req.workspace!.id },
+                select: { userId: true }
+            });
 
-                if (adminCount <= 1)
-                    throw new ApiError(400, 'It is not possible to remove the last admin from the workspace.');
+            if (members.length > 0) {
+                await tx.notification.createMany({
+                    data: members.map(m => ({
+                        userId: m.userId,
+                        type: NotificationType.workspace,
+                        message: `Workspace "${req.workspace!.name}" has been deleted by ${req.user!.username}`
+                    }))
+                });
             }
 
-            await tx.workspaceMember.delete({
-                where: { id: targetMembership.id }
-            });
-
-            await tx.workspace.update({
-                where: { id },
-                data: { updatedAt: new Date() }
-            });
+            await tx.workspaceMember.deleteMany({ where: { workspaceId: req.workspace!.id } });
+            await tx.workspace.delete({ where: { id: req.workspace!.id } });
         });
 
-        res.json({ success: true, message: 'Member successfully removed.' });
+        res.json({
+            success: true,
+            message: 'Workspace deleted successfully'
+        });
     }
     catch (err) { next(err); }
 }
 
-export async function listWorkspaceColumns(req: Request, res: Response, next: NextFunction)
+export async function   listUserWorkspaces(req: Request, res: Response, next: NextFunction)
 {
-  try {
-    const workspaceId = parseOrThrow(idSchema, 'WorkspaceID', req.params.id);
+	try {
+        const targetUserId = req.params.id ? parseOrThrow(idSchema, 'UserID', req.params.id) : req.user!.id;
 
-    const columns = await prisma.column.findMany({
-      where: { workspaceId },
-      include: {
-        _count: { select: { tasks: true } }
-      },
-      orderBy: { order: 'asc' }
-    });
+		const memberships = await prisma.$transaction(async (tx) => {
+			if (targetUserId !== req.user!.id)
+				await requireFriendship(req.user!.id, targetUserId, "You must be friends to view this user's workspaces", tx);
 
-    res.json({ success: true, data: columns });
-  } catch (err) { next(err); }
-}
+			return await tx.workspaceMember.findMany({
+				where: { userId: targetUserId },
+				include: {
+					workspace: {
+						select: {
+							id: true,
+							name: true,
+							description: true,
+							createdAt: true,
+							updatedAt: true,
+							_count: { select: { members: true } }
+						}
+					}
+				},
+				orderBy: { workspaceId: 'asc' }
+			});
+		});
 
-export async function listWorkspaceTasks(req: Request, res: Response, next: NextFunction)
-{
-  try {
-    const workspaceId = parseOrThrow(idSchema, 'WorkspaceID', req.params.id);
-    const columnId = parseQueryInt('columnId', req.query.columnId, { isOptional: true, min: 1 });
-    const priority = parseQueryEnum('priority', req.query.priority, Priority, { isOptional: true });
-    const assigneeId = parseQueryInt('assignee', req.query.assignee, { isOptional: true, min: 1 });
-    const isDone = parseQueryBool('isDone', req.query.isDone, { isOptional: true });
-
-    const where: any = { column: { workspaceId } };
-    if (columnId !== undefined) where.columnId = columnId;
-    if (priority !== undefined) where.priority = priority;
-    if (isDone !== undefined) where.isDone = isDone;
-    if (assigneeId !== undefined) {
-      where.assignments = { some: { userId: assigneeId } };
-    }
-
-    const tasks = await prisma.task.findMany({
-      where,
-      include: {
-        assignments: { include: { user: { select: { id: true, username: true, avatarUrl: true } } } },
-        column: { select: { id: true, name: true } }
-      },
-      orderBy: [{ columnId: 'asc' }, { orderInColumn: 'asc' }]
-    });
-
-    res.json({ success: true, data: tasks });
-  } catch (err) { next(err); }
+        res.json({
+			success: true,
+			data: memberships.map((membership) => ({
+				id: membership.workspace.id,
+				name: membership.workspace.name,
+				description: membership.workspace.description,
+				createdAt: membership.workspace.createdAt,
+				updatedAt: membership.workspace.updatedAt,
+				role: membership.role,
+				memberCount: membership.workspace._count.members
+			}))
+		});
+	}
+    catch (err) { next(err); }
 }

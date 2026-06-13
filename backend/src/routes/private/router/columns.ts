@@ -5,47 +5,47 @@ import {
 	requireWorkspaceMember
 } from '../../../middleware/rbac';
 import {
-  listColumnTasks,
-  createColumnTask,
-  reorderColumnTasks
+	updateColumn, deleteColumn,
+	reorderColumns, listColumns,
+	createColumn
 } from '../controller/columns';
 
 const columnsRouter = Router({ mergeParams: true });
 
 /**
  * @swagger
- * /columns/{id}/tasks:
+ * /workspaces/{workspaceId}/columns:
  *   get:
- *     summary: List tasks in a column (ordered)
- *     tags: [Tasks]
+ *     summary: List workspace columns (ordered by position)
+ *     tags: [Columns]
  *     security:
  *       - BearerAuth: []
  *     parameters:
  *       - in: path
- *         name: id
+ *         name: workspaceId
  *         required: true
  *         schema: { type: integer }
  *     responses:
  *       200:
- *         description: Tasks list
+ *         description: Columns list ordered by position
  *       403:
  *         description: Forbidden
  *       404:
- *         description: Column not found
+ *         description: Workspace not found
  */
-router.get('/:id/tasks', listColumnTasks);
+columnsRouter.get('/', listColumns);
 
 /**
  * @swagger
- * /columns/{id}/tasks:
+ * /workspaces/{workspaceId}/columns:
  *   post:
- *     summary: Create a task in a column
- *     tags: [Tasks]
+ *     summary: Create a new column (admins only)
+ *     tags: [Columns]
  *     security:
  *       - BearerAuth: []
  *     parameters:
  *       - in: path
- *         name: id
+ *         name: workspaceId
  *         required: true
  *         schema: { type: integer }
  *     requestBody:
@@ -54,34 +54,34 @@ router.get('/:id/tasks', listColumnTasks);
  *         application/json:
  *           schema:
  *             type: object
- *             required: [title]
+ *             required: [name]
  *             properties:
- *               title: { type: string, minLength: 1, maxLength: 255 }
- *               description: { type: string, maxLength: 10000 }
- *               priority: { type: string, enum: [LOW, MEDIUM, HIGH] }
+ *               name: { type: string, minLength: 1, maxLength: 255 }
  *     responses:
  *       201:
- *         description: Task created
+ *         description: Column created
  *       400:
  *         description: Invalid input
  *       403:
- *         description: Forbidden
- *       404:
- *         description: Column not found
+ *         description: Only admins can perform this action
  */
-router.post('/:id/tasks', createColumnTask);
+columnsRouter.post('/', requireWorkspaceAdmin, createColumn);
 
 /**
  * @swagger
- * /columns/{id}/tasks/reorder:
+ * /workspaces/{workspaceId}/columns/{columnId}:
  *   patch:
- *     summary: Bulk reorder tasks within a column
- *     tags: [Tasks]
+ *     summary: Update column name or order (admins and members only)
+ *     tags: [Columns]
  *     security:
  *       - BearerAuth: []
  *     parameters:
  *       - in: path
- *         name: id
+ *         name: workspaceId
+ *         required: true
+ *         schema: { type: integer }
+ *       - in: path
+ *         name: columnId
  *         required: true
  *         schema: { type: integer }
  *     requestBody:
@@ -90,9 +90,43 @@ router.post('/:id/tasks', createColumnTask);
  *         application/json:
  *           schema:
  *             type: object
- *             required: [tasks]
+ *             required: [name]
  *             properties:
- *               tasks:
+ *               name: { type: string, minLength: 1, maxLength: 255 }
+ *     responses:
+ *       200:
+ *         description: Column renamed
+ *       400:
+ *         description: Invalid input
+ *       403:
+ *         description: Only admins and members can perform this action
+ *       404:
+ *         description: Column not found
+ */
+columnsRouter.patch('/:columnId', columnContext, requireWorkspaceMember, updateColumn);
+
+/**
+ * @swagger
+ * /workspaces/{workspaceId}/columns/reorder:
+ *   patch:
+ *     summary: Bulk reorder columns (admins and members only)
+ *     tags: [Columns]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: workspaceId
+ *         required: true
+ *         schema: { type: integer }
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [columns]
+ *             properties:
+ *               columns:
  *                 type: array
  *                 items:
  *                   type: object
@@ -102,12 +136,39 @@ router.post('/:id/tasks', createColumnTask);
  *                     order: { type: integer, minimum: 0 }
  *     responses:
  *       200:
- *         description: Tasks reordered
+ *         description: Columns reordered
  *       400:
  *         description: Invalid payload
  *       403:
- *         description: Forbidden
+ *         description: Only admins can perform this action
  */
-router.patch('/:id/tasks/reorder', reorderColumnTasks);
+columnsRouter.patch('/reorder', requireWorkspaceMember, reorderColumns);
 
-export default router;
+/**
+ * @swagger
+ * /workspaces/{workspaceId}/columns/{columnId}:
+ *   delete:
+ *     summary: Delete a column (admins only)
+ *     tags: [Columns]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: workspaceId
+ *         required: true
+ *         schema: { type: integer }
+ *       - in: path
+ *         name: columnId
+ *         required: true
+ *         schema: { type: integer }
+ *     responses:
+ *       200:
+ *         description: Column deleted
+ *       403:
+ *         description: Only admins can perform this action
+ *       404:
+ *         description: Column not found
+ */
+columnsRouter.delete('/:columnId', columnContext, requireWorkspaceAdmin, deleteColumn);
+
+export default columnsRouter;
