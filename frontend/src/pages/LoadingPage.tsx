@@ -38,7 +38,8 @@ export default function LoadingPage(props: LoadingPageProps) {
     {
       // Replace history so back button doesn't loop back to loading page
       window.history.replaceState(null, '', window.location.pathname)
-      window.location.href = `${api.defaults.baseURL}/api/auth/42/login`
+      const base = (api.defaults.baseURL ?? '').replace(/\/$/, '')
+      window.location.href = `${base}/api/auth/42/login`
     }
   }, [])
 

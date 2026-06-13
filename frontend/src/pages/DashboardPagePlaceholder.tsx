@@ -26,7 +26,7 @@ interface Workspace {
   healthScore?: number
 }
 
-interface dataSideBar{
+interface dataSideBar {
   name: string
   avatarUrl: string | null
   workspaces: Workspace[]
@@ -65,7 +65,7 @@ function PlaceholderView({ title }: { title: string }) {
 export default function DashboardPagePlaceholder() {
   const navigate = useNavigate()
   const location = useLocation()
-  const dataQuery: UserResponse | undefined = useGetUserRequest({refetchOnMount: false}).data
+  const dataQuery: UserResponse | undefined = useGetUserRequest({ refetchOnMount: false }).data
   const userDataQuery: User | null = dataQuery?.success ? dataQuery.data : null
   const workspaceQuery = useUserWorkspacesQuery({ refetchOnMount: false })
   const createWorkspaceMutation = useCreateWorkspaceMutation()
@@ -83,7 +83,7 @@ export default function DashboardPagePlaceholder() {
     if (viewParam && viewParam !== 'dashboard') {
       return viewParam as ActiveView
     }
-    
+
     // Se temos apenas workspaceParam sem view específico
     if (workspaceParam) {
       return `workspace-${workspaceParam}` as ActiveView
@@ -106,13 +106,13 @@ export default function DashboardPagePlaceholder() {
     if (workspaceParam) {
       return workspaceDataQuery.find((workspace: Workspace) => String(workspace.id) === String(workspaceParam)) ?? workspaceDataQuery[0]
     }
-    
+
     // Fallback: try to extract from activeView (for 'workspace-{id}' pattern)
     if (activeView.startsWith('workspace-') && activeView !== 'workspace-logs') {
       const workspaceId = activeView.replace('workspace-', '')
       return workspaceDataQuery.find((workspace: Workspace) => String(workspace.id) === String(workspaceId)) ?? workspaceDataQuery[0]
     }
-    
+
     // Default: use selected workspace or first one
     return workspaceDataQuery.find((workspace: Workspace) => String(workspace.id) === String(selectedWorkspaceId)) ?? workspaceDataQuery[0]
   }, [activeView, selectedWorkspaceId, workspaceDataQuery, workspaceParam])
@@ -195,7 +195,7 @@ export default function DashboardPagePlaceholder() {
       name: data.name,
       description: data.description || "New workspace",
     })
-   
+
     handleNavigate('workspace', createdWorkspace.id)
     setCreateOrganizationOpen(false)
   }
@@ -225,17 +225,18 @@ export default function DashboardPagePlaceholder() {
 
   // ── Render main area ─────────────────────────────────────────────────────
   const renderMain = () => {
-    if (activeView === 'dashboard') {return <PlaceholderView title="Dashboard" />}
+    if (activeView === 'dashboard') { return <PlaceholderView title="Dashboard" /> }
     if (activeView === 'profile') {
       if (!userDataQuery) {
         return <PlaceholderView title="Loading profile..." />
-      }else
+      } else
         return (
           <ThisProfile
             user={userDataQuery}
             onNavigate={handleNavigate}
           />
-        )}
+        )
+    }
     if (activeView === 'notifications') return <NotificationsPage />
     if (activeView === 'all-boards') return <PlaceholderView title="All Boards" />
     if (activeView === 'completed') return <PlaceholderView title="Completed Tasks" />
@@ -343,7 +344,7 @@ export default function DashboardPagePlaceholder() {
         onCreate={handleCreateOrganization}
       />
 
-      
+
 
     </div>
   )
