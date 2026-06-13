@@ -8,17 +8,17 @@ import { NotificationTypes, SortOptions }       from '../../../types/constants';
 export async function getNotifications(req: Request, res: Response, next: NextFunction)
 {
     try {
-        const userId = req.user!.id;
+        const id = req.user!.id;
         const skip = parseQueryInt('skip', req.query.skip, { default: 0, min: 0 });
         const take = parseQueryInt('take', req.query.take, { default: 42, min: 1, max: 100 });
         const type = parseQueryEnum('type', req.query.type, NotificationTypes, { isOptional: true });
         const sort = parseQueryEnum('sort', req.query.sort, SortOptions, { isOptional: true });
 
-        const user = await prisma.user.findUnique({ where: { id: userId } });
+        const user = await prisma.user.findUnique({ where: { id } });
         if (!user)
             throw new ApiError(404, 'User not found');
 
-        const where: any = { userId };
+        const where: any = { userId: id };
         if (type)
             where.type = type;
         const orderBy = { createdAt: sort === 'oldest' ? 'asc' : 'desc'	} as const;

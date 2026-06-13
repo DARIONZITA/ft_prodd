@@ -53,7 +53,7 @@ const notificationsRouter = Router();
  *       401:
  *         description: Unauthorized
  */
-router.get('/', getNotifications);
+notificationsRouter.get('/', getNotifications);
 
 /**
  * @swagger
@@ -73,7 +73,7 @@ router.get('/', getNotifications);
  *       404:
  *         description: User not found
  */
-router.patch('/read-all', markAllNotificationsAsRead);
+notificationsRouter.patch('/read-all', markAllNotificationsAsRead);
 
 /**
  * @swagger
@@ -100,6 +100,6 @@ router.patch('/read-all', markAllNotificationsAsRead);
  *       404:
  *         description: Notification not found
  */
-router.patch('/:id/read', markNotificationAsRead);
+notificationsRouter.patch('/:id/read', markNotificationAsRead);
 
-export default router;
+export default notificationsRouter;

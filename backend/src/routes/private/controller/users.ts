@@ -12,8 +12,8 @@ export async function   listUsers( req: Request, res: Response, next: NextFuncti
 {
 	try
     {
-		const	skip = parseQueryInt('skip', req.query.skip, { default: 0, min: 0 });
-		const	take = parseQueryInt('take', req.query.take, { default: 42, min: 1, max: 100 });
+		const	skip = parseQueryInt('listUsers() skip', req.query.skip, { default: 0, min: 0 });
+		const	take = parseQueryInt('listUsers() take', req.query.take, { default: 42, min: 1, max: 100 });
 
 		let whereClause: any = {};
 		if (typeof req.query.search === 'string' && req.query.search.trim() !== '')
@@ -60,7 +60,7 @@ export async function   getUserProfile( req: Request, res: Response, next: NextF
 {
 	try
     {
-		const id = req.params.id ? parseOrThrow(idSchema, 'UserID', req.params.id) : req.user!.id;
+		const id = req.params.id ? parseOrThrow(idSchema, 'getUserProfile() UserID', req.params.id) : req.user!.id;
 		const isOwnProfile = req.user!.id === id;
 
 		const user = await prisma.user.findUnique({
@@ -99,12 +99,7 @@ export async function   updateUserProfile( req: Request, res: Response, next: Ne
 {
 	try
     {
-		const id = req.params.id ? parseOrThrow(idSchema, 'UserID', req.params.id) : req.user!.id;
-
-		if (req.user!.id !== id)
-			return (next(new ApiError(403, 'You can only update your own profile')));
-
-		const updateData = parseOrThrow(updateUserProfileSchema, 'UpdateUserProfile', req.body);
+		const updateData = parseOrThrow(updateUserProfileSchema, 'updateUserProfile() UpdateUserProfileSchema', req.body);
 
 		const updateFields: any = {};
 		if (updateData.username !== undefined)
@@ -129,7 +124,7 @@ export async function   updateUserProfile( req: Request, res: Response, next: Ne
 			return (next(new ApiError(400, 'At least one field must be provided for update')));
 
 		const updatedUser = await prisma.user.update({
-			where: { id },
+			where: { id: req.user!.id },
 			data: updateFields,
 			select: {
 				id: true,
@@ -154,19 +149,14 @@ export async function   deleteUserAccount( req: Request, res: Response, next: Ne
 {
 	try
     {
-		const id = req.params.id ? parseOrThrow(idSchema, 'UserID', req.params.id) : req.user!.id;
-
-		if (req.user!.id !== id)
-			throw new ApiError(403, 'You can only delete your own account');
-
-		const user = await prisma.user.findUnique({ where: { id }, select : { username: true, avatarUrl: true } });
+		const user = await prisma.user.findUnique({ where: { id: req.user!.id }, select : { username: true, avatarUrl: true } });
 
         if (!user)
 			throw new ApiError(404, 'User not found');
 
 		await prisma.$transaction(async (tx) => {
 			const memberships = await tx.workspaceMember.findMany({
-				where: { userId: id },
+				where: { userId: req.user!.id },
 				include: { workspace: {
 					select: {
 						id: true,
@@ -182,7 +172,7 @@ export async function   deleteUserAccount( req: Request, res: Response, next: Ne
 			for (const membership of memberships)
 			{
 				const members = membership.workspace.members;
-				const remainingMembers = members.filter( m => m.userId !== id );
+				const remainingMembers = members.filter( m => m.userId !== req.user!.id );
 
 				if (!remainingMembers.length) {
 					await tx.workspace.delete({ where: { id: membership.workspaceId } });
@@ -241,7 +231,7 @@ export async function   deleteUserAccount( req: Request, res: Response, next: Ne
 				});
 			}
 
-			await tx.user.delete({ where: { id } });
+			await tx.user.delete({ where: { id: req.user!.id } });
 		});
 
 		if (user.avatarUrl && user.avatarUrl !== `${avatarDir}default.svg` && user.avatarUrl.startsWith(avatarDir))

@@ -6,8 +6,6 @@ import {
 	deleteUserAccount, getUserProfile,
 	listUsers, updateUserProfile
 } from '../controller/users';
-import { listUserWorkspaces }	from '../controller/workspaces';
-import { listUserFriends }		from '../controller/friends';
 
 const userRouter = Router();
 
@@ -37,7 +35,7 @@ const userRouter = Router();
  *       500:
  *         description: Internal server error
  */
-router.get('/', listUsers);
+userRouter.get('/', listUsers);
 
 /**
  * @swagger
@@ -66,7 +64,7 @@ router.get('/', listUsers);
  *         description: Internal server error
  * */
 
-router.get('/me', getUserProfile);
+userRouter.get('/me', getUserProfile);
 
 /**
  * @swagger
@@ -96,7 +94,7 @@ router.get('/me', getUserProfile);
  *       500:
  *         description: Internal server error
  */
-router.patch('/me', uploadAvatar('avatar'), updateUserProfile);
+userRouter.patch('/me', uploadAvatar('avatar'), updateUserProfile);
 
 /**
  * @swagger
@@ -118,7 +116,7 @@ router.patch('/me', uploadAvatar('avatar'), updateUserProfile);
  *       500:
  *         description: Internal server error
  * */
-router.delete('/me', deleteUserAccount);
+userRouter.delete('/me', deleteUserAccount);
 
 /**
  * @swagger
@@ -165,7 +163,7 @@ router.delete('/me', deleteUserAccount);
  *       500:
  *         description: Internal server error
  */
-router.get('/:id', getUserProfile);
+userRouter.get('/:id', getUserProfile);
 
 /**
  * @swagger
@@ -200,7 +198,7 @@ router.get('/:id', getUserProfile);
  *       404:
  *         description: User not found
  */
-router.get('/:id/friends', listUserFriends);
+userRouter.get('/:id/friends', listUserFriends);
 
 /**
  * @swagger
@@ -230,6 +228,6 @@ router.get('/:id/friends', listUserFriends);
  *       404:
  *         description: User not found
  */
-router.get('/:id/workspaces', listUserWorkspaces);
+userRouter.get('/:id/workspaces', listUserWorkspaces);
 
-export default router;
+export default userRouter;
