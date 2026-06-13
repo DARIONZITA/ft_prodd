@@ -32,6 +32,22 @@ enum Priority {
     HIGH
 }
 
+enum LabelColor {
+    red
+    orange
+    yellow
+    green
+    blue
+    purple
+    pink
+    cyan
+    teal
+    indigo
+    lime
+    gray
+    brown
+}
+
 model User {
     id           Int        @id @default(autoincrement())
     username     String     // @unique
@@ -48,7 +64,9 @@ model User {
     apiKeys                 ApiKey[]
     comments                Comment[]
     notifications           Notification[]
-    taskAssignments         TaskAssignment[]
+    taskAssignments         TaskAssignment[] @relation("assignee")
+    assignedTasks           TaskAssignment[] @relation("assigner")
+    tasksCreated            Task[]
     workspaceMemberships    WorkspaceMember[]
     sentFriendRequests      FriendRequest[] @relation("sender")
     receivedFriendRequests  FriendRequest[] @relation("receiver")
@@ -88,6 +106,8 @@ model WorkspaceMember {
 
     workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
     user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    @@unique([workspaceId, userId])
 }
 
 model Column {
@@ -107,6 +127,7 @@ model Column {
 model Task {
     id            Int       @id @default(autoincrement())
     columnId      Int
+    creatorId     Int
     title         String
     description   String
     priority      Priority  @default(MEDIUM)
@@ -117,7 +138,8 @@ model Task {
     createdAt     DateTime  @default(now())
     updatedAt     DateTime  @updatedAt
 
-    column Column @relation(fields: [columnId], references: [id], onDelete: Cascade)
+    column  Column @relation(fields: [columnId], references: [id], onDelete: Cascade)
+    creator User   @relation(fields: [creatorId], references: [id])
 
     assignments    TaskAssignment[]
     checklistItems ChecklistItem[]
@@ -126,14 +148,16 @@ model Task {
 }
 
 model TaskAssignment {
-    id        Int      @id @default(autoincrement())
-    taskId    Int
-    userId    Int
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
+    id           Int      @id @default(autoincrement())
+    taskId       Int
+    userId       Int
+    assignedById Int
+    createdAt    DateTime @default(now())
+    updatedAt    DateTime @updatedAt
 
-    task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
-    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+    task       Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+    user       User @relation("assignee", fields: [userId], references: [id], onDelete: Cascade)
+    assignedBy User @relation("assigner", fields: [assignedById], references: [id])
 
     @@unique([taskId, userId])
 }
@@ -141,7 +165,7 @@ model TaskAssignment {
 model ChecklistItem {
     id          Int      @id @default(autoincrement())
     taskId      Int
-    text        String
+    description String
     isCompleted Boolean  @default(false)
     createdAt   DateTime @default(now())
     updatedAt   DateTime @updatedAt
@@ -175,12 +199,12 @@ model Comment {
 }
 
 model Label {
-    id          Int      @id @default(autoincrement())
+    id          Int        @id @default(autoincrement())
     workspaceId Int
     name        String
-    color       String
-    createdAt   DateTime @default(now())
-    updatedAt   DateTime @updatedAt
+    color       LabelColor
+    createdAt   DateTime   @default(now())
+    updatedAt   DateTime   @updatedAt
 
     workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
 
