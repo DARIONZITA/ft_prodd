@@ -6,7 +6,8 @@ import workspaceContext				from '../../../middleware/workspaceContext';
 import { requireWorkspaceAdmin }	from '../../../middleware/rbac';
 import {
 	createWorkspace, deleteWorkspace,
-	getWorkspaceDashboard, updateWorkspace
+	getWorkspaceDashboard, updateWorkspace,
+	listUserWorkspaces
 } from '../controller/workspaces';
 
 const workspaceRouter = Router({ mergeParams: true });
@@ -14,6 +15,22 @@ const workspaceRouter = Router({ mergeParams: true });
 workspaceRouter.use('/:workspaceId/members', workspaceContext, membersRoutes);
 workspaceRouter.use('/:workspaceId/columns', workspaceContext, columnsRoutes);
 workspaceRouter.use('/:workspaceId/labels', workspaceContext, labelsRoutes);
+
+/**
+ * @swagger
+ * /workspaces:
+ *   get:
+ *     summary: List user workspaces
+ *     tags: [Workspaces]
+ *     security:
+ *       - BearerAuth: []
+ *     responses:
+ *       200:
+ *         description: List of workspaces
+ *       401:
+ *         description: Unauthorized
+ */
+workspaceRouter.get('/', listUserWorkspaces);
 
 /**
  * @swagger

@@ -16,27 +16,8 @@ import apiKeyRouter                   from './routes/private/router/keys';
 import { setupSocketIO }              from './ws/ws.server';
 import { authenticate }               from './middleware/auth';
 
-const			app = express();
-export const	server = http.createServer( app );
-
-app.use(
-  helmet({
-    crossOriginResourcePolicy: { policy: "same-site" },
-  })
-);
-app.use(cors({ origin: 'http://localhost:3000', credentials: true }));
-import cors from 'cors';
-import helmet from 'helmet';
-import morgan from 'morgan';
-import authRoutes from './routes/auth';
-import workspaceRoutes from './routes/workspaces';
-import badgeRoutes from './routes/badges';
-import userRoutes from './routes/users';
-import friendRoutes from './routes/friends';
-import { errorHandler } from './middleware/errorHandler';
-import { setupSwagger } from './swagger';
-
 export const app = express();
+export const	server = http.createServer( app );
 
 app.set('trust proxy', 1);
 
@@ -53,7 +34,7 @@ app.get('/api/health', (_req: Request, res: Response) => {
 });
 
 app.use('/api/auth', authRoutes);
-app.use('/uploads', authenticate, express.static('uploads'));
+app.use('/uploads', express.static('uploads'));
 app.use('/api/users', authenticate, userRoutes);
 app.use('/api/friends', authenticate, friendRoutes);
 app.use('/api/notifications', authenticate, notificationsRouter);
