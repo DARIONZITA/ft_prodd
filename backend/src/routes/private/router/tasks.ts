@@ -5,11 +5,9 @@ import { requireWorkspaceMember }       from '../../../middleware/rbac';
 import { columnContext, taskContext }   from '../../../middleware/workspaceContext';
 import { listComments, createComment }  from '../controller/comments';
 import {
-  getTask, updateTask, deleteTask, moveTask,
-  listAssignments, createAssignment, deleteAssignment,
-  listChecklist, createChecklistItem, updateChecklistItem,
-  deleteChecklistItem, listTaskLabels, attachLabel, detachLabel,
-  listTaskComments, createTaskComment
+  reorderColumnTasks, listColumnTasks,
+  createColumnTask, getTask,
+  updateTask, deleteTask, moveTask
 } from '../controller/tasks';
 
 const tasksRouter = Router();
@@ -85,7 +83,7 @@ tasksRouter.post('/:columnId/tasks', columnContext, requireWorkspaceMember, crea
 
 /**
  * @swagger
- * /tasks/{id}:
+ * /columns/{columnId}/tasks/{taskId}:
  *   get:
  *     summary: Get task detail
  *     tags: [Tasks]
@@ -93,7 +91,11 @@ tasksRouter.post('/:columnId/tasks', columnContext, requireWorkspaceMember, crea
  *       - BearerAuth: []
  *     parameters:
  *       - in: path
- *         name: id
+ *         name: columnId
+ *         required: true
+ *         schema: { type: integer }
+ *       - in: path
+ *         name: taskId
  *         required: true
  *         schema: { type: integer }
  *     responses:
@@ -104,11 +106,11 @@ tasksRouter.post('/:columnId/tasks', columnContext, requireWorkspaceMember, crea
  *       404:
  *         description: Task not found
  */
-router.get('/:id', getTask);
+tasksRouter.get('/:columnId/tasks/:taskId', columnContext, taskContext, getTask);
 
 /**
  * @swagger
- * /tasks/{id}:
+ * /columns/{columnId}/tasks/{taskId}:
  *   patch:
  *     summary: Update task fields
  *     tags: [Tasks]
@@ -116,7 +118,11 @@ router.get('/:id', getTask);
  *       - BearerAuth: []
  *     parameters:
  *       - in: path
- *         name: id
+ *         name: columnId
+ *         required: true
+ *         schema: { type: integer }
+ *       - in: path
+ *         name: taskId
  *         required: true
  *         schema: { type: integer }
  *     requestBody:
@@ -130,7 +136,6 @@ router.get('/:id', getTask);
  *               priority: { type: string, enum: [LOW, MEDIUM, HIGH] }
  *               dueDate: { type: string, format: date-time, nullable: true }
  *               isDone: { type: boolean }
- *               columnId: { type: integer }
  *     responses:
  *       200:
  *         description: Task updated
@@ -141,11 +146,11 @@ router.get('/:id', getTask);
  *       404:
  *         description: Task not found
  */
-router.patch('/:id', updateTask);
+tasksRouter.patch('/:columnId/tasks/:taskId', columnContext, taskContext, requireWorkspaceMember, updateTask);
 
 /**
  * @swagger
- * /tasks/{id}:
+ * /columns/{columnId}/tasks/{taskId}:
  *   delete:
  *     summary: Delete a task
  *     tags: [Tasks]
@@ -153,7 +158,11 @@ router.patch('/:id', updateTask);
  *       - BearerAuth: []
  *     parameters:
  *       - in: path
- *         name: id
+ *         name: columnId
+ *         required: true
+ *         schema: { type: integer }
+ *       - in: path
+ *         name: taskId
  *         required: true
  *         schema: { type: integer }
  *     responses:
@@ -164,11 +173,11 @@ router.patch('/:id', updateTask);
  *       404:
  *         description: Task not found
  */
-router.delete('/:id', deleteTask);
+tasksRouter.delete('/:columnId/tasks/:taskId', columnContext, taskContext, requireWorkspaceMember, deleteTask);
 
 /**
  * @swagger
- * /tasks/{id}/move:
+ * /columns/{columnId}/tasks/{taskId}/move:
  *   patch:
  *     summary: Move task to another column
  *     tags: [Tasks]
@@ -176,7 +185,11 @@ router.delete('/:id', deleteTask);
  *       - BearerAuth: []
  *     parameters:
  *       - in: path
- *         name: id
+ *         name: columnId
+ *         required: true
+ *         schema: { type: integer }
+ *       - in: path
+ *         name: taskId
  *         required: true
  *         schema: { type: integer }
  *     requestBody:
@@ -185,9 +198,9 @@ router.delete('/:id', deleteTask);
  *         application/json:
  *           schema:
  *             type: object
- *             required: [columnId]
+ *             required: [targetColumnId]
  *             properties:
- *               columnId: { type: integer }
+ *               targetColumnId: { type: integer }
  *               afterTaskId: { type: integer, minimum: 0 }
  *     responses:
  *       200:
@@ -199,127 +212,19 @@ router.delete('/:id', deleteTask);
  *       404:
  *         description: Task not found
  */
-router.patch('/:id/move', moveTask);
-
-
-
-// ── Assignments ─────────────────────────────────────────────────────────
+tasksRouter.patch('/:columnId/tasks/:taskId/move', columnContext, taskContext, requireWorkspaceMember, moveTask);
 
 /**
  * @swagger
- * /tasks/{id}/assignments:
- *   get:
- *     summary: List assigned users
- *     tags: [Task Assignments]
+ * /columns/{columnId}/tasks/reorder:
+ *   patch:
+ *     summary: Bulk reorder tasks within a column
+ *     tags: [Tasks]
  *     security:
  *       - BearerAuth: []
  *     parameters:
  *       - in: path
- *         name: id
- *         required: true
- *         schema: { type: integer }
- *     responses:
- *       200:
- *         description: Assignment list
- *       403:
- *         description: Forbidden
- *       404:
- *         description: Task not found
- */
-router.get('/:id/assignments', listAssignments);
-
-/**
- * @swagger
- * /tasks/{id}/assignments/{userId}:
- *   post:
- *     summary: Assign a user to the task
- *     tags: [Task Assignments]
- *     security:
- *       - BearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema: { type: integer }
- *       - in: path
- *         name: userId
- *         required: true
- *         schema: { type: integer }
- *     responses:
- *       201:
- *         description: User assigned
- *       400:
- *         description: Already assigned or invalid
- *       403:
- *         description: Forbidden
- *       404:
- *         description: Task or user not found
- */
-router.post('/:id/assignments/:userId', createAssignment);
-
-/**
- * @swagger
- * /tasks/{id}/assignments/{userId}:
- *   delete:
- *     summary: Unassign a user
- *     tags: [Task Assignments]
- *     security:
- *       - BearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema: { type: integer }
- *       - in: path
- *         name: userId
- *         required: true
- *         schema: { type: integer }
- *     responses:
- *       200:
- *         description: User unassigned
- *       403:
- *         description: Forbidden
- *       404:
- *         description: Assignment not found
- */
-router.delete('/:id/assignments/:userId', deleteAssignment);
-
-
-
-// ── Checklist ───────────────────────────────────────────────────────────
-
-/**
- * @swagger
- * /tasks/{id}/checklist:
- *   get:
- *     summary: Get checklist items
- *     tags: [Task Checklist]
- *     security:
- *       - BearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema: { type: integer }
- *     responses:
- *       200:
- *         description: Checklist items
- *       403:
- *         description: Forbidden
- */
-router.get('/:id/checklist', listChecklist);
-
-/**
- * @swagger
- * /tasks/{id}/checklist:
- *   post:
- *     summary: Add a checklist item
- *     tags: [Task Checklist]
- *     security:
- *       - BearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
+ *         name: columnId
  *         required: true
  *         schema: { type: integer }
  *     requestBody:
@@ -328,177 +233,41 @@ router.get('/:id/checklist', listChecklist);
  *         application/json:
  *           schema:
  *             type: object
- *             required: [text]
+ *             required: [tasks]
  *             properties:
- *               text: { type: string, minLength: 1, maxLength: 500 }
+ *               tasks:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   required: [id, order]
+ *                   properties:
+ *                     id: { type: integer }
+ *                     order: { type: integer, minimum: 0 }
  *     responses:
- *       201:
- *         description: Item created
+ *       200:
+ *         description: Tasks reordered
  *       400:
- *         description: Invalid input
+ *         description: Invalid payload
  *       403:
  *         description: Forbidden
  */
-router.post('/:id/checklist', createChecklistItem);
+tasksRouter.patch('/:columnId/tasks/reorder', columnContext, requireWorkspaceMember, reorderColumnTasks);
 
 /**
  * @swagger
- * /tasks/{id}/checklist/{itemId}:
- *   patch:
- *     summary: Update checklist item text or completion
- *     tags: [Task Checklist]
- *     security:
- *       - BearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema: { type: integer }
- *       - in: path
- *         name: itemId
- *         required: true
- *         schema: { type: integer }
- *     requestBody:
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               text: { type: string, minLength: 1, maxLength: 500 }
- *               isCompleted: { type: boolean }
- *     responses:
- *       200:
- *         description: Item updated
- *       400:
- *         description: Invalid input
- *       403:
- *         description: Forbidden
- *       404:
- *         description: Item not found
- */
-router.patch('/:id/checklist/:itemId', updateChecklistItem);
-
-/**
- * @swagger
- * /tasks/{id}/checklist/{itemId}:
- *   delete:
- *     summary: Remove a checklist item
- *     tags: [Task Checklist]
- *     security:
- *       - BearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema: { type: integer }
- *       - in: path
- *         name: itemId
- *         required: true
- *         schema: { type: integer }
- *     responses:
- *       200:
- *         description: Item removed
- *       403:
- *         description: Forbidden
- *       404:
- *         description: Item not found
- */
-router.delete('/:id/checklist/:itemId', deleteChecklistItem);
-
-
-
-// ── Labels ──────────────────────────────────────────────────────────────
-
-/**
- * @swagger
- * /tasks/{id}/labels:
- *   get:
- *     summary: Get labels attached to a task
- *     tags: [Task Labels]
- *     security:
- *       - BearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema: { type: integer }
- *     responses:
- *       200:
- *         description: Label list
- *       403:
- *         description: Forbidden
- */
-router.get('/:id/labels', listTaskLabels);
-
-/**
- * @swagger
- * /tasks/{id}/labels/{labelId}:
- *   post:
- *     summary: Attach a label to the task
- *     tags: [Task Labels]
- *     security:
- *       - BearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema: { type: integer }
- *       - in: path
- *         name: labelId
- *         required: true
- *         schema: { type: integer }
- *     responses:
- *       201:
- *         description: Label attached
- *       400:
- *         description: Already attached or label not in workspace
- *       403:
- *         description: Forbidden
- */
-router.post('/:id/labels/:labelId', attachLabel);
-
-/**
- * @swagger
- * /tasks/{id}/labels/{labelId}:
- *   delete:
- *     summary: Detach a label from the task
- *     tags: [Task Labels]
- *     security:
- *       - BearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema: { type: integer }
- *       - in: path
- *         name: labelId
- *         required: true
- *         schema: { type: integer }
- *     responses:
- *       200:
- *         description: Label detached
- *       403:
- *         description: Forbidden
- *       404:
- *         description: Label not attached
- */
-router.delete('/:id/labels/:labelId', detachLabel);
-
-
-
-// ── Comments ──────────────────────────────────────────────────────────────
-
-/**
- * @swagger
- * /tasks/{id}/comments:
+ * /columns/{columnId}/tasks/{taskId}/comments:
  *   get:
  *     summary: List comments for a task
- *     tags: [Comments]
+ *     tags: [Tasks]
  *     security:
  *       - BearerAuth: []
  *     parameters:
  *       - in: path
- *         name: id
+ *         name: columnId
+ *         required: true
+ *         schema: { type: integer }
+ *       - in: path
+ *         name: taskId
  *         required: true
  *         schema: { type: integer }
  *       - in: query
@@ -513,19 +282,23 @@ router.delete('/:id/labels/:labelId', detachLabel);
  *       403:
  *         description: Forbidden
  */
-router.get('/:id/comments', listTaskComments);
+tasksRouter.get('/:columnId/tasks/:taskId/comments', columnContext, taskContext, listComments);
 
 /**
  * @swagger
- * /tasks/{id}/comments:
+ * /columns/{columnId}/tasks/{taskId}/comments:
  *   post:
  *     summary: Add a comment to a task
- *     tags: [Comments]
+ *     tags: [Tasks]
  *     security:
  *       - BearerAuth: []
  *     parameters:
  *       - in: path
- *         name: id
+ *         name: columnId
+ *         required: true
+ *         schema: { type: integer }
+ *       - in: path
+ *         name: taskId
  *         required: true
  *         schema: { type: integer }
  *     requestBody:
@@ -543,6 +316,6 @@ router.get('/:id/comments', listTaskComments);
  *       403:
  *         description: Forbidden
  */
-router.post('/:id/comments', createTaskComment);
+tasksRouter.post('/:columnId/tasks/:taskId/comments', columnContext, taskContext, requireWorkspaceMember, createComment);
 
-export default router;
+export default tasksRouter;

@@ -1,19 +1,9 @@
-import { prisma }           from '../../../lib/prisma';
-import { ApiError }         from '../../../utils/ApiError';
-import { getWorkspaceRole } from '../../../middleware/rbac';
-import { WorkspaceRole }    from '@prisma/client';
-import type {
-  Request,
-  Response,
-  NextFunction
-} from 'express';
-import {
-  idSchema,
-  parseOrThrow,
-  parseQueryString
-} from '../../../validations/utils';
+import type { Request, Response, NextFunction } from 'express';
+import { prisma }                               from '../../../lib/prisma';
+import { NotificationType }                     from '@prisma/client';
+import { parseQueryInt, parseQueryString }      from '../../../validations/utils';
 
-export function parseMentions(content: string): string[]
+function parseMentions(content: string): string[]
 {
     const matches = content.match(/@([a-zA-Z0-9_-]+)/g);
     if (!matches)
@@ -21,55 +11,70 @@ export function parseMentions(content: string): string[]
     return [...new Set(matches.map(m => m.slice(1)))];
 }
 
-export async function resolveMentionUsers(usernames: string[], workspaceId: number): Promise<number[]>
+async function resolveMentionUsers(usernames: string[], workspaceId: number): Promise<number[]>
 {
-    if (usernames.length === 0)
+    if (!usernames.length)
         return [];
     const users = await prisma.user.findMany({
         where: {
             username: { in: usernames },
-            workspaceMemberships: {
-                some: { workspaceId }
-            }
+            workspaceMemberships: { some: { workspaceId } }
         },
         select: { id: true }
     });
     return users.map(u => u.id);
 }
 
-async function resolveCommentWorkspace(commentId: number)
-{
-  const comment = await prisma.comment.findUnique({
-    where: { id: commentId },
-    include: { task: { select: { id: true, title: true, column: { select: { workspaceId: true, name: true } } } } }
-  });
-  if (!comment)
-    throw new ApiError(404, 'Comment not found');
-  return comment;
-}
-
-export async function deleteComment(req: Request, res: Response, next: NextFunction)
+export async function listComments(req: Request, res: Response, next: NextFunction)
 {
   try {
-    const commentId = parseOrThrow(idSchema, 'CommentID', req.params.id);
-    const taskComment = await resolveCommentWorkspace(commentId);
-    const workspaceId = taskComment.task.column.workspaceId;
-    const role = await getWorkspaceRole(workspaceId, req.user!.id);
+    const taskId = req.task?.id;
+    const skip = parseQueryInt('skip', req.query.skip, { default: 0, isOptional: true, min: 0 });
+    const take = parseQueryInt('take', req.query.take, { default: 42, isOptional: true, min: 1, max: 100 });
 
-    if (role === WorkspaceRole.guest)
-      throw new ApiError(403, "Guests can't delete comments");
+    const [comments, total] = await prisma.$transaction([
+        prisma.comment.findMany({
+            where: { taskId },
+            include: { user: { select: { id: true, username: true, avatarUrl: true } } },
+            orderBy: { createdAt: 'asc' },
+            skip,
+            take
+        }),
+        prisma.comment.count({ where: { taskId } })
+    ]);
 
-    const existing = await prisma.comment.findUnique({ where: { id: commentId } });
-    if (!existing)
-      throw new ApiError(404, 'Comment not found');
+    res.json({ success: true, data: { comments, pagination: { skip, take, total } } });
+  } catch (err) { next(err); }
+}
 
-    if (existing.authorId !== req.user!.id)
-      throw new ApiError(403, 'You can only delete your own comments');
+export async function createComment(req: Request, res: Response, next: NextFunction)
+{
+  try {
+    const task = req.task!;
+    const workspace = req.workspace!;
+    const content = parseQueryString('content', req.body.content, { isOptional: false, minLength: 1, maxLength: 10000 })!;
 
-    await prisma.$transaction(async (tx) => {
-      await tx.comment.delete({ where: { id: commentId } });
+    const mentionedUsernames = parseMentions(content);
+
+    const comment = await prisma.$transaction(async (tx) => {
+      const c = await tx.comment.create({
+        data: { taskId: task.id, authorId: req.user!.id, content }
+      });
+
+      const mentionedUserIds = await resolveMentionUsers(mentionedUsernames, workspace.id);
+      if (mentionedUserIds.length > 0) {
+        await tx.notification.createMany({
+            data: mentionedUserIds.map(userId => ({
+              userId,
+              message: `${req.user!.username} mentioned you in a comment on task "${task!.title}" from column "${req.column!.name}" in workspace "${workspace.name}"`,
+              type: NotificationType.mention
+            }))
+        });
+      }
+
+      return c;
     });
 
-    res.json({ success: true, message: 'Comment deleted' });
+    res.status(201).json({ success: true, data: comment });
   } catch (err) { next(err); }
 }
