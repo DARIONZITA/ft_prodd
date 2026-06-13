@@ -1,14 +1,16 @@
-import { Router }       from 'express';
-import { authenticate } from '../../../middleware/auth';
+import { Router }   		from 'express';
+import { columnContext }	from '../../../middleware/workspaceContext';
+import {
+	requireWorkspaceAdmin,
+	requireWorkspaceMember
+} from '../../../middleware/rbac';
 import {
   listColumnTasks,
   createColumnTask,
   reorderColumnTasks
 } from '../controller/columns';
 
-const router = Router();
-
-router.use(authenticate);
+const columnsRouter = Router({ mergeParams: true });
 
 /**
  * @swagger

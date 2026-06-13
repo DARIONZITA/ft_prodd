@@ -1,13 +1,11 @@
 import { Router }		from 'express';
-import { authenticate }	from '../../../middleware/auth';
 import {
 	getNotifications,
 	markAllNotificationsAsRead,
 	markNotificationAsRead
 } from '../controller/notifications';
 
-const router = Router();
-router.use(authenticate);
+const notificationsRouter = Router();
 
 /**
  * @swagger

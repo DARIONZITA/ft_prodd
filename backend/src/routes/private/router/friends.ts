@@ -1,10 +1,11 @@
-import { Router }									from 'express';
-import { authenticate }								from '../../../middleware/auth';
-import { removeFriend,
-	sendFriendRequest, updateFriendRequest }		from '../controller/friends';
+import { Router }	from 'express';
+import {
+	removeFriend,
+	sendFriendRequest,
+	updateFriendRequest
+} from '../controller/friends';
 
-const router = Router();
-router.use(authenticate);
+const friendsRouter = Router();
 
 /**
  * @swagger

@@ -1,5 +1,9 @@
-import { Router } from 'express';
-import { authenticate } from '../../../middleware/auth';
+import { Router }                       from 'express';
+import labelsRoutes                     from './labels';
+import assignmentsRouter                from './assignments';
+import { requireWorkspaceMember }       from '../../../middleware/rbac';
+import { columnContext, taskContext }   from '../../../middleware/workspaceContext';
+import { listComments, createComment }  from '../controller/comments';
 import {
   getTask, updateTask, deleteTask, moveTask,
   listAssignments, createAssignment, deleteAssignment,
@@ -8,9 +12,76 @@ import {
   listTaskComments, createTaskComment
 } from '../controller/tasks';
 
-const router = Router();
+const tasksRouter = Router();
 
-router.use(authenticate);
+tasksRouter.use('/:columnId/tasks/:taskId/labels', columnContext, taskContext, labelsRoutes);
+tasksRouter.use('/:columnId/tasks/:taskId/assignments', columnContext, taskContext, assignmentsRouter);
+
+/**
+ * @swagger
+ * /columns/{columnId}/tasks:
+ *   get:
+ *     summary: List tasks in a column (ordered, paginated)
+ *     tags: [Tasks]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: columnId
+ *         required: true
+ *         schema: { type: integer }
+ *       - in: query
+ *         name: skip
+ *         schema: { type: integer, default: 0 }
+ *       - in: query
+ *         name: take
+ *         schema: { type: integer, default: 42, maximum: 100 }
+ *     responses:
+ *       200:
+ *         description: Paginated tasks list
+ *       403:
+ *         description: Forbidden
+ *       404:
+ *         description: Column not found
+ */
+tasksRouter.get('/:columnId/tasks', columnContext, listColumnTasks);
+
+/**
+ * @swagger
+ * /columns/{columnId}/tasks:
+ *   post:
+ *     summary: Create a task in a column
+ *     tags: [Tasks]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: columnId
+ *         required: true
+ *         schema: { type: integer }
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [title]
+ *             properties:
+ *               title: { type: string, minLength: 1, maxLength: 255 }
+ *               description: { type: string, maxLength: 10000 }
+ *               priority: { type: string, enum: [LOW, MEDIUM, HIGH], default: MEDIUM }
+ *               dueDate: { type: string, format: date-time, nullable: true }
+ *     responses:
+ *       201:
+ *         description: Task created
+ *       400:
+ *         description: Invalid input
+ *       403:
+ *         description: Forbidden
+ *       404:
+ *         description: Column not found
+ */
+tasksRouter.post('/:columnId/tasks', columnContext, requireWorkspaceMember, createColumnTask);
 
 /**
  * @swagger

@@ -1,6 +1,7 @@
-import { Router }		from 'express';
-import { authenticate }	from '../../../middleware/auth';
-import { uploadAvatar }	from '../../../middleware/uploadAvatar';
+import { Router }				from 'express';
+import { uploadAvatar }			from '../../../middleware/uploadAvatar';
+import { listUserFriends }		from '../controller/friends';
+import { listUserWorkspaces }	from '../controller/workspaces';
 import {
 	deleteUserAccount, getUserProfile,
 	listUsers, updateUserProfile
@@ -8,8 +9,7 @@ import {
 import { listUserWorkspaces }	from '../controller/workspaces';
 import { listUserFriends }		from '../controller/friends';
 
-const router = Router();
-router.use(authenticate);
+const userRouter = Router();
 
 /**
  * @swagger

@@ -1,10 +1,7 @@
 import { Router }                                   from 'express';
-import { authenticate }                             from '../../../middleware/auth';
 import { createApiKey, deleteApiKey, listApiKeys }  from '../controller/keys';
 
 const   apiKeyRouter = Router( );
-
-apiKeyRouter.use( authenticate );
 
 /**
  * @swagger

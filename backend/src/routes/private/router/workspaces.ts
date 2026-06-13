@@ -1,6 +1,9 @@
-import { Router }				from 'express';
-import { authenticate }			from '../../../middleware/auth';
-import { listWorkspaceTasks }	from '../controller/workspaces';
+import { Router }					from 'express';
+import membersRoutes				from './members';
+import columnsRoutes				from './columns';
+import labelsRoutes					from './labels';
+import workspaceContext				from '../../../middleware/workspaceContext';
+import { requireWorkspaceAdmin }	from '../../../middleware/rbac';
 import {
 	requireWorkspaceAdmin,
 	requireWorkspaceMember,
@@ -14,16 +17,35 @@ import {
 	updateWorkspace, updateWorkspaceMemberRole,
 	listWorkspaceColumns
 } from '../controller/workspaces';
-import {
-	createColumn,
-	updateColumn,
-	deleteColumn,
-	reorderColumns
-} from '../controller/columns';
 
-const router = Router();
+const workspaceRouter = Router({ mergeParams: true });
 
-router.use(authenticate);
+workspaceRouter.use('/:workspaceId/members', workspaceContext, membersRoutes);
+workspaceRouter.use('/:workspaceId/columns', workspaceContext, columnsRoutes);
+workspaceRouter.use('/:workspaceId/labels', workspaceContext, labelsRoutes);
+
+/**
+ * @swagger
+ * /workspaces/{workspaceId}/dashboard:
+ *   get:
+ *     summary: Get workspace dashboard with columns, tasks, labels and assignments
+ *     tags: [Workspaces]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: workspaceId
+ *         required: true
+ *         schema: { type: integer }
+ *     responses:
+ *       200:
+ *         description: Workspace dashboard data
+ *       404:
+ *         description: Workspace not found
+ *       403:
+ *         description: Forbidden
+ */
+workspaceRouter.get('/:workspaceId/dashboard', workspaceContext, getWorkspaceDashboard);
 
 /**
  * @swagger
