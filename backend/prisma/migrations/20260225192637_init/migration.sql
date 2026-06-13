@@ -7,7 +7,7 @@ CREATE TYPE "NotificationType" AS ENUM ('mention', 'taskAssignment', 'comment', 
 -- CreateTable
 CREATE TABLE "User" (
     "id" SERIAL NOT NULL,
-    "nickname" TEXT NOT NULL,
+    "username" TEXT NOT NULL,
     "email" TEXT NOT NULL,
     "passwordHash" TEXT NOT NULL,
     "avatarUrl" TEXT NOT NULL,
@@ -235,7 +235,7 @@ CREATE TABLE "LeaderboardEntry" (
 );
 
 -- CreateIndex
-CREATE UNIQUE INDEX "User_nickname_key" ON "User"("nickname");
+CREATE UNIQUE INDEX "User_username_key" ON "User"("username");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "User_email_key" ON "User"("email");

@@ -1,0 +1,66 @@
+import type { Request, Response, NextFunction } from 'express';
+import { prisma }                               from '../../../lib/prisma';
+import { ApiError }                             from '../../../utils/ApiError';
+import { idSchema, parseOrThrow,
+    parseQueryEnum, parseQueryInt }             from '../../../validations/utils';
+import { NotificationTypes, SortOptions }       from '../../../types/constants';
+
+export async function getNotifications(req: Request, res: Response, next: NextFunction)
+{
+    try {
+        const id = req.user!.id;
+        const skip = parseQueryInt('skip', req.query.skip, { default: 0, min: 0 });
+        const take = parseQueryInt('take', req.query.take, { default: 42, min: 1, max: 100 });
+        const type = parseQueryEnum('type', req.query.type, NotificationTypes, { isOptional: true });
+        const sort = parseQueryEnum('sort', req.query.sort, SortOptions, { isOptional: true });
+
+        const user = await prisma.user.findUnique({ where: { id } });
+        if (!user)
+            throw new ApiError(404, 'User not found');
+
+        const where: any = { userId: id };
+        if (type)
+            where.type = type;
+        const orderBy = { createdAt: sort === 'oldest' ? 'asc' : 'desc'	} as const;
+
+        const notifications = await prisma.notification.findMany({
+            where,
+            orderBy,
+            skip,
+            take
+        });
+
+        const total = await prisma.notification.count({ where });
+
+        res.json({ success: true, data: { notifications, pagination: { skip, take, total } } });
+    } catch (err) { next(err); }
+}
+
+export async function markAllNotificationsAsRead(req: Request, res: Response, next: NextFunction)
+{
+    try {
+        const user = await prisma.user.findUnique({ where: { id: req.user?.id } });
+        if (!user)
+            throw new ApiError(404, 'User not found');
+
+        const updated = await prisma.notification.updateMany({ where: { userId: req.user?.id, isRead: false }, data: { isRead: true } });
+        res.json({ success: true, data: { updatedCount: updated.count } });
+    } catch (err) { next(err); }
+}
+
+export async function markNotificationAsRead(req: Request, res: Response, next: NextFunction)
+{
+    try {
+        const id = parseOrThrow(idSchema, 'NotificationID', req.params.id);
+
+        const notif = await prisma.notification.findUnique({ where: { id } });
+        if (!notif)
+            throw new ApiError(404, 'Notification not found');
+        if (req.user!.id !== notif.userId)
+            throw new ApiError(403, 'Not allowed');
+
+        const updated = await prisma.notification.update({ where: { id }, data: { isRead: true } });
+
+        res.json({ success: true, data: updated });
+    } catch (err) { next(err); }
+}

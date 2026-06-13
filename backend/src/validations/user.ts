@@ -7,14 +7,10 @@ const bio_max_len = 142
 
 export const updateUserProfileSchema = z.object({
   username: usernameSchema.optional(),
-  bio: z.string().max(bio_max_len, 'Bio is too long').optional()
+  bio: z.string().max(bio_max_len, 'Bio is too long').optional(),
+  avatarUrl: z.preprocess(
+    (value) => (typeof value === 'string' && value.trim() === '' ? undefined : value),
+    z.string().url('Invalid URL').optional(),
+  ),
 })
-.strict() // ❌ reject any unknown fields
-.refine(data => Object.values(data).some(v => v !== undefined), {
-  message: 'At least one field must be provided.'
-});
-
-
-// ------------------------------------ PATCH /friends/:id/:friendId ------------------------------------
-
-export const friendRequestStatusSchema = z.object({status: z.enum(['accepted', 'rejected'])}).strict();
+.strict()

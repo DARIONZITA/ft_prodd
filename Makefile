@@ -6,8 +6,9 @@ DOCKER-COMPOSE = ./config/docker-compose.yaml
 ENV_FILE = ./config/.env
 
 DOCKER := docker compose -f $(DOCKER-COMPOSE) --env-file $(ENV_FILE)
+FRONTEND_DEV_PORT ?= 5173
 
-.PHONY: help setup up down restart logs ps clean rebuild rebuild-all rebuild-% health migrate dev test
+.PHONY: help setup up down restart logs ps clean rebuild rebuild-all rebuild-% health migrate dev test prisma-migrate-deploy
 
 all: 
 	@$(DOCKER) up -d
@@ -71,11 +72,16 @@ rebuild-%: ## Rebuild um serviço específico (ex: make rebuild-backend)
 health: ## Verificar saúde dos serviços
 	@./scripts/health-check.sh
 
-migrate: ## Executar migrations do banco de dados
-	@./scripts/migrate.sh
+migrate: prisma-migrate-deploy ## Aplicar migrations existentes (usar após git pull)
 
-dev: ## Modo desenvolvimento (com logs visíveis)
-	@./scripts/dev.sh
+prisma-migrate-deploy: ## Executar migrate deploy direto no container backend
+	@echo "🧩 Executando Prisma migrate deploy no backend..."
+	@$(DOCKER) up -d postgres redis
+	@$(DOCKER) run --rm --no-deps backend sh -lc 'npx prisma migrate deploy && npx prisma generate'
+
+dev: ## Modo desenvolvimento (com logs visíveis) docker compose --profile dev up frontend-dev
+	@FRONTEND_DEV_PORT=$(FRONTEND_DEV_PORT) $(DOCKER) --profile dev up frontend-dev
+	
 
 # ===========================
 # LOGS POR SERVIÇO
@@ -135,12 +141,22 @@ test-all: ## Executar todos os testes
 # ===========================
 
 prisma-generate: ## Gerar Prisma Client
+	@$(DOCKER) up -d postgres redis backend
 	@$(DOCKER) exec backend npm run prisma:generate
 
-prisma-migrate: ## Executar migrations do Prisma
-	@$(DOCKER) exec backend npm run prisma:migrate
+prisma-migrate: prisma-migrate-new ## Alias: criar nova migration (usar NAME=descricao)
+
+prisma-migrate-new: ## Criar nova migration após alterar schema.prisma (uso: make prisma-migrate-new NAME=add_foo)
+	@if [ -z "$(NAME)" ]; then \
+		echo "Erro: define um nome. Exemplo: make prisma-migrate-new NAME=add_user_bio"; \
+		exit 1; \
+	fi
+	@echo "🧩 Criando migration '$(NAME)' a partir de schema.prisma..."
+	@$(DOCKER) up -d postgres redis backend
+	@$(DOCKER) exec backend npx prisma migrate dev --name "$(NAME)"
 
 prisma-studio: ## Abrir Prisma Studio (GUI para DB)
+	@$(DOCKER) up -d postgres redis backend
 	@$(DOCKER) exec backend npm run prisma:studio
 
 # ===========================
@@ -165,10 +181,10 @@ install-all: ## Instalar dependências de todos os serviços
 reset-db: ## Reset completo do banco de dados (PERDE DADOS)
 	@echo "  ATENÇÃO: Isso irá deletar todos os dados!"
 	@read -p "Tem certeza? [y/N]: " confirm && [ "$$confirm" = "y" ] || exit 1
-	@$(DOCKER) down -v
+	@$(DOCKER) down -v --remove-orphans
 	@$(DOCKER) up -d postgres redis
-	@sleep 5
-	@make prisma-migrate
+	@$(MAKE) migrate
+	@$(DOCKER) up -d backend frontend
 
 reset-all: ## Reset completo do projeto (PERDE TUDO)
 	@echo "  ATENÇÃO: Isso irá deletar containers, volumes e dados!"

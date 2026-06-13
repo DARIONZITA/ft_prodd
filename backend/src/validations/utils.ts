@@ -12,16 +12,28 @@ export function parseOrThrow<T extends z.ZodTypeAny>( schema: T, key: string, va
   return result.data;
 }
 
-export function parseQueryInt( key: string, value: unknown, options: { default?: number; min?: number; max?: number } = {} ): number
+function validateQueryParam<T>( key: string, value: unknown, options: { default?: T, isOptional?: boolean } ): { value: unknown } | { early: T }
 {
   if (value === undefined)
   {
-    if (options.default === undefined)
-      throw new ApiError(400, `Query parameter "${key}" is required`);
-    return options.default;
+    if (options.default !== undefined)
+      return { early: options.default };
+    if (options.isOptional)
+      return { value: undefined };
+    throw new ApiError(400, `Query parameter "${key}" is required`);
   }
   if (Array.isArray(value))
     throw new ApiError(400, `Query parameter "${key}" must be a single value, not an array`);
+  return { value };
+}
+
+export function parseQueryInt( key: string, value: unknown, options: { default?: number; isOptional?: boolean, min?: number; max?: number } = {} ): number | undefined
+{
+  const check = validateQueryParam(key, value, options);
+  if ('early' in check)
+    return check.early;
+  if (check.value === undefined)
+    return check.value;
 
   const schema = z.coerce.number().int()
                   .refine((val: number) => !Number.isNaN(val), { message: `Query parameter "${key}" is not a valid integer` })
@@ -30,8 +42,72 @@ export function parseQueryInt( key: string, value: unknown, options: { default?:
   return parseOrThrow(schema, key, value);
 }
 
-export const requireRole = ( currentRole: string, allowedRoles: string[] ): void =>
+export function parseQueryBool( key: string, value: unknown, options: { default?: boolean, isOptional?: boolean } = {} ): boolean | undefined
 {
-	if (!allowedRoles.includes(currentRole))
-		throw new ApiError( 403, `Required role: ${allowedRoles.join(' or ')}` );
-};
+  const check = validateQueryParam(key, value, options);
+  if ('early' in check)
+    return check.early;
+  if (check.value === undefined)
+    return check.value;
+
+  const schema = z.preprocess(
+    (val: unknown) => {
+      if (typeof val === 'boolean') return val;
+      if (typeof val === 'string') {
+        if (val.toLowerCase() === 'true') return true;
+        if (val.toLowerCase() === 'false') return false;
+      }
+      return undefined;
+    },
+    z.boolean({ message: `Query parameter "${key}" must be a boolean (true/false)` })
+  );
+  return parseOrThrow(schema, key, value);
+}
+
+export function parseQueryEnum<T extends string>( key: string, value: unknown, allowed: readonly [T, ...T[]], options: { default?: T, isOptional?: boolean } = {} ): T | undefined
+{
+  const check = validateQueryParam(key, value, options);
+  if ('early' in check)
+    return check.early;
+  if (check.value === undefined)
+    return check.value;
+
+  const schema = z.enum(allowed, {message: `Query parameter "${key}" must be one of: ${allowed.join(', ')}`});
+  return parseOrThrow(schema, key, value);
+}
+
+export function parseQueryString( key: string, value: unknown, options: { default?: string; minLength?: number; maxLength?: number; isOptional?: boolean } = {} ): string | undefined
+{
+  const check = validateQueryParam(key, value, options);
+  if ('early' in check)
+    return check.early;
+  if (check.value === undefined)
+    return check.value;
+
+  const schema = z.string().trim()
+    .min(options.minLength ?? 0, {message: `Query parameter "${key}" must contain at least ${options.minLength} characters`})
+    .max(options.maxLength ?? Infinity, {message: `Query parameter "${key}" must contain at most ${options.maxLength} characters`});
+
+  return parseOrThrow(schema, key, value);
+}
+
+export function parseQueryDate( key: string, value: unknown, options: { default?: Date; isOptional?: boolean } = {} ): Date | undefined
+{
+  const check = validateQueryParam(key, value, options);
+  if ('early' in check)
+    return check.early;
+  if (check.value === undefined)
+    return check.value;
+
+  const schema = z.preprocess(
+    (val: unknown) => {
+      if (typeof val !== 'string' && !(val instanceof Date))
+        return undefined;
+      const parsed = new Date(val);
+      return Number.isNaN(parsed.getTime()) ? undefined : parsed;
+    },
+    z.date({ message: `Query parameter "${key}" must be a valid date string` })
+  );
+
+  return parseOrThrow(schema, key, value);
+}

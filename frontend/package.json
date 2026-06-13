@@ -1,57 +1,41 @@
 {
-  "name": "ft-transcendence-frontend",
-  "version": "1.0.0",
-  "description": "Frontend for ft_prodd task manager",
+  "name": "ts-frontend",
   "private": true,
-  "dependencies": {
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "react-router-dom": "^6.20.1",
-    "axios": "^1.6.2",
-    "socket.io-client": "^4.6.1",
-    "@dnd-kit/core": "^6.1.0",
-    "@dnd-kit/sortable": "^8.0.0",
-    "react-markdown": "^9.0.1",
-    "emoji-picker-react": "^4.5.16"
-  },
+  "version": "0.0.0",
+  "type": "module",
   "scripts": {
-    "start": "PORT=3000 DISABLE_ESLINT_PLUGIN=true WDS_SOCKET_PORT=0 react-scripts start",
-    "start-simple": "node server.js",
-    "build": "react-scripts build",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject",
-    "lint": "eslint src --ext .js,.jsx,.ts,.tsx",
-    "format": "prettier --write \"src/**/*.{js,jsx,ts,tsx,css,md}\""
+    "dev": "vite --host --port 3000",
+    "build": "tsc -b && vite build",
+    "lint": "eslint .",
+    "preview": "vite preview"
   },
-  "eslintConfig": {
-    "extends": [
-      "react-app"
-    ]
-  },
-  "browserslist": {
-    "production": [
-      ">0.2%",
-      "not dead",
-      "not op_mini all"
-    ],
-    "development": [
-      "last 1 chrome version",
-      "last 1 firefox version",
-      "last 1 safari version"
-    ]
+  "dependencies": {
+    "@tanstack/react-query": "^5.0.0",
+    "@dnd-kit/dom": "^0.4.0",
+    "@dnd-kit/helpers": "^0.4.0",
+    "@dnd-kit/react": "^0.4.0",
+    "@tailwindcss/vite": "^4.2.1",
+    "axios": "^1.13.6",
+    "lucide-react": "^0.575.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "react-router-dom": "^7.13.1",
+    "recharts": "^3.8.1",
+    "tailwindcss": "^4.2.1",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
-    "@types/react": "^18.2.43",
-    "@types/react-dom": "^18.2.17",
-    "@types/node": "^20.10.4",
-    "react-scripts": "5.0.1",
-    "typescript": "^5.3.3",
-    "prettier": "^3.1.0"
-  },
-  "resolutions": {
-    "ajv": "^8.12.0"
-  },
-  "overrides": {
-    "ajv": "^8.12.0"
+    "@eslint/js": "^9.39.1",
+    "@types/node": "^24.10.1",
+    "@types/react": "^19.2.7",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^5.1.1",
+    "eslint": "^9.39.1",
+    "eslint-plugin-react-hooks": "^7.0.1",
+    "eslint-plugin-react-refresh": "^0.4.24",
+    "globals": "^16.5.0",
+    "typescript": "~5.9.3",
+    "typescript-eslint": "^8.48.0",
+    "vite": "^7.3.1"
   }
 }
