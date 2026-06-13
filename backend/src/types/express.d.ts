@@ -1,7 +1,6 @@
-import { User } from '@prisma/client';
-import express from 'express';
+import { WorkspaceRole, LabelColor }	from '@prisma/client';
 
-//Declaration merging
+// Declaration merging
 declare global
 {
 	namespace	Express
@@ -12,8 +11,31 @@ declare global
 				id: number,
 				email?: string,
 				username?: string,
-				avatarUrl?: string,
+				avatarUrl?: string
 			}
+
+			workspace?: {
+				id: number,
+				name: string,
+				role: WorkspaceRole
+			};
+
+			column?: {
+				id: number,
+				name: string
+			};
+
+			task?: {
+				id: number,
+				title: string,
+				creatorId: number
+			};
+
+			label?: {
+				id: number,
+				name: string,
+				color: LabelColor
+			};
 		}
 	}
 }
