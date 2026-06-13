@@ -13,14 +13,15 @@ const options = {
 		tags: [
 			{ name: 'Auth', description: 'Authentication endpoints' },
 			{ name: 'Users', description: 'User profile management' },
-			{ name: 'Workspaces', description: 'Manage workspaces and members' },
 			{ name: 'Friends', description: 'Manage friend relationships' },
 			{ name: 'Notifications', description: 'Manage notifications' },
+			{ name: 'Workspaces', description: 'Manage workspaces' },
+			{ name: 'Members', description: 'Manage workspace members' },
+			{ name: 'Columns', description: 'Manage workspace columns' },
+			{ name: 'Labels', description: 'Manage workspace labels' },
+			{ name: 'Tasks', description: 'Manage tasks (creation, updates, assignments)' },
 			{ name: 'API Keys', description: 'Manage API keys for external access' },
-			{ name: 'Public API', description: `Public API endpoints secured with API key authentication.\n
-Read operations limited to 30 requests per minute (GET).\n
-Write operations have a shorter limit of 10 requests per minute (POST, PUT, DELETE)`
-			},
+			{ name: 'Public API', description: `Public API endpoints secured with API key authentication.<br> Read operations limited to 30 requests per minute (GET).<br> Write operations have a shorter limit of 10 requests per minute (POST, PUT, DELETE)` },
 		],
 		servers: [
 			{
