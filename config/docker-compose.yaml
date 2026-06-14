@@ -88,9 +88,9 @@ services:
       - GITHUB_CLIENT_SECRET=${GITHUB_CLIENT_SECRET}
       - CORS_ORIGIN=${CORS_ORIGIN:-https://localhost}
       - LOG_LEVEL=${LOG_LEVEL:-debug}
-    ports:
-      - "3001:3001"
-      - "5555:5555"
+    expose:
+      - "3001"
+      - "5555"
     volumes:
       - ../backend:/app
       - ../websocket:/app/src/ws
@@ -119,8 +119,8 @@ services:
       - NODE_ENV=${NODE_ENV:-development}
       - VITE_API_URL=/
       - VITE_UPLOADS_PROXY=http://ft_prodd_backend:3001
-    ports:
-      - "3000:3000"
+    expose:
+      - "3000"
     volumes:
       - ../frontend:/app
       - ../websocket:/app/src/ws
