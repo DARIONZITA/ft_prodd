@@ -10,6 +10,8 @@ interface PropsHeaderkanbanBoard {
   workspaceCreatedAt: Date
   onOpenSettings?: () => void
   onOpenMembers?: () => void
+  onOpenManagerAPI?: () => void
+  userMode?: 'Admin' | 'Member' | 'Viewer'
 }
 
 export function HeaderKanbanBoard({
@@ -22,8 +24,9 @@ export function HeaderKanbanBoard({
   workspaceCreatedAt,
   onOpenSettings,
   onOpenMembers,
+  onOpenManagerAPI,
+  userMode = 'Viewer'
 }: PropsHeaderkanbanBoard) {
-    const userMode: 'Admin' | 'Member' | 'Viewer' = 'Admin';
     console.log(workspaceCreatedAt)
     return (
       <>
@@ -60,18 +63,23 @@ export function HeaderKanbanBoard({
           {/* Members avatars - clickable to open members page */}
           <button 
             onClick={onOpenMembers}
-            className="flex items-center text-slate-400 hidden sm:flex hover:opacity-80 transition-opacity cursor-pointer"
+            className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-slate-600 bg-white border border-slate-200 hover:bg-slate-50 rounded-lg transition-colors"
             title="Manage members"
           >
-            <div className="flex -space-x-2 mr-3">
-              <img src="https://ui-avatars.com/api/?name=Jose+M&background=0891b2&color=fff" className="w-8 h-8 rounded-full border-2 border-white ring-1 ring-slate-100" />
-              <img src="https://ui-avatars.com/api/?name=Ana+S&background=4f46e5&color=fff" className="w-8 h-8 rounded-full border-2 border-white ring-1 ring-slate-100" />
-              <div className="w-8 h-8 rounded-full border-2 border-white bg-slate-100 text-slate-500 text-xs font-bold flex items-center justify-center ring-1 ring-slate-100">+2</div>
-            </div>
+           Members
           </button>
+          {userMode === 'Admin' && (
+            <button 
+              onClick={onOpenManagerAPI}
+              className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-slate-600 bg-white border border-slate-200 hover:bg-slate-50 rounded-lg transition-colors"
+              title="Manage members"
+            >
+            Manager Api Keys
+            </button>
+          )
+          }
           
           <div className="h-6 w-px bg-slate-200"></div>
-          
           {/* Settings button */}
           <button
             onClick={onOpenSettings}

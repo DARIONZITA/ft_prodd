@@ -10,6 +10,7 @@ import {move} from '@dnd-kit/helpers';
 import TaskDetailPanel from './TaskDetailPanel';
 import { HeaderKanbanBoard } from './HeaderKanbanBoard';
 import TaskListPage from './TaskListPage';
+import ApiKeyManagerModal from './ApiKeyManagerModal';
 
 const COLUMN_COLOR_BY_TYPE_ID: Record<ColumnTypeId, string> = {
   backlog: 'bg-slate-400',
@@ -418,17 +419,25 @@ interface KanbanBoardPageProps {
   onOpenSettings?: () => void
   onOpenMembers?: () => void
   dateWorkspace: string
+  workspaceRole?: 'admin' | 'member' | 'guest'
 }
 
-export default function KanbanBoardPage({ onOpenSettings, onOpenMembers, dateWorkspace }: KanbanBoardPageProps) {
+export default function KanbanBoardPage({ onOpenSettings, onOpenMembers, dateWorkspace, workspaceRole }: KanbanBoardPageProps) {
   const [columns, setColumns] = useState<Column[]>(() => SORTED_DEFAULT_COLUMNS);
   const [tasks, setTasks] = useState<Task[]>(() => sortTasks(INITIAL_TASKS));
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showApiKeysModal, setShowApiKeysModal] = useState(false);
   const [showCreateColumnModal, setShowCreateColumnModal] = useState(false);
   const [createTaskColumnId, setCreateTaskColumnId] = useState<string>(DEFAULT_COLUMNS[0]?.id ?? '');
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<'board' | 'list'>('board');
+
+  const userMode: 'Admin' | 'Member' | 'Viewer' = useMemo(() => {
+    if (workspaceRole === 'admin') return 'Admin';
+    if (workspaceRole === 'member') return 'Member';
+    return 'Viewer';
+  }, [workspaceRole]);
   const todayIso = new Date().toISOString().slice(0, 10);
 
   const doneColumnIds = useMemo(
@@ -760,7 +769,8 @@ export default function KanbanBoardPage({ onOpenSettings, onOpenMembers, dateWor
         workspaceCreatedAt={dateWorkspace}
         onOpenSettings={onOpenSettings}
         onOpenMembers={onOpenMembers}
-
+        onOpenManagerAPI={() => setShowApiKeysModal(true)}
+        userMode={userMode}
       />
 
       <DragDropProvider
@@ -853,6 +863,11 @@ export default function KanbanBoardPage({ onOpenSettings, onOpenMembers, dateWor
           onUpdateTask={handleUpdateTask}
         />
       )}
+
+      <ApiKeyManagerModal
+        isOpen={showApiKeysModal}
+        onClose={() => setShowApiKeysModal(false)}
+      />
     </div>
   );
 }

@@ -24,6 +24,8 @@ interface Workspace {
   onlineCount?: number
   sprintDaysLeft?: number
   healthScore?: number
+  createdAt?: string
+  role?: 'admin' | 'member' | 'guest'
 }
 
 interface dataSideBar {
@@ -246,7 +248,8 @@ export default function DashboardPagePlaceholder() {
         <KanbanBoardPage
           onOpenSettings={() => handleNavigate('organization-settings')}
           onOpenMembers={() => handleNavigate('organization-members')}
-          dateWorkspace={currentWorkspace.createdAt}
+          dateWorkspace={currentWorkspace?.createdAt ?? ''}
+          workspaceRole={currentWorkspace?.role}
         />
       )
     }
