@@ -32,6 +32,15 @@ enum Priority {
     HIGH
 }
 
+enum ColumnType {
+    backlog
+    todo
+    in_progress
+    code_review
+    done
+    custom
+}
+
 enum LabelColor {
     red
     orange
@@ -111,13 +120,13 @@ model WorkspaceMember {
 }
 
 model Column {
-    id          Int      @id @default(autoincrement())
+    id          Int        @id @default(autoincrement())
     workspaceId Int
     name        String
+    columnType  ColumnType @default(custom)
     order       Int
-    createdAt   DateTime @default(now())
-    updatedAt   DateTime @updatedAt
-
+    createdAt   DateTime   @default(now())
+    updatedAt   DateTime   @updatedAt
 
     workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
 

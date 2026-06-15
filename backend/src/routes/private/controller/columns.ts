@@ -2,7 +2,7 @@ import type { Request, Response, NextFunction }     from 'express';
 import { z }                                        from 'zod';
 import { prisma }                                   from '../../../lib/prisma';
 import { ApiError }                                 from '../../../utils/ApiError';
-import { NotificationType }                         from '@prisma/client';
+import { NotificationType, ColumnType }             from '@prisma/client';
 import { idSchema, parseOrThrow, parseQueryString } from '../../../validations/utils';
 
 const orderSchema = z.array( z.object({ id: idSchema, order: z.coerce.number().int().min(0) }) ).min(1);
@@ -35,6 +35,7 @@ export async function listColumns(req: Request, res: Response, next: NextFunctio
       data: columns.map(col => ({
         id: col.id,
         name: col.name,
+        columnType: col.columnType,
         order: col.order,
         tasks: col.tasks.map(task => ({
           id: task.id,
@@ -54,6 +55,20 @@ export async function createColumn(req: Request, res: Response, next: NextFuncti
     const workspaceId = req.workspace!.id;
     const name = parseQueryString('createColumn() name', req.body.name, { isOptional: false, minLength: 1, maxLength: 255 })!;
 
+    // Derive columnType from name if not explicitly provided
+    const inferredType = (() => {
+      const lower = name.toLowerCase();
+      if (lower === 'backlog')                           return ColumnType.backlog;
+      if (lower === 'to do' || lower === 'todo')         return ColumnType.todo;
+      if (lower === 'in progress')                       return ColumnType.in_progress;
+      if (lower === 'code review')                       return ColumnType.code_review;
+      if (lower === 'done')                              return ColumnType.done;
+      return ColumnType.custom;
+    })();
+    const columnType: ColumnType = req.body.columnType && Object.values(ColumnType).includes(req.body.columnType)
+      ? req.body.columnType as ColumnType
+      : inferredType;
+
     const column = await prisma.$transaction(async (tx) => {
       const lastColumn = await prisma.column.findFirst({
         where: { workspaceId },
@@ -63,7 +78,7 @@ export async function createColumn(req: Request, res: Response, next: NextFuncti
       const nextOrder = (lastColumn?.order ?? -1) + 1;
 
       const col = await tx.column.create({
-        data: { workspaceId, name, order: nextOrder }
+        data: { workspaceId, name, columnType, order: nextOrder }
       });
 
       const members = await tx.workspaceMember.findMany({
