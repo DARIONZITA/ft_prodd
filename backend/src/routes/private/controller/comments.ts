@@ -3,6 +3,7 @@ import { prisma }                               from '../../../lib/prisma';
 import { parseQueryInt, parseQueryString }      from '../../../validations/utils';
 import { NotificationType }                     from '@prisma/client';
 import { wsEmitter } from '../../../ws/emitter';
+import { notify } from '../../../utils/notify';
 
 function parseMentions(content: string): string[]
 {
@@ -64,15 +65,16 @@ export async function createComment(req: Request, res: Response, next: NextFunct
 
       const mentionedUserIds = await resolveMentionUsers(mentionedUsernames, workspace.id);
       if (mentionedUserIds.length > 0) {
-        await tx.notification.createMany({
-            data: mentionedUserIds.map(userId => ({
-              userId,
-              message: `${req.user!.username} mentioned you in a comment on task "${task!.title}" from column "${req.column!.name}" in workspace "${workspace.name}"`,
-              type: NotificationType.mention
-            }))
-        });
+        await notify(
+          {
+            userIds: mentionedUserIds,
+            message: `${req.user!.username} mentioned you in a comment on task "${task!.title}" from column "${req.column!.name}" in workspace "${workspace.name}"`,
+            type: NotificationType.mention,
+            data: { taskId: task.id, commentId: c.id },
+          },
+          tx
+        );
       }
-
       return c;
     });
     wsEmitter.commentNew(workspace.id, task.id, comment, req.user!.id);

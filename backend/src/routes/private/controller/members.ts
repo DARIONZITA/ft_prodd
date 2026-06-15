@@ -4,6 +4,7 @@ import { prisma }                                   from '../../../lib/prisma';
 import { ApiError }                                 from '../../../utils/ApiError';
 import { WorkspaceRole }                            from '../../../types/constants';
 import { idSchema, parseOrThrow, parseQueryEnum }   from '../../../validations/utils';
+import { notify } from '../../../utils/notify';
 
 export async function listMembers(req: Request, res: Response, next: NextFunction)
 {
@@ -116,13 +117,14 @@ export async function   createMember(req: Request, res: Response, next: NextFunc
             });
 
             if (otherMembers.length) {
-                await tx.notification.createMany({
-                    data: otherMembers.map(m => ({
-                        userId: m.userId,
+                await notify(
+                    {
+                        userIds: otherMembers.map(m => m.userId),
                         type: NotificationType.workspace,
                         message: `${member.user.username} has been added to workspace "${req.workspace!.name}" by ${req.user!.username}`
-                    }))
-                });
+                    },
+                    tx
+                );
             }
 
             return member;
@@ -187,13 +189,14 @@ export async function   updateMemberRole(req: Request, res: Response, next: Next
             });
 
             if (otherMembers.length > 0) {
-                await tx.notification.createMany({
-                    data: otherMembers.map(m => ({
-                        userId: m.userId,
+                await notify(
+                    {
+                        userIds: otherMembers.map(m => m.userId),
                         type: NotificationType.workspace,
                         message: `${member.user.username}'s role has been changed to ${role} in workspace "${req.workspace!.name}" by ${req.user!.username}`
-                    }))
-                });
+                    },
+                    tx
+                );
             }
 
             return member;
@@ -267,13 +270,14 @@ export async function deleteMember(req: Request, res: Response, next: NextFuncti
             });
 
             if (otherMembers.length > 0) {
-                await tx.notification.createMany({
-                    data: otherMembers.map(m => ({
-                        userId: m.userId,
+                await notify(
+                    {
+                        userIds: otherMembers.map(m => m.userId),
                         type: NotificationType.workspace,
                         message: `${targetUser!.username} has been removed from workspace "${req.workspace!.name}" by ${req.user!.username}`
-                    }))
-                });
+                    },
+                    tx
+                );
             }
 
             return { message: 'Member successfully removed.' };

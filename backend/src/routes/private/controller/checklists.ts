@@ -6,6 +6,7 @@ import {
   idSchema, parseOrThrow,
   parseQueryString, parseQueryBool
 }                                               from '../../../validations/utils';
+import { notify } from '../../../utils/notify';
 
 export async function getChecklist(req: Request, res: Response, next: NextFunction)
 {
@@ -39,13 +40,14 @@ export async function createChecklistItem(req: Request, res: Response, next: Nex
       });
 
       if (members.length > 0) {
-        await tx.notification.createMany({
-          data: members.map(m => ({
-            userId: m.userId,
+        await notify(
+          {
+            userIds: members.map(m => m.userId),
             type: NotificationType.task,
             message: `${req.user!.username} added checklist item "${description}" to task "${req.task!.title}" in column "${req.column!.name}" of workspace "${req.workspace!.name}"`
-          }))
-        });
+          },
+          tx
+        );
       }
 
       return i;
@@ -98,9 +100,14 @@ export async function updateChecklistItem(req: Request, res: Response, next: Nex
       });
 
       if (members.length > 0) {
-        await tx.notification.createMany({
-          data: members.map(m => ({ userId: m.userId, type: NotificationType.task, message }))
-        });
+        await notify(
+          {
+            userIds: members.map(m => m.userId),
+            type: NotificationType.task,
+            message
+          },
+          tx
+        );
       }
 
       return updated;
@@ -134,13 +141,14 @@ export async function deleteChecklistItem(req: Request, res: Response, next: Nex
       });
 
       if (members.length > 0) {
-        await tx.notification.createMany({
-          data: members.map(m => ({
-            userId: m.userId,
+        await notify(
+          {
+            userIds: members.map(m => m.userId),
             type: NotificationType.task,
             message: `${req.user!.username} removed checklist item "${existing.description}" from task "${req.task!.title}" in column "${req.column!.name}" of workspace "${req.workspace!.name}"`
-          }))
-        });
+          },
+          tx
+        );
       }
     });
 
