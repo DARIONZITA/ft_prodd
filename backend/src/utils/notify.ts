@@ -15,10 +15,8 @@ interface   NotifyParams
 // Helper que cria a notificação na DB E emite via WebSocket num só passo.
 // Assim qualquer rota notifica com uma linha: await notify({ ... })
 
-export async function   notify( params: NotifyParams, dbObject : any, excludeUserIds? : Set<number>, add_to_set? : boolean )
+export async function   notify( params: NotifyParams, client : any, excludeUserIds? : Set<number>, add_to_set? : boolean )
 {
-    const client = dbObject ?? prisma;
-
     for (const id of params.userIds)
     {
         if (excludeUserIds?.has(id))
