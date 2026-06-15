@@ -1,7 +1,8 @@
 import type { Request, Response, NextFunction } from 'express';
 import { prisma }                               from '../../../lib/prisma';
-import { NotificationType }                     from '@prisma/client';
 import { parseQueryInt, parseQueryString }      from '../../../validations/utils';
+import { NotificationType }                     from '@prisma/client';
+import { wsEmitter } from '../../../ws/emitter';
 
 function parseMentions(content: string): string[]
 {
@@ -74,7 +75,7 @@ export async function createComment(req: Request, res: Response, next: NextFunct
 
       return c;
     });
-
+    wsEmitter.commentNew(workspace.id, task.id, comment, req.user!.id);
     res.status(201).json({ success: true, data: comment });
   } catch (err) { next(err); }
 }
