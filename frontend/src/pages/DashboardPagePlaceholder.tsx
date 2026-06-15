@@ -246,6 +246,7 @@ export default function DashboardPagePlaceholder() {
       console.log(workspaceQuery)
       return (
         <KanbanBoardPage
+          workspaceId={currentWorkspace?.id}
           onOpenSettings={() => handleNavigate('organization-settings')}
           onOpenMembers={() => handleNavigate('organization-members')}
           dateWorkspace={currentWorkspace?.createdAt ?? ''}

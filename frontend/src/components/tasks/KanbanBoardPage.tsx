@@ -1,6 +1,6 @@
 import { useMemo, useState, useRef, useCallback, useEffect } from 'react';
-import { Plus, Calendar, Link2, Circle } from 'lucide-react';
-import type { ChecklistItem, Column, ColumnTypeId, Task } from './Types';
+import { Plus, Calendar, Link2, Circle, Trash2 } from 'lucide-react';
+import type { ChecklistItem, Column, ColumnTypeId, Task, TaskPriority } from './Types';
 import { useDroppable, DragDropProvider, useDragDropManager} from '@dnd-kit/react';
 import {useSortable} from '@dnd-kit/react/sortable';
 import { PointerSensor, PointerActivationConstraints } from '@dnd-kit/dom';
@@ -11,6 +11,20 @@ import TaskDetailPanel from './TaskDetailPanel';
 import { HeaderKanbanBoard } from './HeaderKanbanBoard';
 import TaskListPage from './TaskListPage';
 import ApiKeyManagerModal from './ApiKeyManagerModal';
+import ManageLabelsModal from './ManageLabelsModal';
+import {
+  useWorkspaceDashboardQuery,
+  useCreateColumnMutation,
+  useDeleteColumnMutation,
+  useCreateTaskMutation,
+  useMoveTaskMutation,
+  useReorderTasksMutation,
+  useReorderColumnsMutation,
+  useUpdateTaskMutation,
+  kanbanKeys,
+} from '../../api/kanban';
+import { queryClient } from '../../main';
+import api from '../../api/axios';
 
 const COLUMN_COLOR_BY_TYPE_ID: Record<ColumnTypeId, string> = {
   backlog: 'bg-slate-400',
@@ -166,6 +180,7 @@ interface ColumnCardProps {
   isBacklog: boolean;
   onAddTask: (id: string) => void;
   onTaskClick: (task: Task) => void;
+  onDeleteColumn?: (id: string) => void;
   index: number;
   backlogColumnId?: string;
 }
@@ -327,7 +342,7 @@ function TaskCard({ task, onClick, index, isBacklogTask, isCompletedBacklog }: {
             </div>);
 }
 
-function ColumnCard({ column, tasks, isBacklog, onAddTask, onTaskClick, index }: ColumnCardProps) {
+function ColumnCard({ column, tasks, isBacklog, onAddTask, onTaskClick, onDeleteColumn, index }: ColumnCardProps) {
   const [element, setElement] = useState<Element | null>(null);
   const handleRef = useRef<HTMLDivElement | null>(null);
 
@@ -369,14 +384,25 @@ function ColumnCard({ column, tasks, isBacklog, onAddTask, onTaskClick, index }:
           </span>
         </div>
 
-        {(column.columnTypeId === 'backlog' || column.columnTypeId === 'todo') && (
-          <button
-            onClick={() => onAddTask(column.id)}
-            className="text-slate-400 rounded p-1 opacity-0 group-hover:opacity-100 transition-opacity hover:text-cyan-600 hover:bg-slate-200"
-          >
-            <Plus className="w-4 h-4" />
-          </button>
-        )}
+        <div className="flex items-center gap-1">
+          {(column.columnTypeId === 'backlog' || column.columnTypeId === 'todo') && (
+            <button
+              onClick={() => onAddTask(column.id)}
+              className="text-slate-400 rounded p-1 opacity-0 group-hover:opacity-100 transition-opacity hover:text-cyan-600 hover:bg-slate-200"
+            >
+              <Plus className="w-4 h-4" />
+            </button>
+          )}
+          {onDeleteColumn && (
+            <button
+              onClick={() => onDeleteColumn(column.id)}
+              className="text-slate-400 rounded p-1 opacity-0 group-hover:opacity-100 transition-opacity hover:text-red-600 hover:bg-slate-200"
+              title="Delete Column"
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
+          )}
+        </div>
       </div>
 
       <div ref={dropRef} className="flex-1 overflow-y-auto thin-scroll space-y-3 pb-3 px-2 pt-1">
@@ -416,22 +442,146 @@ function ColumnCard({ column, tasks, isBacklog, onAddTask, onTaskClick, index }:
 }
 
 interface KanbanBoardPageProps {
+  workspaceId?: number | string
   onOpenSettings?: () => void
   onOpenMembers?: () => void
   dateWorkspace: string
   workspaceRole?: 'admin' | 'member' | 'guest'
 }
 
-export default function KanbanBoardPage({ onOpenSettings, onOpenMembers, dateWorkspace, workspaceRole }: KanbanBoardPageProps) {
+export default function KanbanBoardPage({ workspaceId, onOpenSettings, onOpenMembers, dateWorkspace, workspaceRole }: KanbanBoardPageProps) {
   const [columns, setColumns] = useState<Column[]>(() => SORTED_DEFAULT_COLUMNS);
   const [tasks, setTasks] = useState<Task[]>(() => sortTasks(INITIAL_TASKS));
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showApiKeysModal, setShowApiKeysModal] = useState(false);
+  const [showLabelsModal, setShowLabelsModal] = useState(false);
   const [showCreateColumnModal, setShowCreateColumnModal] = useState(false);
   const [createTaskColumnId, setCreateTaskColumnId] = useState<string>(DEFAULT_COLUMNS[0]?.id ?? '');
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<'board' | 'list'>('board');
+
+  // React Query Dashboard Load
+  const { data: dashboardData } = useWorkspaceDashboardQuery(workspaceId);
+
+  // Sync columns & tasks with backend
+  useEffect(() => {
+    if (dashboardData?.success && dashboardData.data) {
+      const dbColumns = dashboardData.data.columns;
+
+      const mappedColumns: Column[] = dbColumns.map((col) => {
+        // Use columnType from backend directly — no name guessing
+        const typeMap: Record<string, ColumnTypeId> = {
+          backlog: 'backlog',
+          todo: 'todo',
+          in_progress: 'in_progress',
+          code_review: 'code_review',
+          done: 'done',
+          custom: 'custom',
+        };
+        const columnTypeId: ColumnTypeId = typeMap[col.columnType] ?? 'custom';
+        const color = COLUMN_COLOR_BY_TYPE_ID[columnTypeId];
+
+        return {
+          id: String(col.id),
+          name: col.name,
+          columnTypeId,
+          color,
+          order: col.order
+        };
+      });
+
+      const mappedTasks: Task[] = [];
+      dbColumns.forEach((col) => {
+        col.tasks.forEach((t, index) => {
+          const priorityMap: Record<string, TaskPriority> = {
+            LOW: 'Low',
+            MEDIUM: 'Medium',
+            HIGH: 'High'
+          };
+
+          const COLOR_MAP: Record<string, { color: string; bgColor: string; borderColor: string }> = {
+            red: { color: 'text-red-700', bgColor: 'bg-red-50', borderColor: 'border-red-200' },
+            orange: { color: 'text-orange-700', bgColor: 'bg-orange-50', borderColor: 'border-orange-200' },
+            yellow: { color: 'text-yellow-700', bgColor: 'bg-yellow-50', borderColor: 'border-yellow-200' },
+            green: { color: 'text-green-700', bgColor: 'bg-green-50', borderColor: 'border-green-200' },
+            blue: { color: 'text-blue-700', bgColor: 'bg-blue-50', borderColor: 'border-blue-200' },
+            purple: { color: 'text-purple-700', bgColor: 'bg-purple-50', borderColor: 'border-purple-200' },
+            pink: { color: 'text-pink-700', bgColor: 'bg-pink-50', borderColor: 'border-pink-200' },
+            cyan: { color: 'text-cyan-700', bgColor: 'bg-cyan-50', borderColor: 'border-cyan-200' },
+            teal: { color: 'text-teal-700', bgColor: 'bg-teal-50', borderColor: 'border-teal-200' },
+            indigo: { color: 'text-indigo-700', bgColor: 'bg-indigo-50', borderColor: 'border-indigo-200' },
+            lime: { color: 'text-lime-700', bgColor: 'bg-lime-50', borderColor: 'border-lime-200' },
+            gray: { color: 'text-slate-600', bgColor: 'bg-slate-100', borderColor: 'border-slate-200' },
+            brown: { color: 'text-amber-800', bgColor: 'bg-amber-100', borderColor: 'border-amber-200' },
+          };
+
+          mappedTasks.push({
+            id: String(t.id),
+            title: t.title,
+            description: '',
+            columnId: String(col.id),
+            priority: priorityMap[t.priority] || 'Medium',
+            order: index + 1,
+            assignees: t.assignments.map((username, aIdx) => ({
+              id: `assignee-${aIdx}-${username}`,
+              name: username,
+              avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(username)}&background=0891b2&color=fff`,
+              initials: username.slice(0, 2).toUpperCase()
+            })),
+            labels: t.labels.map((lbl, lIdx) => {
+              const style = COLOR_MAP[lbl.toLowerCase()] || COLOR_MAP.cyan;
+              return {
+                id: `label-${lIdx}-${lbl}`,
+                name: lbl,
+                ...style
+              };
+            }),
+            checklist: t.checklist ? t.checklist.map((ci) => {
+              const match = ci.description.match(/^LINK::(\d+)::(.*)$/);
+              return {
+                id: String(ci.id),
+                text: match ? match[2] : ci.description,
+                completed: ci.isCompleted,
+                linkedTaskId: match ? `TASK-${match[1]}` : undefined
+              };
+            }) : [],
+            createdBy: {
+              id: 'creator',
+              name: 'Creator',
+              avatar: 'https://ui-avatars.com/api/?name=Creator',
+              initials: 'CR'
+            },
+            createdAt: new Date().toISOString()
+          });
+        });
+      });
+
+      // Resolve linkedBacklogId for each task
+      mappedTasks.forEach((task) => {
+        const link = mappedTasks.find((backlogTask) => {
+          const backlogCol = mappedColumns.find(c => c.id === backlogTask.columnId);
+          if (backlogCol?.columnTypeId !== 'backlog') return false;
+          return backlogTask.checklist?.some(ci => ci.linkedTaskId === `TASK-${task.id}` || ci.linkedTaskId === task.id);
+        });
+        if (link) {
+          task.linkedBacklogId = link.id;
+        }
+      });
+
+      setColumns(mappedColumns);
+      setTasks(mappedTasks);
+    }
+  }, [dashboardData]);
+
+  // Mutations
+  const createColumnMutation = useCreateColumnMutation(workspaceId ?? 0);
+  const deleteColumnMutation = useDeleteColumnMutation(workspaceId ?? 0);
+  const createTaskMutation = useCreateTaskMutation(workspaceId ?? 0);
+  const moveColumnMutation = useReorderColumnsMutation(workspaceId ?? 0);
+  const moveTaskMutation = useMoveTaskMutation(workspaceId ?? 0);
+  const reorderTasksMutation = useReorderTasksMutation(workspaceId ?? 0);
+  const updateTaskMutation = useUpdateTaskMutation(workspaceId ?? 0);
 
   const userMode: 'Admin' | 'Member' | 'Viewer' = useMemo(() => {
     if (workspaceRole === 'admin') return 'Admin';
@@ -509,89 +659,72 @@ export default function KanbanBoardPage({ onOpenSettings, onOpenMembers, dateWor
   };
 
   const handleCreateColumn = (name: string, columnTypeId: ColumnTypeId) => {
-    setColumns((previous) => {
-      const generatedId = getNextColumnId(previous);
-
-      return [
-        ...previous,
-        {
-          id: generatedId,
-          name,
-          columnTypeId,
-          color: COLUMN_COLOR_BY_TYPE_ID[columnTypeId],
-          order: previous.length + 1,
-        },
-      ];
-    });
+    createColumnMutation.mutate({ name, columnType: columnTypeId });
     setShowCreateColumnModal(false);
   };
 
-  const handleAddTask = (newTask: Task) => {
-    const fallbackColumnId = columns[0]?.id ?? DEFAULT_COLUMNS[0].id;
-    const columnId = columns.some((column) => column.id === newTask.columnId)
-      ? newTask.columnId
-      : fallbackColumnId;
-
-    const nextOrder = tasks
-      .filter((task) => task.columnId === columnId)
-      .reduce((max, task) => Math.max(max, task.order), 0) + 1;
-
-    const finalTask = { ...newTask, columnId, order: nextOrder };
-
-    // If the new task is linked to a backlog, add a checklist item to that backlog
-    if (finalTask.linkedBacklogId) {
-      const newChecklistItem: ChecklistItem = {
-        id: `check-link-${finalTask.id}`,
-        text: finalTask.title,
-        completed: false,
-        linkedTaskId: finalTask.id,
-      };
-
-      setTasks((prev) => [
-        ...prev.map((t) =>
-          t.id === finalTask.linkedBacklogId
-            ? { ...t, checklist: [...(t.checklist ?? []), newChecklistItem] }
-            : t
-        ),
-        finalTask,
-      ]);
-    } else {
-      setTasks((prev) => [...prev, finalTask]);
+  const handleDeleteColumn = (columnId: string) => {
+    if (confirm('Are you sure you want to delete this column and all its tasks?')) {
+      deleteColumnMutation.mutate(Number(columnId));
     }
-
-    setShowCreateModal(false);
   };
+
+  const handleAddTask = (newTask: Task) => {
+    createTaskMutation.mutate({
+      columnId: Number(newTask.columnId),
+      title: newTask.title,
+      description: newTask.description,
+      priority: newTask.priority.toUpperCase() as 'LOW' | 'MEDIUM' | 'HIGH',
+      dueDate: newTask.dueDate ? new Date(newTask.dueDate).toISOString() : null,
+      assignees: newTask.assignees.map(a => Number(a.id)).filter(n => !isNaN(n) && n > 0),
+      labels: newTask.labels.map(l => Number(l.id)).filter(n => !isNaN(n) && n > 0),
+      linkedBacklogId: newTask.linkedBacklogId ? Number(newTask.linkedBacklogId) : null,
+    }, {
+      onSuccess: () => {
+        setShowCreateModal(false);
+        queryClient.invalidateQueries({ queryKey: kanbanKeys.dashboard(workspaceId ?? 0) });
+      }
+    });
+  };
+
 
   const handleUpdateTask = (updatedTask: Task) => {
     const currentTask = tasks.find((task) => task.id === updatedTask.id);
     const isDoneColumn = doneColumnIds.has(updatedTask.columnId);
     const wasDone = currentTask ? doneColumnIds.has(currentTask.columnId) : false;
 
-    const normalizedTask: Task = {
-      ...updatedTask,
-      completedAt: isDoneColumn ? currentTask?.completedAt ?? todayIso : undefined,
+    const priorityMapRev: Record<TaskPriority, 'LOW' | 'MEDIUM' | 'HIGH'> = {
+      High: 'HIGH',
+      Medium: 'MEDIUM',
+      Low: 'LOW'
     };
 
-    let newTasks = tasks.map((task) => (task.id === normalizedTask.id ? normalizedTask : task));
-
-    // Sync checklist if the task moved to/from Done
-    if (normalizedTask.linkedBacklogId && isDoneColumn !== wasDone) {
-      newTasks = newTasks.map((t) => {
-        if (t.id === normalizedTask.linkedBacklogId) {
-          const updatedChecklist = (t.checklist ?? []).map((item) =>
-            item.linkedTaskId === normalizedTask.id
-              ? { ...item, completed: isDoneColumn }
-              : item
-          );
-          return { ...t, checklist: updatedChecklist };
+    updateTaskMutation.mutate({
+      columnId: updatedTask.columnId,
+      taskId: updatedTask.id,
+      payload: {
+        title: updatedTask.title,
+        description: updatedTask.description,
+        priority: priorityMapRev[updatedTask.priority]
+      }
+    }, {
+      onSuccess: () => {
+        if (updatedTask.linkedBacklogId && isDoneColumn !== wasDone) {
+          const backlogTask = tasks.find(t => t.id === updatedTask.linkedBacklogId);
+          if (backlogTask) {
+            const item = backlogTask.checklist?.find(ci => ci.linkedTaskId === `TASK-${updatedTask.id}` || ci.linkedTaskId === updatedTask.id);
+            if (item) {
+              api.patch(`/api/columns/${backlogTask.columnId}/tasks/${backlogTask.id}/checklists/${item.id}`, {
+                isCompleted: isDoneColumn
+              }).then(() => {
+                queryClient.invalidateQueries({ queryKey: kanbanKeys.dashboard(workspaceId ?? 0) });
+              });
+            }
+          }
         }
-        return t;
-      });
-      newTasks = recomputeBacklogCompletion(newTasks, normalizedTask.linkedBacklogId);
-    }
-
-    setTasks(newTasks);
-    setSelectedTask(normalizedTask);
+      }
+    });
+    setSelectedTask(null);
   };
 
   const handleAddColumn = () => {
@@ -651,6 +784,11 @@ export default function KanbanBoardPage({ onOpenSettings, onOpenMembers, dateWor
           order: index + 1,
         }))
       );
+      // Sync: move call
+      moveColumnMutation.mutate({
+        columnId: Number(activeId),
+        targetColumnId: Number(targetColumnId)
+      });
       return;
     }
 
@@ -727,28 +865,40 @@ export default function KanbanBoardPage({ onOpenSettings, onOpenMembers, dateWor
 
     let result = sortTasks([...others, ...newTargetTasks]);
 
-    // 7. SYNC: if the task is linked to a backlog, update checklist
-    if (activeTask.linkedBacklogId) {
-      const isDone = doneColumnIds.has(targetColumnId);
-      const wasDone = doneColumnIds.has(sourceColumnId);
+    // Sync: move call
+    if (sourceColumnId !== targetColumnId) {
+      moveTaskMutation.mutate({
+        columnId: Number(sourceColumnId),
+        taskId: Number(activeId),
+        targetColumnId: Number(targetColumnId),
+        afterTaskId: null
+      }, {
+        onSuccess: () => {
+          if (activeTask.linkedBacklogId) {
+            const isDone = doneColumnIds.has(targetColumnId);
+            const wasDone = doneColumnIds.has(sourceColumnId);
 
-      if (isDone !== wasDone) {
-        // Update the checklist item in the backlog
-        result = result.map((t) => {
-          if (t.id === activeTask.linkedBacklogId) {
-            const updatedChecklist = (t.checklist ?? []).map((item) =>
-              item.linkedTaskId === activeTask.id
-                ? { ...item, completed: isDone }
-                : item
-            );
-            return { ...t, checklist: updatedChecklist };
+            if (isDone !== wasDone) {
+              const backlogTask = tasks.find(t => t.id === activeTask.linkedBacklogId);
+              if (backlogTask) {
+                const item = backlogTask.checklist?.find(ci => ci.linkedTaskId === `TASK-${activeTask.id}` || ci.linkedTaskId === activeTask.id);
+                if (item) {
+                  api.patch(`/api/columns/${backlogTask.columnId}/tasks/${backlogTask.id}/checklists/${item.id}`, {
+                    isCompleted: isDone
+                  }).then(() => {
+                    queryClient.invalidateQueries({ queryKey: kanbanKeys.dashboard(workspaceId ?? 0) });
+                  });
+                }
+              }
+            }
           }
-          return t;
-        });
-
-        // Recompute backlog completion
-        result = recomputeBacklogCompletion(result, activeTask.linkedBacklogId);
-      }
+        }
+      });
+    } else {
+      reorderTasksMutation.mutate({
+        columnId: Number(sourceColumnId),
+        tasks: newTargetTasks.map((t, idx) => ({ id: Number(t.id), order: idx }))
+      });
     }
 
     return result;
@@ -770,6 +920,7 @@ export default function KanbanBoardPage({ onOpenSettings, onOpenMembers, dateWor
         onOpenSettings={onOpenSettings}
         onOpenMembers={onOpenMembers}
         onOpenManagerAPI={() => setShowApiKeysModal(true)}
+        onOpenLabels={() => setShowLabelsModal(true)}
         userMode={userMode}
       />
 
@@ -800,7 +951,6 @@ export default function KanbanBoardPage({ onOpenSettings, onOpenMembers, dateWor
         ) : viewMode === 'board' ? (
           <div className="flex-1 overflow-x-auto overflow-y-hidden px-8 pb-8">
             <div className="flex h-full gap-6 min-w-max">
-
             {columns.map((column, index) => {
               const isBacklog = column.columnTypeId === 'backlog';
               const columnTasks = tasksByColumn[column.id] ?? [];
@@ -813,6 +963,7 @@ export default function KanbanBoardPage({ onOpenSettings, onOpenMembers, dateWor
                   isBacklog={isBacklog}
                   onAddTask={openCreateTaskModal}
                   onTaskClick={setSelectedTask}
+                  onDeleteColumn={handleDeleteColumn}
                   index={index}
                   backlogColumnId={backlogColumnId}
                 />
@@ -840,6 +991,7 @@ export default function KanbanBoardPage({ onOpenSettings, onOpenMembers, dateWor
 
       {showCreateModal && (
         <CreateTaskModal
+          workspaceId={workspaceId ?? 0}
           onClose={() => setShowCreateModal(false)}
           onCreateTask={handleAddTask}
           columns={columns}
@@ -857,6 +1009,7 @@ export default function KanbanBoardPage({ onOpenSettings, onOpenMembers, dateWor
 
       {selectedTask && (
         <TaskDetailPanel
+          workspaceId={workspaceId ?? 0}
           task={selectedTask}
           columns={columns}
           onClose={() => setSelectedTask(null)}
@@ -867,6 +1020,12 @@ export default function KanbanBoardPage({ onOpenSettings, onOpenMembers, dateWor
       <ApiKeyManagerModal
         isOpen={showApiKeysModal}
         onClose={() => setShowApiKeysModal(false)}
+      />
+
+      <ManageLabelsModal
+        isOpen={showLabelsModal}
+        onClose={() => setShowLabelsModal(false)}
+        workspaceId={workspaceId ?? 0}
       />
     </div>
   );

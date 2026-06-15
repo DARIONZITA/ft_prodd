@@ -11,6 +11,7 @@ interface PropsHeaderkanbanBoard {
   onOpenSettings?: () => void
   onOpenMembers?: () => void
   onOpenManagerAPI?: () => void
+  onOpenLabels?: () => void
   userMode?: 'Admin' | 'Member' | 'Viewer'
 }
 
@@ -25,6 +26,7 @@ export function HeaderKanbanBoard({
   onOpenSettings,
   onOpenMembers,
   onOpenManagerAPI,
+  onOpenLabels,
   userMode = 'Viewer'
 }: PropsHeaderkanbanBoard) {
     console.log(workspaceCreatedAt)
@@ -69,15 +71,23 @@ export function HeaderKanbanBoard({
            Members
           </button>
           {userMode === 'Admin' && (
-            <button 
-              onClick={onOpenManagerAPI}
-              className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-slate-600 bg-white border border-slate-200 hover:bg-slate-50 rounded-lg transition-colors"
-              title="Manage members"
-            >
-            Manager Api Keys
-            </button>
-          )
-          }
+            <>
+              <button 
+                onClick={onOpenManagerAPI}
+                className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-slate-600 bg-white border border-slate-200 hover:bg-slate-50 rounded-lg transition-colors"
+                title="Manage API Keys"
+              >
+                Manager Api Keys
+              </button>
+              <button 
+                onClick={onOpenLabels}
+                className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-slate-600 bg-white border border-slate-200 hover:bg-slate-50 rounded-lg transition-colors"
+                title="Manage Labels"
+              >
+                Labels
+              </button>
+            </>
+          )}
           
           <div className="h-6 w-px bg-slate-200"></div>
           {/* Settings button */}
@@ -103,9 +113,6 @@ export function HeaderKanbanBoard({
         {/* Toolbar */}
               <div className="px-4 sm:px-8 py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between flex-shrink-0 gap-4 sm:gap-0">
                 <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-                  <span className="bg-emerald-50 text-emerald-700 text-xs font-mono px-2 py-0.5 rounded-full border border-emerald-200">
-                    {completedTodayCount} tasks completed today
-                  </span>
                   <span className="bg-slate-100 text-slate-500 text-xs font-mono px-2 py-0.5 rounded-full border border-slate-200">
                     Created {workspaceCreatedAt}
                   </span>
