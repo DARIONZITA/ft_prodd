@@ -164,7 +164,7 @@ export async function   updateFriendRequest(req: Request, res: Response, next: N
 	try {
 		const id = req.user!.id;
 		const friendId = parseOrThrow(idSchema, 'FriendID', req.params.friendId);
-		const status = parseQueryEnum('status', req.query.status, ['accepted', 'rejected']);
+		const status = parseQueryEnum('status', req.query.status, ['accepted'/*, 'rejected'*/]);
 
 		await prisma.$transaction(async (tx) => {
 			const friendRequest = await tx.friendRequest.findUnique({

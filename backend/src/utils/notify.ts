@@ -34,9 +34,7 @@ export async function   notify( params: NotifyParams, excludeUserIds? : Set<numb
                 {
                     userId:                 id,
                     message:                params.message,
-                    type:                   params.type,
-                    relatedTaskId:          params.relatedTaskId,
-                    relatedWorkspaceId:     params.relatedWorkspaceId,
+                    type:                   params.type
                 },
             });
             wsEmitter.notification(id, { type: params.type, data: params.data, persisted: notifications } );

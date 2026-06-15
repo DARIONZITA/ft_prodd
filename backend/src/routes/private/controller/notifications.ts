@@ -2,7 +2,7 @@ import type { Request, Response, NextFunction } from 'express';
 import { prisma }                               from '../../../lib/prisma';
 import { ApiError }                             from '../../../utils/ApiError';
 import { idSchema, parseOrThrow,
-    parseQueryEnum }                            from '../../../validations/utils';
+    parseQueryEnum, parseQueryInt }                            from '../../../validations/utils';
 import { NotificationTypes, SortOptions }       from '../../../types/constants';
 import { wsEmitter }                            from '../../../ws/emitter';
 

@@ -1,7 +1,7 @@
 import { prisma }           from '../../../lib/prisma';
 import { ApiError }         from '../../../utils/ApiError';
 import { getWorkspaceRole } from '../../../middleware/rbac';
-import { WorkspaceRole }    from '@prisma/client';
+import { WorkspaceRole, NotificationType }    from '@prisma/client';
 import type {
   Request,
   Response,
@@ -10,7 +10,6 @@ import type {
 import {
   idSchema,
   parseOrThrow,
-  parseQueryString
 } from '../../../validations/utils';
 import { wsEmitter } from '../../../ws/emitter';
 import { notify } from '../../../utils/notify';

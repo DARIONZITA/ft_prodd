@@ -1,3 +1,5 @@
+import { NotificationType } from '@prisma/client';
+
 // Socket.IO é totalmente tipado com generics:
 // Server<ClientToServer, ServerToClient, ServerToServer, SocketData>
 // O TypeScript garante que só emites eventos que existem, com o payload correto.
@@ -21,17 +23,7 @@ export interface    ServerToClientEvents
 
 export interface   NotificationPayload
 {
-    type        :   | 'mention'
-                    | 'invite'
-                    | 'comment'
-                    | 'taskAssignment'
-                    | 'taskUpdated'
-                    | 'taskDeleted'
-                    | 'workspaceInvite'
-                    | 'friendRequest'
-                    | 'friendRequestAccepted'
-                    | 'friendRequestRejected'
-                    | 'friendRemoved';
+    type        : NotificationType;
     //message?     :   string;
     data?       :   unknown; // payload específico do tipo (ex: o objecto FriendRequest)
     persisted?  :   unknown; // o registo Notification da DB, quando existe
