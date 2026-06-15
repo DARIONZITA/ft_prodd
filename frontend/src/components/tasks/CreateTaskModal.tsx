@@ -1,23 +1,27 @@
 import { useEffect, useMemo, useState } from 'react';
 import { X, Link2, Circle } from 'lucide-react';
 import type { Column, Task, TaskPriority } from './Types';
+import { useWorkspaceLabelsQuery } from '../../api/kanban';
+import { useWorkspaceMembersQuery } from '../../api/workspace';
 
-const AVAILABLE_LABELS = [
-  { id: 'l1', name: 'feature', color: 'text-cyan-700', bgColor: 'bg-cyan-50', borderColor: 'border-cyan-200' },
-  { id: 'l2', name: 'design', color: 'text-purple-700', bgColor: 'bg-purple-50', borderColor: 'border-purple-200' },
-  { id: 'l3', name: 'bug', color: 'text-red-700', bgColor: 'bg-red-50', borderColor: 'border-red-200' },
-  { id: 'l4', name: 'docs', color: 'text-slate-600', bgColor: 'bg-slate-100', borderColor: 'border-slate-200' },
-  { id: 'l5', name: 'chore', color: 'text-amber-700', bgColor: 'bg-amber-50', borderColor: 'border-amber-200' },
-];
-
-const AVAILABLE_ASSIGNEES = [
-  { id: '1', name: 'Gama', avatar: 'https://ui-avatars.com/api/?name=Gama&background=4f46e5&color=fff', initials: 'GA' },
-  { id: '2', name: 'Jose M', avatar: 'https://ui-avatars.com/api/?name=Jose+M&background=0891b2&color=fff', initials: 'JM' },
-  { id: '3', name: 'Andre C', avatar: 'https://ui-avatars.com/api/?name=Andre+C&background=0e7490&color=fff', initials: 'AC' },
-  { id: '4', name: 'Ana S', avatar: 'https://ui-avatars.com/api/?name=Ana+S&background=4f46e5&color=fff', initials: 'AS' },
-];
+const COLOR_MAP: Record<string, { color: string; bgColor: string; borderColor: string }> = {
+  red: { color: 'text-red-700', bgColor: 'bg-red-50', borderColor: 'border-red-200' },
+  orange: { color: 'text-orange-700', bgColor: 'bg-orange-50', borderColor: 'border-orange-200' },
+  yellow: { color: 'text-yellow-700', bgColor: 'bg-yellow-50', borderColor: 'border-yellow-200' },
+  green: { color: 'text-green-700', bgColor: 'bg-green-50', borderColor: 'border-green-200' },
+  blue: { color: 'text-blue-700', bgColor: 'bg-blue-50', borderColor: 'border-blue-200' },
+  purple: { color: 'text-purple-700', bgColor: 'bg-purple-50', borderColor: 'border-purple-200' },
+  pink: { color: 'text-pink-700', bgColor: 'bg-pink-50', borderColor: 'border-pink-200' },
+  cyan: { color: 'text-cyan-700', bgColor: 'bg-cyan-50', borderColor: 'border-cyan-200' },
+  teal: { color: 'text-teal-700', bgColor: 'bg-teal-50', borderColor: 'border-teal-200' },
+  indigo: { color: 'text-indigo-700', bgColor: 'bg-indigo-50', borderColor: 'border-indigo-200' },
+  lime: { color: 'text-lime-700', bgColor: 'bg-lime-50', borderColor: 'border-lime-200' },
+  gray: { color: 'text-slate-600', bgColor: 'bg-slate-100', borderColor: 'border-slate-200' },
+  brown: { color: 'text-amber-800', bgColor: 'bg-amber-100', borderColor: 'border-amber-200' },
+};
 
 interface CreateTaskModalProps {
+  workspaceId: number | string;
   onClose: () => void;
   onCreateTask: (task: Task) => void;
   columns: Column[];
@@ -25,15 +29,45 @@ interface CreateTaskModalProps {
   backlogTasks?: Task[];
 }
 
-export default function CreateTaskModal({ onClose, onCreateTask, columns, initialColumnId, backlogTasks = [] }: CreateTaskModalProps) {
+export default function CreateTaskModal({ workspaceId, onClose, onCreateTask, columns, initialColumnId, backlogTasks = [] }: CreateTaskModalProps) {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [columnId, setColumnId] = useState(initialColumnId ?? columns[0]?.id ?? '');
   const [priority, setPriority] = useState<TaskPriority>('Medium');
   const [dueDate, setDueDate] = useState('');
-  const [selectedAssignees, setSelectedAssignees] = useState(AVAILABLE_ASSIGNEES.slice(0, 1));
-  const [selectedLabels, setSelectedLabels] = useState([AVAILABLE_LABELS[0]]);
+  const [selectedAssignees, setSelectedAssignees] = useState<{ id: string; name: string; avatar: string; initials: string }[]>([]);
+  const [selectedLabels, setSelectedLabels] = useState<{ id: string; name: string; color: string; bgColor: string; borderColor: string }[]>([]);
   const [linkedBacklogId, setLinkedBacklogId] = useState<string>('');
+  const [showAssigneesDropdown, setShowAssigneesDropdown] = useState(false);
+
+  // Fetch workspace labels & members dynamically
+  const { data: labelsQuery } = useWorkspaceLabelsQuery(workspaceId);
+  const { data: membersList } = useWorkspaceMembersQuery(workspaceId);
+
+  const availableLabels = useMemo(() => {
+    if (!labelsQuery?.success) return [];
+    return labelsQuery.data.map(l => {
+      const style = COLOR_MAP[l.color.toLowerCase()] || COLOR_MAP.cyan;
+      return {
+        id: String(l.id),
+        name: l.name,
+        ...style
+      };
+    });
+  }, [labelsQuery]);
+
+  const availableAssignees = useMemo(() => {
+    if (!membersList) return [];
+    return membersList.map(m => {
+      const username = m.user?.username || 'User';
+      return {
+        id: String(m.user?.id || m.userId),
+        name: username,
+        avatar: m.user?.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(username)}&background=0891b2&color=fff`,
+        initials: username.slice(0, 2).toUpperCase()
+      };
+    });
+  }, [membersList]);
 
   useEffect(() => {
     if (!columns.length) return;
@@ -56,7 +90,7 @@ export default function CreateTaskModal({ onClose, onCreateTask, columns, initia
   const isBacklogColumn = selectedColumn?.columnTypeId === 'backlog';
   const requiresBacklogLink = !isBacklogColumn && backlogTasks.length > 0;
 
-  const handleToggleAssignee = (assignee: typeof AVAILABLE_ASSIGNEES[0]) => {
+  const handleToggleAssignee = (assignee: { id: string; name: string; avatar: string; initials: string }) => {
     setSelectedAssignees(prev =>
       prev.some(a => a.id === assignee.id)
         ? prev.filter(a => a.id !== assignee.id)
@@ -64,7 +98,7 @@ export default function CreateTaskModal({ onClose, onCreateTask, columns, initia
     );
   };
 
-  const handleToggleLabel = (label: typeof AVAILABLE_LABELS[0]) => {
+  const handleToggleLabel = (label: { id: string; name: string; color: string; bgColor: string; borderColor: string }) => {
     setSelectedLabels(prev =>
       prev.some(l => l.id === label.id)
         ? prev.filter(l => l.id !== label.id)
@@ -84,7 +118,6 @@ export default function CreateTaskModal({ onClose, onCreateTask, columns, initia
     }
 
     const newTask: Task = {
-      id: `TASK-${Math.floor(Math.random() * 1000)}`,
       title,
       description,
       columnId,
@@ -93,8 +126,6 @@ export default function CreateTaskModal({ onClose, onCreateTask, columns, initia
       dueDate: dueDate || undefined,
       assignees: selectedAssignees,
       labels: selectedLabels,
-      createdBy: AVAILABLE_ASSIGNEES[0],
-      createdAt: new Date().toISOString().split('T')[0],
       linkedBacklogId: requiresBacklogLink ? linkedBacklogId : undefined,
     };
 
@@ -168,6 +199,7 @@ export default function CreateTaskModal({ onClose, onCreateTask, columns, initia
                     <img src={assignee.avatar} className="w-5 h-5 rounded-full" />
                     <span className="text-xs font-medium text-slate-600">{assignee.name}</span>
                     <button
+                      type="button"
                       onClick={() => handleToggleAssignee(assignee)}
                       className="text-slate-400 hover:text-red-500"
                     >
@@ -176,9 +208,43 @@ export default function CreateTaskModal({ onClose, onCreateTask, columns, initia
                   </div>
                 ))}
               </div>
-              <button className="mt-2 flex items-center gap-1.5 text-xs text-slate-400 hover:text-cyan-600 border border-dashed border-slate-300 hover:border-cyan-400 px-2 py-1.5 rounded-lg transition-colors">
-                <span className="text-sm">+</span> Add
-              </button>
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setShowAssigneesDropdown(!showAssigneesDropdown)}
+                  className="mt-2 flex items-center gap-1.5 text-xs text-slate-400 hover:text-cyan-600 border border-dashed border-slate-300 hover:border-cyan-400 px-2 py-1.5 rounded-lg transition-colors"
+                >
+                  <span className="text-sm">+</span> Add
+                </button>
+                {showAssigneesDropdown && (
+                  <div className="absolute left-0 mt-1 z-10 w-48 max-h-60 overflow-y-auto rounded-lg border border-slate-200 bg-white shadow-lg p-1.5 space-y-1">
+                    {availableAssignees.length === 0 ? (
+                      <p className="p-2 text-xs text-slate-400">No members found</p>
+                    ) : (
+                      availableAssignees.map((assignee) => {
+                        const isSelected = selectedAssignees.some((a) => a.id === assignee.id);
+                        return (
+                          <button
+                            key={assignee.id}
+                            type="button"
+                            onClick={() => {
+                              handleToggleAssignee(assignee);
+                              setShowAssigneesDropdown(false);
+                            }}
+                            className={`w-full flex items-center gap-2 px-2.5 py-1.5 text-left text-xs font-medium rounded-md transition-colors ${
+                              isSelected ? 'bg-cyan-50 text-cyan-700' : 'text-slate-700 hover:bg-slate-50'
+                            }`}
+                          >
+                            <img src={assignee.avatar} className="w-5 h-5 rounded-full" />
+                            <span className="truncate flex-1">{assignee.name}</span>
+                            {isSelected && <span className="text-cyan-600 text-[10px]">✔</span>}
+                          </button>
+                        );
+                      })
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
 
             <div>
@@ -187,6 +253,7 @@ export default function CreateTaskModal({ onClose, onCreateTask, columns, initia
                 {(['High', 'Medium', 'Low'] as TaskPriority[]).map((p) => (
                   <button
                     key={p}
+                    type="button"
                     onClick={() => setPriority(p)}
                     className={`flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-lg border transition-colors ${
                       priority === p
@@ -222,20 +289,25 @@ export default function CreateTaskModal({ onClose, onCreateTask, columns, initia
           <div>
             <label className="block font-mono text-[11px] uppercase tracking-wider text-slate-400 mb-2">Labels</label>
             <div className="flex items-center gap-2 flex-wrap">
-              {AVAILABLE_LABELS.map((label) => (
-                <button
-                  key={label.id}
-                  onClick={() => handleToggleLabel(label)}
-                  className={`text-xs font-medium px-2.5 py-1 rounded-full flex items-center gap-1 transition-colors border ${
-                    selectedLabels.some(l => l.id === label.id)
-                      ? `${label.bgColor} ${label.color} border-transparent`
-                      : 'border-dashed border-slate-300 text-slate-400 hover:text-cyan-600 hover:border-cyan-400'
-                  }`}
-                >
-                  {selectedLabels.some(l => l.id === label.id) ? <X className="w-3 h-3" /> : <span>+</span>}
-                  {label.name}
-                </button>
-              ))}
+              {availableLabels.length === 0 ? (
+                <p className="text-xs text-slate-400">No workspace labels created.</p>
+              ) : (
+                availableLabels.map((label) => (
+                  <button
+                    key={label.id}
+                    type="button"
+                    onClick={() => handleToggleLabel(label)}
+                    className={`text-xs font-medium px-2.5 py-1 rounded-full flex items-center gap-1 transition-colors border ${
+                      selectedLabels.some(l => l.id === label.id)
+                        ? `${label.bgColor} ${label.color} border-transparent`
+                        : 'border-dashed border-slate-300 text-slate-400 hover:text-cyan-600 hover:border-cyan-400'
+                    }`}
+                  >
+                    {selectedLabels.some(l => l.id === label.id) ? <X className="w-3 h-3" /> : <span>+</span>}
+                    {label.name}
+                  </button>
+                ))
+              )}
             </div>
           </div>
 
