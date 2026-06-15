@@ -69,7 +69,8 @@ export async function   getWorkspaceDashboard(req: Request, res: Response, next:
                             orderBy: { orderInColumn: 'asc' },
                             include: {
                                 taskLabels: { include: { label: { select: { name: true } } } },
-                                assignments: { include: { user: { select: { username: true } } } }
+                                assignments: { include: { user: { select: { username: true } } } },
+                                checklistItems: { orderBy: { id: 'asc' } }
                             }
                         }
                     }
@@ -91,13 +92,19 @@ export async function   getWorkspaceDashboard(req: Request, res: Response, next:
             columns: workspace.columns.map(col => ({
                 id: col.id,
                 name: col.name,
+                columnType: col.columnType,
                 order: col.order,
                 tasks: col.tasks.map(task => ({
                     id: task.id,
                     title: task.title,
                     priority: task.priority,
                     labels: task.taskLabels.map(tl => tl.label.name),
-                    assignments: task.assignments.map(a => a.user.username)
+                    assignments: task.assignments.map(a => a.user.username),
+                    checklist: task.checklistItems.map(ci => ({
+                        id: ci.id,
+                        description: ci.description,
+                        isCompleted: ci.isCompleted
+                    }))
                 }))
             }))
         };

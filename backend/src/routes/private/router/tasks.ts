@@ -1,6 +1,7 @@
 import { Router }                       from 'express';
 import labelsRoutes                     from './labels';
 import assignmentsRouter                from './assignments';
+import checklistsRouter                 from './checklists';
 import { requireWorkspaceMember }       from '../../../middleware/rbac';
 import { columnContext, taskContext }   from '../../../middleware/workspaceContext';
 import { listComments, createComment }  from '../controller/comments';
@@ -14,6 +15,7 @@ const tasksRouter = Router();
 
 tasksRouter.use('/:columnId/tasks/:taskId/labels', columnContext, taskContext, labelsRoutes);
 tasksRouter.use('/:columnId/tasks/:taskId/assignments', columnContext, taskContext, assignmentsRouter);
+tasksRouter.use('/:columnId/tasks/:taskId/checklists', columnContext, taskContext, checklistsRouter);
 
 /**
  * @swagger

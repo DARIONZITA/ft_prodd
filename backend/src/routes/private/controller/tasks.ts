@@ -60,7 +60,22 @@ export async function createColumnTask(req: Request, res: Response, next: NextFu
     const description = parseQueryString('createColumnTask() description', req.body.description, { default: '', isOptional: true, maxLength: 10000 })!;
     const priority = parseQueryEnum('createColumnTask() priority', req.body.priority, Priority, { default: 'MEDIUM', isOptional: true })!;
     const dueDate = parseQueryDate('createColumnTask() dueDate', req.body.dueDate, { isOptional: true });
-    
+
+    // Optional: list of user IDs to assign immediately
+    const assigneeIds: number[] = Array.isArray(req.body.assignees)
+      ? req.body.assignees.map(Number).filter((n: number) => !isNaN(n) && n > 0)
+      : [];
+
+    // Optional: list of label IDs to attach immediately
+    const labelIds: number[] = Array.isArray(req.body.labels)
+      ? req.body.labels.map(Number).filter((n: number) => !isNaN(n) && n > 0)
+      : [];
+
+    // Optional: backlog task ID to link (creates a LINK:: checklist item in that task)
+    const linkedBacklogId: number | null = req.body.linkedBacklogId
+      ? Number(req.body.linkedBacklogId)
+      : null;
+
     const task = await prisma.$transaction(async (tx) => {
       const lastTask = await tx.task.findFirst({
         where: { columnId },
@@ -75,6 +90,32 @@ export async function createColumnTask(req: Request, res: Response, next: NextFu
           assignments: { include: { user: { select: { id: true, username: true, avatarUrl: true } } } }
         }
       });
+
+      // Assign members if provided
+      if (assigneeIds.length > 0) {
+        await tx.taskAssignment.createMany({
+          data: assigneeIds.map(userId => ({ taskId: t.id, userId, assignedById: req.user!.id })),
+          skipDuplicates: true
+        });
+      }
+
+      // Attach labels if provided
+      if (labelIds.length > 0) {
+        await tx.taskLabel.createMany({
+          data: labelIds.map(labelId => ({ taskId: t.id, labelId })),
+          skipDuplicates: true
+        });
+      }
+
+      // If linked to a backlog task, create the LINK checklist item in it
+      if (linkedBacklogId) {
+        const backlogTask = await tx.task.findUnique({ where: { id: linkedBacklogId } });
+        if (backlogTask) {
+          await tx.checklistItem.create({
+            data: { taskId: linkedBacklogId, description: `LINK::${t.id}::${title}` }
+          });
+        }
+      }
 
       const members = await tx.workspaceMember.findMany({
         where: { workspaceId: req.workspace!.id, userId: { not: req.user!.id } },
@@ -97,6 +138,7 @@ export async function createColumnTask(req: Request, res: Response, next: NextFu
     res.status(201).json({ success: true, data: task });
   } catch (err) { next(err); }
 }
+
 
 export async function getTask(req: Request, res: Response, next: NextFunction)
 {
