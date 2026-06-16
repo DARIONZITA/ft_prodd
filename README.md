@@ -333,6 +333,8 @@ In this section, you have access to the main resources that helped us develop th
 
 - **OAuth 2.0:** it helped implement the OAuth 2.0 authentication flow, including user redirection to the 42 authorization page, callback handling, authorization code exchange, access token retrieval, and user information fetching from the 42 API.
 
+- **WebSocket (Socket.IO):** it helped implement and design the real-time features using Socket.IO, including event handling for task comments, notifications, and user presence updates, user connection management, and broadcasting events to relevant users in workspaces.
+
 - **SignIn and SignUp:** it helped implement the authentication system, including password hashing with bcrypt, JWT-based session authentication, request parsing and validation, TypeScript typing, and schema validation with Zod. It also helped structure the backend into routes, controllers, and middleware to improve maintainability and scalability.
 
 ## Database
