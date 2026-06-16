@@ -4,9 +4,9 @@ import { hashPassword, comparePassword }        from '../../utils/encryption';
 import { generateToken }                        from '../../utils/jwt';
 import { ApiError }                             from '../../utils/ApiError';
 import { signupSchema, signinSchema }           from '../../validations/auth';
-import { presenceStore }                        from '../../ws/store';
-import { wsEmitter }                            from '../../ws/emitter';
-import { getFriendAndWorkspaceMembersIds }      from '../../ws/ws.server';
+import { presenceStore }                        from '../../ws/backend/store';
+import { wsEmitter }                            from '../../ws/backend/emitter';
+import { getFriendAndWorkspaceMembersIds }      from '../../ws/backend/ws.server';
 import { avatarDir }                            from '../../types/constants';
 
 export async function   signupController( req : Request, res : Response, next : NextFunction )

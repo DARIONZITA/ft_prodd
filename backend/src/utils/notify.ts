@@ -1,6 +1,6 @@
 import { NotificationType } from '@prisma/client'
 import { prisma }           from "../lib/prisma";
-import { wsEmitter }        from "../ws/emitter";
+import { wsEmitter }        from "../ws/backend/emitter";
 
 interface   NotifyParams
 {

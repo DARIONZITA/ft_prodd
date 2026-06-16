@@ -13,7 +13,7 @@ import { errorHandler }               from './middleware/errorHandler';
 import { setupSwagger }               from './swagger';
 import publicAPIRouter                from './routes/public/api.router';
 import apiKeyRouter                   from './routes/private/router/keys';
-import { setupSocketIO }              from './ws/ws.server';
+import { setupSocketIO }              from './ws/backend/ws.server';
 import { authenticate }               from './middleware/auth';
 
 export const app = express();

@@ -93,6 +93,7 @@ services:
       - "5555:5555"
     volumes:
       - ../backend:/app
+      - ../websocket:/app/src/ws
       - /app/node_modules
     depends_on:
       postgres:
@@ -122,6 +123,7 @@ services:
       - "3000:3000"
     volumes:
       - ../frontend:/app
+      - ../websocket:/app/src/ws
       - /app/node_modules
     depends_on:
       - backend

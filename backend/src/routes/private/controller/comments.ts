@@ -2,7 +2,7 @@ import type { Request, Response, NextFunction } from 'express';
 import { prisma }                               from '../../../lib/prisma';
 import { parseQueryInt, parseQueryString }      from '../../../validations/utils';
 import { NotificationType }                     from '@prisma/client';
-import { wsEmitter } from '../../../ws/emitter';
+import { wsEmitter } from '../../../ws/backend/emitter';
 import { notify } from '../../../utils/notify';
 
 function parseMentions(content: string): string[]

@@ -1,11 +1,11 @@
 import { Server, Socket }               from 'socket.io';
 import { Server as HttpServer }         from 'http';
-import { verifyToken }                  from '../utils/jwt';
-import { prisma }                       from '../lib/prisma';
+import { verifyToken }                  from '../../utils/jwt';
+import { prisma }                       from '../../lib/prisma';
 import { presenceStore }                from './store';
 import { wsEmitter, initEmitter }       from './emitter';
-import { env }                          from '../config/env';
-import type { ServerToClientEvents, SocketData, ClientToServerEvents } from './types';
+import { env }                          from '../../config/env';
+import type { ServerToClientEvents, SocketData, ClientToServerEvents } from '../types';
 
 
 //----------------------------------Tipos---------------------------------------

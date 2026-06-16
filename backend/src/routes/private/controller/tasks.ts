@@ -10,7 +10,7 @@ import {
   parseQueryString, parseQueryDate,
   parseQueryBool
 } from '../../../validations/utils';
-import { wsEmitter }    from '../../../ws/emitter';
+import { wsEmitter }    from '../../../ws/backend/emitter';
 import { notify } from '../../../utils/notify';
 
 const orderSchema = z.array( z.object({ id: idSchema, order: z.coerce.number().int().min(0) }) ).min(1);
