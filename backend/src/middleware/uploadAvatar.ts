@@ -1,3 +1,4 @@
+import path										from 'path';
 import multer, { MulterError }					from 'multer';
 import { ApiError }								from '../utils/ApiError';
 import type { Request, Response, NextFunction } from 'express';
@@ -6,7 +7,7 @@ const AVATAR_DIR = 'uploads/avatars';
 
 const storageEngine = multer.diskStorage({
 	destination: ( _req: Request, _file: Express.Multer.File, cb: (error: Error | null, destination: string ) => void) => { cb(null, AVATAR_DIR); },
-	filename: ( req: Request, _file: Express.Multer.File, cb: (error: Error | null, filename: string ) => void) => { cb(null, `user-${req.user!.id}`); }
+	filename: ( req: Request, file: Express.Multer.File, cb: (error: Error | null, filename: string ) => void) => { cb(null, `user-${req.user!.id}${path.extname(file.originalname)}`); }
 });
 
 const fileFilter = ( _req: Request, file: Express.Multer.File, cb: multer.FileFilterCallback ) => {
