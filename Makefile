@@ -31,12 +31,11 @@ setup: ## Setup inicial completo do projeto (inclui geração de certificados TL
 
 certs: ## Gerar certificados TLS self-signed para desenvolvimento
 	@echo " A gerar certificados TLS self-signed..."
-	@mkdir -p ./config/certs
 	@openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
 		-keyout ./config/certs/nginx-selfsigned.key \
 		-out ./config/certs/nginx-selfsigned.crt \
 		-subj "/C=PT/ST=Lisboa/L=Lisboa/O=ft_prodd/CN=localhost" \
-		-addext "subjectAltName=DNS:localhost,IP:127.0.0.1" 2>/dev/null
+		-addext "subjectAltName=DNS:localhost,IP:127.0.0.1"
 	@echo " Certificados gerados em ./config/certs/"
 
 up: ## Iniciar todos os serviços em background
