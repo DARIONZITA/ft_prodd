@@ -12,25 +12,22 @@ While the platform is inspired by and tailored to the needs of 42 students, **it
 
 The application combines task management, collaboration tools, and real-time features into a single environment. It allows multiple users to interact simultaneously, manage shared workspaces, and monitor project progress as it evolves.
 
-### Key Features
+## Key Features
 
-- **Task Management System**  
-  Create, assign, and track tasks within project workspaces, ensuring clear visibility of what has been completed and what remains.
+- **Authentication & User Management**
+  JWT-based sessions, OAuth 2.0 login via the 42 API, user profiles with avatars, a friendship system, and role-based permissions (admin, member, guest) within workspaces.
 
-- **Real-Time Collaboration**  
-  Live updates and interactions between users using WebSocket-based communication, enabling synchronized teamwork.
+- **Workspace & Task Management**
+  Collaborative workspaces with Kanban boards, columns, tasks, checklists, labels, and member assignments for full project visibility.
 
-- **User Interaction System**  
-  Profiles, friendships, and integrated chat allow team members to communicate and coordinate directly within the platform.
+- **Communication & Real-Time**
+  Live updates via WebSocket (Socket.IO), presence status, workspace chat, task comments with mentions, and emoji reactions.
 
-- **Project Knowledge Sharing**  
-  Access to template projects and curated references from other students to better understand project requirements and best practices.
+- **Notifications & Advanced Search**
+  Real-time notifications for all creation, update, and deletion events, with advanced filtering, sorting, and pagination.
 
-- **Testing Awareness**  
-  Encourage early testing and validation during development to avoid unexpected issues during project evaluation.
-
-- **Multi-user Environment**  
-  Designed to support concurrent users working on shared projects without conflicts or data inconsistency.
+- **System & Infrastructure**
+  Public RESTful API with key authentication, rate limiting, and Swagger documentation; Docker containerization; Prisma ORM; and a custom React design system.
 
 
 
@@ -51,6 +48,7 @@ Before running the project, make sure you have the following installed:
 * **Docker**
 * **Docker Compose**
 * **Make**
+* **OpenSSL** (used to generate TLS certificates for HTTPS)
 
 > All services run inside containers, so no manual installation of Node.js, PostgreSQL, or other dependencies is required on the host machine.
 
@@ -61,7 +59,7 @@ Before running the project, make sure you have the following installed:
 Clone the repository and navigate to the project root:
 
 ```bash
-git clone <repository_url> ft_prodd
+git clone <repository_url>
 cd ft_prodd
 ```
 
@@ -69,15 +67,9 @@ cd ft_prodd
 
 ## Environment Configuration
 
-The project uses environment variables for configuration.
+The project uses environment variables for configuration, and since the `.env` file is ignored by Git, it will not be present when cloning the repository.
 
-A `.env.example` file is provided as a **template**, containing all the required environment variable names. The values in this file are placeholders and must be configured before running the project.
-
-Since the `.env` file is ignored by Git, it will not be present when cloning the repository.
-
-You have two options:
-
-### Option 1: Manual Setup
+A `.env.example` file located inside `config/` is provided as a **template**, containing all the required environment variable names. The values in this file are placeholders and must be configured before running the project.
 
 Create a `.env` file inside the `config/` directory and define all variables based on `.env.example`:
 
@@ -89,67 +81,50 @@ Then edit the file and replace all placeholder values with your desired configur
 
 ---
 
-### Option 2: Automatic Setup (Recommended)
-
-The `.env` file can be automatically generated during the initial project setup process.
-
-If no `.env` file exists, it will be created from `.env.example`.
-
----
-
-You can review or modify the environment variables at any time:
-
-```bash
-config/.env
-```
-
----
-
 ## Running the Project
 
-To perform the initial setup and start all services:
+### Initial Setup (one-time)
 
 ```bash
 make setup
 ```
 
-This command will:
+This single command will:
 
-* Generate a `.env` file if it does not exist
-* Prepare the environment
-* Build all services
-* Start the containers
+1. Generate **TLS certificates** for local HTTPS via `make certs`
+2. Check if Docker is running
+3. Create `.env` from `.env.example` if none exists, then **pause** and wait for you to configure it
+4. Stop any existing containers
+5. Build all Docker images
+6. Start all containers
+7. Verify service health
+
+> After `make setup` completes, the application is already running.
+
+---
+
+### Start / Stop (daily use)
+
+```bash
+make up      # Start all services
+make down    # Stop all services
+make restart # Restart all services
+```
 
 ---
 
-To start the project:
+### Useful Info & Health
 
 ```bash
-make up
+make info   # Show service URLs and access info
+make ps     # Show container status
+make health # Check health of all services
+make logs   # Follow logs of all services
 ```
-
-To stop all services:
-
-```bash
-make down
-```
-
----
 
 ## Development Workflow
 
 The Makefile provides commands to simplify development and debugging.
-
-### General Commands
-
-```bash
-make help
-make ps
-make logs
-make health
-```
-
----
 
 ### Development Mode
 
@@ -157,7 +132,7 @@ make health
 make dev
 ```
 
-Runs the project with visible logs for easier debugging.
+Starts the project with live frontend hot-reload and visible logs for easier debugging.
 
 ---
 
@@ -168,6 +143,38 @@ make logs-backend
 make logs-frontend
 make logs-db
 make logs-redis
+make logs-nginx
+```
+
+---
+
+### Shell Access to Containers
+
+```bash
+make shell-backend   # Open shell in backend container
+make shell-frontend  # Open shell in frontend container
+make db-shell        # Access PostgreSQL CLI
+make redis-cli       # Access Redis CLI
+```
+
+---
+
+### Rebuilding Specific Services
+
+```bash
+make rebuild-all     # Rebuild all services from scratch
+make rebuild-backend # Rebuild only the backend
+make rebuild-frontend# Rebuild only the frontend
+```
+
+---
+
+### Installing Dependencies
+
+```bash
+make install-backend
+make install-frontend
+make install-all
 ```
 
 ---
@@ -175,41 +182,45 @@ make logs-redis
 ### Database Management
 
 ```bash
-make db-shell
-make migrate
-make prisma-migrate-new NAME=descricao_da_alteracao
-make prisma-generate
-make prisma-studio
+make db-shell      # Access PostgreSQL CLI
+make migrate       # Apply existing migrations (alias for prisma-migrate-deploy)
+make prisma-generate    # Regenerate Prisma Client
+make prisma-studio      # Open Prisma Studio (GUI for the database)
 ```
 
-#### Fluxo Prisma (importante para toda a equipa)
+#### Prisma Workflow
 
-**Depois de `git pull`** — aplicar migrations que alguém já criou:
+**After `git pull`** — apply any new migrations from teammates:
 
 ```bash
 make migrate
 ```
 
-**Quando alteras `backend/prisma/schema.prisma`** — criar e commitar a nova migration:
+This runs `npx prisma migrate deploy` inside the backend container.
+
+---
+
+**When you modify `backend/prisma/schema.prisma`** — create and commit a new migration:
 
 ```bash
-make prisma-migrate-new NAME=descricao_curta
+make prisma-migrate-new NAME=short_description
 git add backend/prisma/migrations/ backend/prisma/schema.prisma
-git commit -m "feat(db): descricao da alteracao"
+git commit -m "feat(db): short description"
 ```
 
-**Se `make migrate` falhar com P3009** (migration falhada no teu banco local):
+---
+
+**If `make migrate` fails with P3009** (stuck migration on local DB):
 
 ```bash
-make reset-db   # apaga dados locais e reaplica tudo do zero
+make reset-db   # wipes local data and re-applies all migrations from scratch
 ```
 
-Regras para evitar problemas:
+#### Important Rules
 
-- **Nunca apagar** pastas em `backend/prisma/migrations/` — isso partiu o projeto (só ficou uma migration incremental sem as tabelas base).
-- **Nunca usar** `prisma db push` em desenvolvimento partilhado — usa sempre `make prisma-migrate-new`.
-- **Sempre commitar** a pasta `migrations/` inteira (incluindo `migration_lock.toml`), não só o `schema.prisma`.
-- Usar **WSL Ubuntu** para correr o Makefile: `wsl -d Ubuntu` antes dos comandos `make`.
+- **Never delete** folders inside `backend/prisma/migrations/`
+- **Never use** `prisma db push` in shared development — always use `make prisma-migrate-new`
+- **Always commit** the entire `migrations/` folder (including `migration_lock.toml`), not just `schema.prisma`
 
 ---
 
@@ -227,16 +238,16 @@ make test-coverage
 ### Maintenance & Reset
 
 ```bash
-make restart
-make rebuild
-make clean
+make restart   # Restart all containers
+make rebuild   # Full rebuild of all services
+make clean     # Remove all containers, volumes, and images
 ```
 
-⚠️ Destructive commands:
+⚠️ Destructive commands (data loss):
 
 ```bash
-make reset-db
-make reset-all
+make reset-db    # Wipes database and re-applies all migrations
+make reset-all   # Full clean + fresh setup (wipes everything)
 ```
 
 ---
@@ -261,17 +272,6 @@ Makefile
 * The project is designed to run with a **single command** (`make setup`) as required by the subject.
 * All services run inside Docker containers.
 * The Makefile abstracts Docker commands to provide a simpler and consistent workflow.
-
----
-
-## Future Extensions
-
-This section is designed to be incrementally updated as new features are added, such as:
-
-* New services
-* Additional environment variables
-* New Makefile commands
-* Deployment instructions
 
 
 
@@ -359,7 +359,7 @@ This section outlines the roles and core responsibilities of each team member wi
 
 * Oversees project planning, coordination, and progress tracking
 * Ensures team communication and alignment
-* Contributes to frontend development and user interface implementation
+* Contributes to both frontend and backend development
 
 ---
 
@@ -414,9 +414,11 @@ We use **Trello** as our Kanban board platform. The board is shared among all te
 Our Trello board structure:
 - **Backlog** - All upcoming tasks waiting to be picked up
 - **To Do** - Tasks assigned for the current sprint
-- **In Progress** - Work currently being developed
+- **Doing** - Work currently being developed
+- **Blocked** - Tasks put on hold due to dependencies missing
 - **Review** - Completed work awaiting validation
 - **Done** - Validated and merged work
+- **Modules** - Checklist of the modules
 
 Team members move their assigned cards across columns as they progress, giving everyone real-time visibility into what's being worked on, what's blocked, and what's completed.
 
@@ -659,56 +661,63 @@ This section lists all implemented features of the project, along with their des
 
 ---
 
-## Core Features
+## Authentication & User Management
 
-| Feature                  | Description                                                                                                | Implemented By                                         |
-| ------------------------ | ---------------------------------------------------------------------------------------------------------- | ------------------------------------------------------ |
-| **User Authentication**  | Allows users to register, log in, and securely authenticate using JWT-based sessions and password hashing. | efinda (Frontend), jbofengo (Backend)                  |
-| **User Profiles**        | Provides user profile management, including personal information and avatar customization.                 |                                                        |
-| **Workspace Management** | Enables users to create and manage collaborative workspaces.                                               |                                                        |
-| **Workspace Membership** | Allows users to join workspaces with specific roles and permissions.                                       |                                                        |
-
----
-
-## Task Management (Kanban System)
-
-| Feature                        | Description                                                               | Implemented By |
-| ------------------------------ | ------------------------------------------------------------------------- | -------------- |
-| **Kanban Board**               | Visual task management system using columns to represent workflow stages. |                |
-| **Task Creation & Management** | Create, update, delete, and organize tasks within columns.                |                |
-| **Task Assignment**            | Assign tasks to one or multiple users.                                    |                |
-| **Task Checklist**             | Add checklist items to tasks and track their completion.                  |                |
-| **Task Labels**                | Categorize tasks using labels for better organization.                    |                |
+| Feature                         | Description                                                                                                             | Implemented By                        |
+| ------------------------------- | ----------------------------------------------------------------------------------------------------------------------- | ------------------------------------- |
+| **User Authentication**         | Register, log in, and authenticate using JWT-based sessions and password hashing (bcrypt).                               | efinda (Frontend), jbofengo (Backend) |
+| **OAuth 2.0 Authentication**    | Log in using 42 API credentials via the OAuth 2.0 authorization flow.                                                   | efinda (Frontend), jbofengo (Backend) |
+| **User Profiles**               | Profile management with personal information, avatar upload, and default avatar assignment at signup.                     | efinda                                |
+| **Friendship System**           | Send, accept, and remove friend requests; view friends list and their online status on each profile.                     | efinda                                |
+| **Social Discovery**            | Browse workspaces your friends are members of to discover and request to join collaborative projects.                     | efinda                                |
+| **Advanced Permissions System** | Role-based access control (admin, member, guest) with role-specific views and actions within workspaces.                | efinda, cgama (Backend), dnzita (Frontend) |
 
 ---
 
-## Communication Features
+## Workspace & Task Management
 
-| Feature             | Description                                                                       | Implemented By |
-| ------------------- | --------------------------------------------------------------------------------- | -------------- |
-| **Task Comments**   | Users can comment on tasks for discussion and collaboration.                      |                |
-| **Mentions System** | Users can mention others in comments to notify them.                              |                |
-| **Workspace Chat**  | Real-time messaging system within workspaces.                                     |                |
-| **Reactions**       | Users can react to messages and comments using emojis.                            |                |
-| **Notifications**   | System-generated notifications for relevant events (mentions, assignments, etc.). |                |
+| Feature                    | Description                                                                                         | Implemented By                        |
+| -------------------------- | --------------------------------------------------------------------------------------------------- | ------------------------------------- |
+| **Workspace Management**   | Create, update, delete, and browse collaborative workspaces with membership management.              | efinda, cgama (Backend), dnzita (Frontend) |
+| **Kanban Board**           | Visual task organization using columns to represent workflow stages within each workspace.           | efinda, cgama (Backend), dnzita (Frontend) |
+| **Task CRUD**              | Create, update, delete, and reorder tasks across columns.                                           | efinda, cgama (Backend), dnzita (Frontend) |
+| **Task Assignment**        | Assign tasks to one or multiple workspace members.                                                   | efinda, cgama (Backend), dnzita (Frontend) |
+| **Task Checklist**         | Add checklist items to tasks and track their completion status.                                     | efinda, cgama (Backend), dnzita (Frontend) |
+| **Task Labels**            | Categorize tasks using color-coded labels for better organization.                                  | efinda, cgama (Backend), dnzita (Frontend) |
+
+---
+
+## Communication & Real-Time
+
+| Feature                              | Description                                                                                    | Implemented By                        |
+| ------------------------------------ | ---------------------------------------------------------------------------------------------- | ------------------------------------- |
+| **Real-Time WebSocket Infrastructure** | Persistent Socket.IO connections enabling live updates across the platform.                    | dnzita (Frontend), jbofengo (Backend) |
+| **Real-Time Collaborative Features**    | Live synchronization of task comments and workspace data for all connected users.              | efinda, cgama (Backend), dnzita (Frontend) |
+| **Presence System**                  | View online/offline status of friends in real time.                                            | dnzita (Frontend), jbofengo (Backend) |
+| **Workspace Chat**                   | Real-time messaging system within workspaces.                                                  | efinda (Backend), dnzita (Frontend)   |
+| **Task Comments & Mentions**         | Comment on tasks with @mentions to notify other workspace members.                             | efinda (Backend), dnzita (Frontend)   |
+| **Reactions**                        | React to messages and comments using emojis.                                                   | efinda (Backend), dnzita (Frontend)   |
+
+---
+
+## Notifications
+
+| Feature                   | Description                                                                                                 | Implemented By                        |
+| ------------------------- | ----------------------------------------------------------------------------------------------------------- | ------------------------------------- |
+| **Notification System**   | Real-time notifications delivered via Socket.IO for all creation, update, and deletion events.               | efinda (Backend), dnzita (Frontend)   |
+| **Advanced Search**       | Filter, sort, and paginate notifications by type (mentions, task, workspace, friendship), date, and status. | efinda (Backend), dnzita (Frontend)   |
 
 ---
 
 ## System & Infrastructure
 
-| Feature                    | Description                                                               | Implemented By         |
-| -------------------------- | ------------------------------------------------------------------------- | ---------------------- |
-| **Real-Time Updates**      | Synchronizes application state across users using WebSockets (Socket.IO). |                        |
-| **Dockerized Environment** | Full application runs in containers with a single command.                | cgama                  |
-| **Secure API**             | Backend secured with middleware (JWT, rate limiting, CORS, Helmet).       | jbofengo               |
-| **Database Integration**   | Persistent data storage using PostgreSQL with Prisma ORM.                 | dnzita                 |
-
----
-
-## Notes
-
-* This section is continuously updated as new features are implemented.
-* Each feature should be updated with the responsible team member(s) once completed.
+| Feature                    | Description                                                                       | Implemented By         |
+| -------------------------- | --------------------------------------------------------------------------------- | ---------------------- |
+| **Public API**             | RESTful API secured with API key authentication, rate limiting, and Swagger documentation. | efinda (Frontend), jbofengo (Backend) |
+| **Dockerized Environment** | Full application runs in containers with a single command.                        | cgama                  |
+| **ORM Integration**        | PostgreSQL database managed through Prisma ORM with type-safe queries and migrations. | dnzita                 |
+| **Secure API**             | Backend secured with middleware (JWT, CORS, Helmet, rate limiting).               | jbofengo               |
+| **Custom Design System**   | Consistent UI built with reusable React components, color palette, typography rules, and shared icons. | efinda, dnzita (Frontend) |
 
 
 
@@ -1146,11 +1155,3 @@ This section provides a detailed breakdown of each team member’s contributions
 
 * All team members participated in code reviews
 * Collaboratively validated implementations before merging into the main codebase
-
----
-
-## Notes
-
-* This section is updated continuously as the project progresses.
-* Each team member is responsible for keeping their contributions accurate and up to date.
-* Contributions should reflect **actual implemented work**, not planned tasks.
