@@ -35,13 +35,7 @@ if [ ! -f "$ENV_FILE" ]; then
     if [ -f "$ENV_EXAMPLE" ]; then
         cp "$ENV_EXAMPLE" "$ENV_FILE"
         echo -e "${GREEN}✓ Arquivo .env criado${NC}"
-        echo -e "${YELLOW}⚠ IMPORTANTE: Edite o arquivo .env com suas credenciais antes de continuar!${NC}"
-        echo -e "${YELLOW}  Especialmente os seguintes campos:${NC}"
-        echo -e "${YELLOW}  - INTRA_42_CLIENT_ID${NC}"
-        echo -e "${YELLOW}  - INTRA_42_CLIENT_SECRET${NC}"
-        echo -e "${YELLOW}  - JWT_SECRET${NC}"
-        echo -e "${YELLOW}  - JWT_REFRESH_SECRET${NC}"
-        echo ""
+        echo -e "${YELLOW}⚠ IMPORTANTE: Edite o arquivo .env com suas credenciais antes de continuar!${NC}\n"
         read -p "Pressione ENTER depois de configurar o .env para continuar..."
     else
         echo -e "${RED}✗ Arquivo .env.example não encontrado!${NC}"
