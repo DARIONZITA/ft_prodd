@@ -40,7 +40,6 @@
     "passport-42": "^1.2.6",
     "passport-oauth2": "^1.7.0",
     "prisma": "^5.7.0",
-    "redis": "^4.6.10",
     "socket.io": "^4.6.1",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1",
