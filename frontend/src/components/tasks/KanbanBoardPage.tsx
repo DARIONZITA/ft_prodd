@@ -451,7 +451,7 @@ interface KanbanBoardPageProps {
 
 export default function KanbanBoardPage({ workspaceId, onOpenSettings, onOpenMembers, dateWorkspace, workspaceRole }: KanbanBoardPageProps) {
   const [columns, setColumns] = useState<Column[]>(() => SORTED_DEFAULT_COLUMNS);
-  const [tasks, setTasks] = useState<Task[]>(() => sortTasks(INITIAL_TASKS));
+  const [tasks, setTasks] = useState<Task[]>([]);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showApiKeysModal, setShowApiKeysModal] = useState(false);
