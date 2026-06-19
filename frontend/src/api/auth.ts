@@ -10,7 +10,7 @@ async function authRequest<T>(endpoint: string, form: T): Promise<AuthResponseDa
 
   console.log(`Received response from POST ${endpoint}: token=${token}, user=${JSON.stringify(user)}`)
   localStorage.setItem('token', token)
-  queryClient.setQueryData(['user'], user)
+  queryClient.setQueryData(['user', 'me'], user)
   return user
 }
 
