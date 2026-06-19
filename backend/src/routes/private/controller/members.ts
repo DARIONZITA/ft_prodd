@@ -5,7 +5,6 @@ import { ApiError }                                 from '../../../utils/ApiErro
 import { WorkspaceRole }                            from '../../../types/constants';
 import { idSchema, parseOrThrow, parseQueryEnum }   from '../../../validations/utils';
 import { notify } from '../../../utils/notify';
-
 const MEMBER_SELECT = {
     role: true,
     invitedRole: true,
@@ -19,9 +18,6 @@ const MEMBER_SELECT = {
     }
 } as const;
 
-/* ─────────────────────────────────────────────────────────
-   List active (non-pending) workspace members
-───────────────────────────────────────────────────────── */
 export async function listMembers(req: Request, res: Response, next: NextFunction)
 {
     try {
