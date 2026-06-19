@@ -91,7 +91,7 @@ make setup
 
 This single command will:
 
-1. Generate **TLS certificates** for local HTTPS via `make certs`
+1. Generate **TLS certificates** for local HTTPS
 2. Check if Docker is running
 3. Create `.env` from `.env.example` if none exists, then **pause** and wait for you to configure it
 4. Stop any existing containers
@@ -103,151 +103,42 @@ This single command will:
 
 ---
 
-### Start / Stop (daily use)
+### Common Commands
 
 ```bash
 make up      # Start all services
 make down    # Stop all services
 make restart # Restart all services
+make logs    # Follow logs of all services
+make ps      # Show container status
+make info    # Show service URLs and access info
 ```
 
 ---
 
-### Useful Info & Health
+### Rebuilding Services
 
 ```bash
-make info   # Show service URLs and access info
-make ps     # Show container status
-make health # Check health of all services
-make logs   # Follow logs of all services
-```
-
-## Development Workflow
-
-The Makefile provides commands to simplify development and debugging.
-
-### Development Mode
-
-```bash
-make dev
-```
-
-Starts the project with live frontend hot-reload and visible logs for easier debugging.
-
----
-
-### Logs per Service
-
-```bash
-make logs-backend
-make logs-frontend
-make logs-db
-make logs-redis
-make logs-nginx
+make rebuild          # Rebuild all services from scratch
+make rebuild-backend  # Rebuild only the backend
+make rebuild-frontend # Rebuild only the frontend
 ```
 
 ---
 
-### Shell Access to Containers
+### Database
 
 ```bash
-make shell-backend   # Open shell in backend container
-make shell-frontend  # Open shell in frontend container
-make db-shell        # Access PostgreSQL CLI
-make redis-cli       # Access Redis CLI
+make prisma-studio  # Open Prisma Studio (GUI for the database)
 ```
 
 ---
 
-### Rebuilding Specific Services
+### Maintenance
 
 ```bash
-make rebuild-all     # Rebuild all services from scratch
-make rebuild-backend # Rebuild only the backend
-make rebuild-frontend# Rebuild only the frontend
-```
-
----
-
-### Installing Dependencies
-
-```bash
-make install-backend
-make install-frontend
-make install-all
-```
-
----
-
-### Database Management
-
-```bash
-make db-shell      # Access PostgreSQL CLI
-make migrate       # Apply existing migrations (alias for prisma-migrate-deploy)
-make prisma-generate    # Regenerate Prisma Client
-make prisma-studio      # Open Prisma Studio (GUI for the database)
-```
-
-#### Prisma Workflow
-
-**After `git pull`** — apply any new migrations from teammates:
-
-```bash
-make migrate
-```
-
-This runs `npx prisma migrate deploy` inside the backend container.
-
----
-
-**When you modify `backend/prisma/schema.prisma`** — create and commit a new migration:
-
-```bash
-make prisma-migrate-new NAME=short_description
-git add backend/prisma/migrations/ backend/prisma/schema.prisma
-git commit -m "feat(db): short description"
-```
-
----
-
-**If `make migrate` fails with P3009** (stuck migration on local DB):
-
-```bash
-make reset-db   # wipes local data and re-applies all migrations from scratch
-```
-
-#### Important Rules
-
-- **Never delete** folders inside `backend/prisma/migrations/`
-- **Never use** `prisma db push` in shared development — always use `make prisma-migrate-new`
-- **Always commit** the entire `migrations/` folder (including `migration_lock.toml`), not just `schema.prisma`
-
----
-
-### Testing
-
-```bash
-make test-all
-make test-backend
-make test-frontend
-make test-coverage
-```
-
----
-
-### Maintenance & Reset
-
-```bash
-make restart   # Restart all containers
-make rebuild   # Full rebuild of all services
-make clean     # Remove all containers, volumes, and images
-```
-
-⚠️ Destructive commands (data loss):
-
-```bash
-make reset-db    # Wipes database and re-applies all migrations
-make reset-all   # Full clean + fresh setup (wipes everything)
+make clean      # Remove all containers, volumes, and images
+make reset-all  # Full clean + fresh setup (wipes everything)
 ```
 
 ---
