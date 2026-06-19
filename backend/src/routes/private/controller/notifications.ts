@@ -2,8 +2,12 @@ import type { Request, Response, NextFunction } from 'express';
 import { prisma }                               from '../../../lib/prisma';
 import { ApiError }                             from '../../../utils/ApiError';
 import { idSchema, parseOrThrow,
-    parseQueryEnum, parseQueryInt }             from '../../../validations/utils';
+    parseQueryEnum, parseQueryInt }                            from '../../../validations/utils';
 import { NotificationTypes, SortOptions }       from '../../../types/constants';
+import { wsEmitter }                            from '../../../ws/emitter';
+
+
+//Estas rotas muito provavelmente não serão usadas — as notificações são criadas por eventos (ex: menção num comentário) e não por acção directa do user. Mas ficam aqui para eventuais necessidades futuras de CRUD manual de notificações (ex: para testes ou admin).
 
 export async function getNotifications(req: Request, res: Response, next: NextFunction)
 {
@@ -61,6 +65,24 @@ export async function markNotificationAsRead(req: Request, res: Response, next: 
 
         const updated = await prisma.notification.update({ where: { id }, data: { isRead: true } });
 
+        wsEmitter.notificationRead(req.user!.id, notif.id); // Sincroniza outras abas do mesmo user
         res.json({ success: true, data: updated });
+    } catch (err) { next(err); }
+}
+
+export async function deleteNotification(req: Request, res: Response, next: NextFunction) {
+    try {
+        const notificationId = parseOrThrow(idSchema, 'NotificationID', req.params.id);
+
+        const notif = await prisma.notification.findUnique({ where: { id: notificationId } });
+        if (!notif)
+            throw new ApiError(404, 'Notification not found');
+        if (req.user!.id !== notif.userId)
+            throw new ApiError(403, 'Not allowed');
+
+        await prisma.notification.delete({ where: { id: notificationId } });
+
+        wsEmitter.notificationDeleted(req.user!.id, notif.id); // Sincroniza outras abas do mesmo user
+        res.json({ success: true, message: 'Notification deleted' });
     } catch (err) { next(err); }
 }
