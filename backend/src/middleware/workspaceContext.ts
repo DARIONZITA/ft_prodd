@@ -30,6 +30,13 @@ const   workspaceContext = async ( req : Request, _res : Response, next : NextFu
 
         req.workspace = await loadWorkspaceAccess( id, req.user!.id );
 
+        if (req.workspace.role === 'pending') {
+            const isAcceptOrDecline = req.path.endsWith('/invite/accept') || req.path.endsWith('/invite/decline');
+            if (!isAcceptOrDecline) {
+                throw new ApiError(403, 'No permission for this workspace (pending invitation)');
+            }
+        }
+
         next();
     } catch (err) { next( err ); }
 }

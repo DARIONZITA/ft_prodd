@@ -12,6 +12,8 @@ enum WorkspaceRole {
     admin
     member
     guest
+    pending
+    requesting
 }
 
 enum NotificationType {
@@ -76,7 +78,8 @@ model User {
     taskAssignments         TaskAssignment[] @relation("assignee")
     assignedTasks           TaskAssignment[] @relation("assigner")
     tasksCreated            Task[]
-    workspaceMemberships    WorkspaceMember[]
+    workspaceMemberships    WorkspaceMember[] @relation("MemberOf")
+    invitedMemberships      WorkspaceMember[] @relation("InvitedBy")
     sentFriendRequests      FriendRequest[] @relation("sender")
     receivedFriendRequests  FriendRequest[] @relation("receiver")
 }
@@ -106,15 +109,18 @@ model Workspace {
 }
 
 model WorkspaceMember {
-    id          Int           @id @default(autoincrement())
-    workspaceId Int
-    userId      Int
-    role        WorkspaceRole
-    createdAt   DateTime      @default(now())
-    updatedAt   DateTime      @updatedAt
+    id            Int           @id @default(autoincrement())
+    workspaceId   Int
+    userId        Int
+    role          WorkspaceRole
+    invitedRole   WorkspaceRole @default(member)
+    invitedById   Int?
+    createdAt     DateTime      @default(now())
+    updatedAt     DateTime      @updatedAt
 
-    workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-    user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+    workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+    user        User      @relation("MemberOf", fields: [userId], references: [id], onDelete: Cascade)
+    invitedBy   User?     @relation("InvitedBy", fields: [invitedById], references: [id], onDelete: SetNull)
 
     @@unique([workspaceId, userId])
 }

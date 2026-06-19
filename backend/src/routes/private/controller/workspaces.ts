@@ -234,12 +234,12 @@ export async function   listUserWorkspaces(req: Request, res: Response, next: Ne
 	try {
         const targetUserId = req.params.id ? parseOrThrow(idSchema, 'UserID', req.params.id) : req.user!.id;
 
-		const memberships = await prisma.$transaction(async (tx) => {
+		const result = await prisma.$transaction(async (tx) => {
 			if (targetUserId !== req.user!.id)
 				await requireFriendship(req.user!.id, targetUserId, "You must be friends to view this user's workspaces", tx);
 
-			return await tx.workspaceMember.findMany({
-				where: { userId: targetUserId },
+			const memberships = await tx.workspaceMember.findMany({
+				where: { userId: targetUserId, role: { notIn: ['pending', 'requesting'] } },
 				include: {
 					workspace: {
 						select: {
@@ -248,26 +248,105 @@ export async function   listUserWorkspaces(req: Request, res: Response, next: Ne
 							description: true,
 							createdAt: true,
 							updatedAt: true,
-							_count: { select: { members: true } }
+							_count: { select: { members: { where: { role: { notIn: ['pending', 'requesting'] } } } } }
 						}
 					}
 				},
 				orderBy: { workspaceId: 'asc' }
 			});
+
+			const workspaceIds = memberships.map(m => m.workspaceId);
+			const currentUserMemberships = await tx.workspaceMember.findMany({
+				where: {
+					workspaceId: { in: workspaceIds },
+					userId: req.user!.id
+				}
+			});
+			const currentUserMembershipMap = new Map(
+				currentUserMemberships.map(m => [m.workspaceId, m.role])
+			);
+
+			return { memberships, currentUserMembershipMap };
 		});
 
         res.json({
 			success: true,
-			data: memberships.map((membership) => ({
+			data: result.memberships.map((membership) => ({
 				id: membership.workspace.id,
 				name: membership.workspace.name,
 				description: membership.workspace.description,
 				createdAt: membership.workspace.createdAt,
 				updatedAt: membership.workspace.updatedAt,
 				role: membership.role,
-				memberCount: membership.workspace._count.members
+				memberCount: membership.workspace._count.members,
+				currentUserRole: result.currentUserMembershipMap.get(membership.workspaceId) || null
 			}))
 		});
 	}
     catch (err) { next(err); }
 }
+
+/* ─────────────────────────────────────────────────────────
+   Request to join a workspace (creates member with role=requesting)
+───────────────────────────────────────────────────────── */
+export async function requestToJoinWorkspace(req: Request, res: Response, next: NextFunction)
+{
+    try {
+        const workspaceId = parseOrThrow(idSchema, 'requestToJoinWorkspace() workspaceId', req.params.workspaceId);
+        const userId = req.user!.id;
+
+        const newRequest = await prisma.$transaction(async (tx) => {
+            const workspace = await tx.workspace.findUnique({
+                where: { id: workspaceId },
+                include: { members: { where: { role: 'admin' } } }
+            });
+            if (!workspace)
+                throw new ApiError(404, 'Workspace not found');
+
+            const existingMembership = await tx.workspaceMember.findFirst({
+                where: { workspaceId, userId }
+            });
+            if (existingMembership) {
+                if (existingMembership.role === 'requesting') {
+                    throw new ApiError(400, 'You have already requested to join this workspace');
+                } else if (existingMembership.role === 'pending') {
+                    throw new ApiError(400, 'You have a pending invitation to this workspace. Please accept it instead');
+                } else {
+                    throw new ApiError(400, 'You are already a member of this workspace');
+                }
+            }
+
+            // Create WorkspaceMember with role 'requesting'
+            const membership = await tx.workspaceMember.create({
+                data: {
+                    workspaceId,
+                    userId,
+                    role: 'requesting',
+                    invitedRole: 'member'
+                }
+            });
+
+            // Create notification for all admins of the workspace
+            const admins = workspace.members;
+            if (admins.length > 0) {
+                await tx.notification.createMany({
+                    data: admins.map(admin => ({
+                        userId: admin.userId,
+                        type: NotificationType.workspace,
+                        message: `${req.user!.username} requested to join workspace "${workspace.name}"`
+                    }))
+                });
+            }
+
+            return membership;
+        });
+
+        res.status(201).json({
+            success: true,
+            message: 'Join request sent successfully',
+            data: newRequest
+        });
+    }
+    catch (err) { next(err); }
+}
+

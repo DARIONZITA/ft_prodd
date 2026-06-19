@@ -7,8 +7,9 @@ import { requireWorkspaceAdmin }	from '../../../middleware/rbac';
 import {
 	createWorkspace, deleteWorkspace,
 	getWorkspaceDashboard, updateWorkspace,
-	listUserWorkspaces
+	listUserWorkspaces, requestToJoinWorkspace
 } from '../controller/workspaces';
+import { listMyInvitations } from '../controller/members';
 
 const workspaceRouter = Router({ mergeParams: true });
 
@@ -30,7 +31,12 @@ workspaceRouter.use('/:workspaceId/labels', workspaceContext, labelsRoutes);
  *       401:
  *         description: Unauthorized
  */
+// List all pending invitations for current user (no workspaceId needed)
+workspaceRouter.get('/invitations', listMyInvitations);
+
 workspaceRouter.get('/', listUserWorkspaces);
+workspaceRouter.post('/:workspaceId/join-request', requestToJoinWorkspace);
+
 
 /**
  * @swagger

@@ -5,23 +5,28 @@ import { ApiError }                                 from '../../../utils/ApiErro
 import { WorkspaceRole }                            from '../../../types/constants';
 import { idSchema, parseOrThrow, parseQueryEnum }   from '../../../validations/utils';
 
+const MEMBER_SELECT = {
+    role: true,
+    invitedRole: true,
+    invitedById: true,
+    createdAt: true,
+    user: {
+        select: { id: true, username: true, email: true, avatarUrl: true }
+    },
+    invitedBy: {
+        select: { id: true, username: true, avatarUrl: true }
+    }
+} as const;
+
+/* ─────────────────────────────────────────────────────────
+   List active (non-pending) workspace members
+───────────────────────────────────────────────────────── */
 export async function listMembers(req: Request, res: Response, next: NextFunction)
 {
     try {
         const members = await prisma.workspaceMember.findMany({
-            where: { workspaceId: req.workspace!.id },
-            select: {
-                role: true,
-                createdAt: true,
-                user: {
-                    select: {
-                        id: true,
-                        username: true,
-                        email: true,
-                        avatarUrl: true
-                    }
-                }
-            },
+            where: { workspaceId: req.workspace!.id, role: { notIn: ['pending', 'requesting'] } },
+            select: MEMBER_SELECT,
             orderBy: [{ role: 'asc' }, { userId: 'asc' }]
         });
 
@@ -30,6 +35,7 @@ export async function listMembers(req: Request, res: Response, next: NextFunctio
             data: members.map(m => ({
                 role: m.role,
                 joinedAt: m.createdAt,
+                userId: m.user.id,
                 user: m.user
             }))
         });
@@ -37,25 +43,17 @@ export async function listMembers(req: Request, res: Response, next: NextFunctio
     catch (err) { next(err); }
 }
 
-export async function   getMember(req: Request, res: Response, next: NextFunction)
+/* ─────────────────────────────────────────────────────────
+   Get single member
+───────────────────────────────────────────────────────── */
+export async function getMember(req: Request, res: Response, next: NextFunction)
 {
     try {
         const userId = parseOrThrow(idSchema, 'getMember() UserID', req.params.userId);
 
         const member = await prisma.workspaceMember.findFirst({
             where: { workspaceId: req.workspace!.id, userId },
-            select: {
-                role: true,
-                createdAt: true,
-                user: {
-                    select: {
-                        id: true,
-                        username: true,
-                        email: true,
-                        avatarUrl: true
-                    }
-                }
-            }
+            select: MEMBER_SELECT
         });
 
         if (!member)
@@ -63,46 +61,46 @@ export async function   getMember(req: Request, res: Response, next: NextFunctio
 
         res.json({
             success: true,
-            data: {
-                role: member.role,
-                joinedAt: member.createdAt,
-                user: member.user
-            }
+            data: { role: member.role, joinedAt: member.createdAt, user: member.user }
         });
     }
     catch (err) { next(err); }
 }
 
-export async function   createMember(req: Request, res: Response, next: NextFunction)
+/* ─────────────────────────────────────────────────────────
+   Send invitation (creates member with role=pending)
+───────────────────────────────────────────────────────── */
+export async function createMember(req: Request, res: Response, next: NextFunction)
 {
     try {
         const workspaceId = req.workspace!.id;
         const userId = parseOrThrow(idSchema, 'createMember() UserID', req.params.userId);
-        const role = parseQueryEnum('role', req.query.role, WorkspaceRole, { default: WorkspaceRole[1], isOptional: true })!;
-        
+
+        // The intended role after acceptance (defaults to member); pending is not allowed as intended role
+        const intendedRole = parseQueryEnum('role', req.body.role ?? req.query.role, WorkspaceRole, { default: 'member', isOptional: true })!;
+        const safeIntendedRole = intendedRole === 'pending' ? 'member' : intendedRole;
+
         const newMembership = await prisma.$transaction(async (tx) => {
-            const targetUser = await prisma.user.findUnique({ where: { id: userId } });
+            const targetUser = await tx.user.findUnique({ where: { id: userId } });
             if (!targetUser)
                 throw new ApiError(404, 'User not found');
-    
-            const existingMembership = await prisma.workspaceMember.findFirst({
+
+            const existingMembership = await tx.workspaceMember.findFirst({
                 where: { workspaceId, userId }
             });
             if (existingMembership)
-                throw new ApiError(400, 'User is already a member of this workspace');
+                throw new ApiError(400, 'User is already a member or has a pending invitation for this workspace');
 
+            // Create with role=pending — user must accept
             const member = await tx.workspaceMember.create({
-                data: { workspaceId, userId, role },
-                include: {
-                    user: {
-                        select: {
-                            id: true,
-                            username: true,
-                            email: true,
-                            avatarUrl: true
-                        }
-                    }
-                }
+                data: {
+                    workspaceId,
+                    userId,
+                    role: 'pending',
+                    invitedRole: safeIntendedRole,
+                    invitedById: req.user!.id
+                },
+                select: MEMBER_SELECT
             });
 
             await tx.workspace.update({
@@ -110,17 +108,95 @@ export async function   createMember(req: Request, res: Response, next: NextFunc
                 data: { updatedAt: new Date() }
             });
 
+            // Notify the invited user
+            await tx.notification.create({
+                data: {
+                    userId,
+                    type: NotificationType.workspace,
+                    message: `${req.user!.username} invited you to workspace "${req.workspace!.name}" as ${safeIntendedRole}`
+                }
+            });
+
+            return member;
+        });
+
+        res.status(201).json({
+            success: true,
+            message: 'Invitation sent successfully',
+            data: newMembership
+        });
+    }
+    catch (err) { next(err); }
+}
+
+/* ─────────────────────────────────────────────────────────
+   List pending invitations for the current user (all workspaces)
+───────────────────────────────────────────────────────── */
+export async function listMyInvitations(req: Request, res: Response, next: NextFunction)
+{
+    try {
+        const invitations = await prisma.workspaceMember.findMany({
+            where: { userId: req.user!.id, role: 'pending' },
+            include: {
+                workspace: { select: { id: true, name: true, description: true, createdAt: true } },
+                invitedBy: { select: { id: true, username: true, avatarUrl: true } }
+            },
+            orderBy: { createdAt: 'desc' }
+        });
+
+        res.json({
+            success: true,
+            data: invitations.map(inv => ({
+                workspaceId: inv.workspaceId,
+                workspace: inv.workspace,
+                invitedRole: inv.invitedRole,
+                invitedBy: inv.invitedBy,
+                invitedAt: inv.createdAt
+            }))
+        });
+    }
+    catch (err) { next(err); }
+}
+
+/* ─────────────────────────────────────────────────────────
+   Accept invitation (current user accepts for a specific workspace)
+───────────────────────────────────────────────────────── */
+export async function acceptInvitation(req: Request, res: Response, next: NextFunction)
+{
+    try {
+        const workspaceId = parseOrThrow(idSchema, 'acceptInvitation() workspaceId', req.params.workspaceId);
+
+        const result = await prisma.$transaction(async (tx) => {
+            const invitation = await tx.workspaceMember.findFirst({
+                where: { workspaceId, userId: req.user!.id, role: 'pending' }
+            });
+
+            if (!invitation)
+                throw new ApiError(404, 'No pending invitation found for this workspace');
+
+            const member = await tx.workspaceMember.update({
+                where: { id: invitation.id },
+                data: { role: invitation.invitedRole },
+                select: MEMBER_SELECT
+            });
+
+            await tx.workspace.update({
+                where: { id: workspaceId },
+                data: { updatedAt: new Date() }
+            });
+
+            // Notify other members
             const otherMembers = await tx.workspaceMember.findMany({
-                where: { workspaceId, userId: { not: req.user!.id } },
+                where: { workspaceId, userId: { not: req.user!.id }, role: { not: 'pending' } },
                 select: { userId: true }
             });
 
-            if (otherMembers.length) {
+            if (otherMembers.length > 0) {
                 await tx.notification.createMany({
                     data: otherMembers.map(m => ({
                         userId: m.userId,
                         type: NotificationType.workspace,
-                        message: `${member.user.username} has been added to workspace "${req.workspace!.name}" by ${req.user!.username}`
+                        message: `${req.user!.username} accepted the invitation to workspace "${member.user?.username}"`
                     }))
                 });
             }
@@ -128,24 +204,50 @@ export async function   createMember(req: Request, res: Response, next: NextFunc
             return member;
         });
 
-        res.status(201).json({
-            success: true,
-            message: 'Member added successfully',
-            data: newMembership
-        });
+        res.json({ success: true, message: 'Invitation accepted', data: result });
     }
     catch (err) { next(err); }
 }
 
-export async function   updateMemberRole(req: Request, res: Response, next: NextFunction)
+/* ─────────────────────────────────────────────────────────
+   Decline invitation (current user declines for a specific workspace)
+───────────────────────────────────────────────────────── */
+export async function declineInvitation(req: Request, res: Response, next: NextFunction)
+{
+    try {
+        const workspaceId = parseOrThrow(idSchema, 'declineInvitation() workspaceId', req.params.workspaceId);
+
+        await prisma.$transaction(async (tx) => {
+            const invitation = await tx.workspaceMember.findFirst({
+                where: { workspaceId, userId: req.user!.id, role: 'pending' }
+            });
+
+            if (!invitation)
+                throw new ApiError(404, 'No pending invitation found for this workspace');
+
+            await tx.workspaceMember.delete({ where: { id: invitation.id } });
+        });
+
+        res.json({ success: true, message: 'Invitation declined' });
+    }
+    catch (err) { next(err); }
+}
+
+/* ─────────────────────────────────────────────────────────
+   Update member role
+───────────────────────────────────────────────────────── */
+export async function updateMemberRole(req: Request, res: Response, next: NextFunction)
 {
     try {
         const workspaceId = req.workspace!.id;
         const userId = parseOrThrow(idSchema, 'updateMemberRole() UserID', req.params.userId);
-        const role = parseQueryEnum('role', req.query.role, WorkspaceRole, { isOptional: false });
+        const role = parseQueryEnum('role', req.body.role ?? req.query.role, WorkspaceRole, { isOptional: false });
+
+        if (!role || role === 'pending')
+            throw new ApiError(400, 'Invalid role value');
 
         const updatedMember = await prisma.$transaction(async (tx) => {
-            const targetMembership = await prisma.workspaceMember.findFirst({
+            const targetMembership = await tx.workspaceMember.findFirst({
                 where: { workspaceId, userId }
             });
 
@@ -164,16 +266,7 @@ export async function   updateMemberRole(req: Request, res: Response, next: Next
             const member = await tx.workspaceMember.update({
                 where: { id: targetMembership.id },
                 data: { role },
-                include: {
-                    user: {
-                        select: {
-                            id: true,
-                            username: true,
-                            email: true,
-                            avatarUrl: true
-                        }
-                    }
-                }
+                select: MEMBER_SELECT
             });
 
             await tx.workspace.update({
@@ -182,7 +275,7 @@ export async function   updateMemberRole(req: Request, res: Response, next: Next
             });
 
             const otherMembers = await tx.workspaceMember.findMany({
-                where: { workspaceId, userId: { not: req.user!.id } },
+                where: { workspaceId, userId: { not: req.user!.id }, role: { not: 'pending' } },
                 select: { userId: true }
             });
 
@@ -204,6 +297,9 @@ export async function   updateMemberRole(req: Request, res: Response, next: Next
     catch (err) { next(err);}
 }
 
+/* ─────────────────────────────────────────────────────────
+   Remove member
+───────────────────────────────────────────────────────── */
 export async function deleteMember(req: Request, res: Response, next: NextFunction)
 {
     try {
@@ -211,7 +307,7 @@ export async function deleteMember(req: Request, res: Response, next: NextFuncti
         const userId = parseOrThrow(idSchema, 'deleteMember() UserID', req.params.userId);
 
         const result = await prisma.$transaction(async (tx) => {
-             const targetMembership = await prisma.workspaceMember.findFirst({
+             const targetMembership = await tx.workspaceMember.findFirst({
                 where: { workspaceId, userId }
             });
 
@@ -262,7 +358,7 @@ export async function deleteMember(req: Request, res: Response, next: NextFuncti
             });
 
             const otherMembers = await tx.workspaceMember.findMany({
-                where: { workspaceId, userId: { not: req.user!.id } },
+                where: { workspaceId, userId: { not: req.user!.id }, role: { not: 'pending' } },
                 select: { userId: true }
             });
 
@@ -283,3 +379,123 @@ export async function deleteMember(req: Request, res: Response, next: NextFuncti
     }
     catch (err) { next(err); }
 }
+
+/* ─────────────────────────────────────────────────────────
+   List pending join requests for the workspace (admin only)
+───────────────────────────────────────────────────────── */
+export async function listJoinRequests(req: Request, res: Response, next: NextFunction)
+{
+    try {
+        const requests = await prisma.workspaceMember.findMany({
+            where: { workspaceId: req.workspace!.id, role: 'requesting' },
+            select: MEMBER_SELECT,
+            orderBy: { createdAt: 'desc' }
+        });
+
+        res.json({
+            success: true,
+            data: requests.map(r => ({
+                userId: r.user.id,
+                user: r.user,
+                requestedAt: r.createdAt
+            }))
+        });
+    }
+    catch (err) { next(err); }
+}
+
+/* ─────────────────────────────────────────────────────────
+   Accept join request (admin accepts a request from a user)
+───────────────────────────────────────────────────────── */
+export async function acceptJoinRequest(req: Request, res: Response, next: NextFunction)
+{
+    try {
+        const workspaceId = req.workspace!.id;
+        const targetUserId = parseOrThrow(idSchema, 'acceptJoinRequest() targetUserId', req.params.userId);
+
+        const result = await prisma.$transaction(async (tx) => {
+            const membership = await tx.workspaceMember.findFirst({
+                where: { workspaceId, userId: targetUserId, role: 'requesting' }
+            });
+
+            if (!membership)
+                throw new ApiError(404, 'No pending join request found for this user in this workspace');
+
+            const updatedMember = await tx.workspaceMember.update({
+                where: { id: membership.id },
+                data: { role: membership.invitedRole },
+                select: MEMBER_SELECT
+            });
+
+            await tx.workspace.update({
+                where: { id: workspaceId },
+                data: { updatedAt: new Date() }
+            });
+
+            // Notify the user who requested to join
+            await tx.notification.create({
+                data: {
+                    userId: targetUserId,
+                    type: NotificationType.workspace,
+                    message: `Your request to join workspace "${req.workspace!.name}" has been accepted`
+                }
+            });
+
+            // Notify other active members
+            const otherMembers = await tx.workspaceMember.findMany({
+                where: { workspaceId, userId: { notIn: [req.user!.id, targetUserId] }, role: { notIn: ['pending', 'requesting'] } },
+                select: { userId: true }
+            });
+
+            if (otherMembers.length > 0) {
+                await tx.notification.createMany({
+                    data: otherMembers.map(m => ({
+                        userId: m.userId,
+                        type: NotificationType.workspace,
+                        message: `${updatedMember.user.username} joined the workspace "${req.workspace!.name}"`
+                    }))
+                });
+            }
+
+            return updatedMember;
+        });
+
+        res.json({ success: true, message: 'Join request accepted', data: result });
+    }
+    catch (err) { next(err); }
+}
+
+/* ─────────────────────────────────────────────────────────
+   Decline join request (admin denies a request from a user)
+───────────────────────────────────────────────────────── */
+export async function declineJoinRequest(req: Request, res: Response, next: NextFunction)
+{
+    try {
+        const workspaceId = req.workspace!.id;
+        const targetUserId = parseOrThrow(idSchema, 'declineJoinRequest() targetUserId', req.params.userId);
+
+        await prisma.$transaction(async (tx) => {
+            const invitation = await tx.workspaceMember.findFirst({
+                where: { workspaceId, userId: targetUserId, role: 'requesting' }
+            });
+
+            if (!invitation)
+                throw new ApiError(404, 'No pending join request found for this user in this workspace');
+
+            await tx.workspaceMember.delete({ where: { id: invitation.id } });
+
+            // Notify the user who requested to join
+            await tx.notification.create({
+                data: {
+                    userId: targetUserId,
+                    type: NotificationType.workspace,
+                    message: `Your request to join workspace "${req.workspace!.name}" has been declined`
+                }
+            });
+        });
+
+        res.json({ success: true, message: 'Join request declined' });
+    }
+    catch (err) { next(err); }
+}
+

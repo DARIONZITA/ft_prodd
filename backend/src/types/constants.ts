@@ -1,4 +1,4 @@
-export const WorkspaceRole = ['admin', 'member', 'guest'] as const;
+export const WorkspaceRole = ['admin', 'member', 'guest', 'pending', 'requesting'] as const;
 export const NotificationTypes = ['friendship', 'workspace', 'task', 'mention'] as const;
 export const SortOptions = ['newest', 'oldest'] as const;
 export const FriendRequestStatuses = ['pending', 'accepted'] as const;

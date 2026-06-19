@@ -5,7 +5,12 @@ import {
     getMember,
     createMember,
     updateMemberRole,
-    deleteMember
+    deleteMember,
+    acceptInvitation,
+    declineInvitation,
+    listJoinRequests,
+    acceptJoinRequest,
+    declineJoinRequest,
 } from '../controller/members';
 
 const membersRouter = Router({ mergeParams: true });
@@ -14,7 +19,7 @@ const membersRouter = Router({ mergeParams: true });
  * @swagger
  * /workspaces/{workspaceId}/members:
  *   get:
- *     summary: List workspace members
+ *     summary: List active workspace members (excludes pending)
  *     tags: [Members]
  *     security:
  *       - BearerAuth: []
@@ -32,6 +37,77 @@ const membersRouter = Router({ mergeParams: true });
  *         description: Workspace not found
  */
 membersRouter.get('/', listMembers);
+
+/**
+ * @swagger
+ * /workspaces/{workspaceId}/members/requests:
+ *   get:
+ *     summary: List pending join requests (admin only)
+ *     tags: [Members]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: workspaceId
+ *         required: true
+ *         schema: { type: integer }
+ *     responses:
+ *       200:
+ *         description: List of join requests
+ *       403:
+ *         description: Forbidden
+ */
+membersRouter.get('/requests', requireWorkspaceAdmin, listJoinRequests);
+
+/**
+ * @swagger
+ * /workspaces/{workspaceId}/members/requests/{userId}/accept:
+ *   post:
+ *     summary: Accept a join request (admin only)
+ *     tags: [Members]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: workspaceId
+ *         required: true
+ *         schema: { type: integer }
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema: { type: integer }
+ *     responses:
+ *       200:
+ *         description: Request accepted
+ *       404:
+ *         description: Request not found
+ */
+membersRouter.post('/requests/:userId/accept', requireWorkspaceAdmin, acceptJoinRequest);
+
+/**
+ * @swagger
+ * /workspaces/{workspaceId}/members/requests/{userId}/decline:
+ *   delete:
+ *     summary: Decline a join request (admin only)
+ *     tags: [Members]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: workspaceId
+ *         required: true
+ *         schema: { type: integer }
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema: { type: integer }
+ *     responses:
+ *       200:
+ *         description: Request declined
+ *       404:
+ *         description: Request not found
+ */
+membersRouter.delete('/requests/:userId/decline', requireWorkspaceAdmin, declineJoinRequest);
 
 /**
  * @swagger
@@ -62,7 +138,7 @@ membersRouter.get('/:userId', getMember);
  * @swagger
  * /workspaces/{workspaceId}/members/{userId}:
  *   post:
- *     summary: Add member to workspace
+ *     summary: Invite a user to the workspace (role=pending until accepted)
  *     tags: [Members]
  *     security:
  *       - BearerAuth: []
@@ -75,16 +151,20 @@ membersRouter.get('/:userId', getMember);
  *         name: userId
  *         required: true
  *         schema: { type: integer }
- *       - in: query
- *         name: role
- *         schema: { type: string, enum: [admin, member, guest], default: member }
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               role: { type: string, enum: [admin, member, guest], default: member }
  *     responses:
  *       201:
- *         description: Member added
+ *         description: Invitation sent
  *       400:
- *         description: User already member or invalid input
+ *         description: User already member or invited
  *       403:
- *         description: Only admins can perform this action
+ *         description: Only admins can invite
  *       404:
  *         description: User not found
  */
@@ -92,9 +172,9 @@ membersRouter.post('/:userId', requireWorkspaceAdmin, createMember);
 
 /**
  * @swagger
- * /workspaces/{workspaceId}/members/{userId}:
- *   put:
- *     summary: Update a member role
+ * /workspaces/{workspaceId}/members/invite/accept:
+ *   post:
+ *     summary: Accept a pending invitation (current user)
  *     tags: [Members]
  *     security:
  *       - BearerAuth: []
@@ -103,21 +183,42 @@ membersRouter.post('/:userId', requireWorkspaceAdmin, createMember);
  *         name: workspaceId
  *         required: true
  *         schema: { type: integer }
- *       - in: path
- *         name: userId
- *         required: true
- *         schema: { type: integer }
- *       - in: query
- *         name: role
- *         required: true
- *         schema: { type: string, enum: [admin, member, guest] }
  *     responses:
  *       200:
- *         description: Member updated
- *       403:
- *         description: Only admins can perform this action
+ *         description: Invitation accepted
  *       404:
- *         description: Member not found
+ *         description: No pending invitation
+ */
+membersRouter.post('/invite/accept', acceptInvitation);
+
+/**
+ * @swagger
+ * /workspaces/{workspaceId}/members/invite/decline:
+ *   delete:
+ *     summary: Decline a pending invitation (current user)
+ *     tags: [Members]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: workspaceId
+ *         required: true
+ *         schema: { type: integer }
+ *     responses:
+ *       200:
+ *         description: Invitation declined
+ *       404:
+ *         description: No pending invitation
+ */
+membersRouter.delete('/invite/decline', declineInvitation);
+
+
+/**
+ * @swagger
+ * /workspaces/{workspaceId}/members/{userId}:
+ *   put:
+ *     summary: Update a member role
+ *     tags: [Members]
  */
 membersRouter.put('/:userId', requireWorkspaceAdmin, updateMemberRole);
 
@@ -127,24 +228,6 @@ membersRouter.put('/:userId', requireWorkspaceAdmin, updateMemberRole);
  *   delete:
  *     summary: Remove a workspace member
  *     tags: [Members]
- *     security:
- *       - BearerAuth: []
- *     parameters:
- *       - in: path
- *         name: workspaceId
- *         required: true
- *         schema: { type: integer }
- *       - in: path
- *         name: userId
- *         required: true
- *         schema: { type: integer }
- *     responses:
- *       200:
- *         description: Member removed
- *       403:
- *         description: Only admins can perform this action
- *       404:
- *         description: Member not found
  */
 membersRouter.delete('/:userId', requireWorkspaceAdmin, deleteMember);
 
