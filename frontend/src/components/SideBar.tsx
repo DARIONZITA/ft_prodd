@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
-import { Menu, Plus, Search, ChevronsLeft, LogOut, Grid2x2, FileText, ArrowLeftRight, Trophy, Medal, ScrollText, Users, Loader2 } from 'lucide-react'
+import { Menu, Plus, Search, ChevronsLeft, LogOut, Grid2x2, FileText, ArrowLeftRight, Trophy, Medal, ScrollText, Users, Loader2, Mail } from 'lucide-react'
 import NotificationsDropdown from './NotificationsDropdown'
 import { useUsersQuery } from '../api/user'
+import { useMyInvitationsQuery } from '../api/workspace'
 
 interface Workspace {
   id: string | number
@@ -49,6 +50,8 @@ export default function Sidebar({ data, activeView, onNavigate, onLogout = () =>
     { search: committedSearch, take: 10 },
     { enabled: committedSearch.trim().length > 0 },
   )
+  const { data: invitationsResponse } = useMyInvitationsQuery()
+  const pendingInvitationsCount = invitationsResponse?.success ? invitationsResponse.data.length : 0
   const userResults = usersQuery.data?.data?.users ?? []
 
   const filteredWorkspaces = data.workspaces.filter(ws => ws.name.toLowerCase().includes(searchQuery.toLowerCase()))
@@ -85,6 +88,21 @@ export default function Sidebar({ data, activeView, onNavigate, onLogout = () =>
         </button>
 
         <NotificationsDropdown active={activeView === 'notifications'} bellSize={16} bellPaddingClassName="p-2" onViewAll={() => onNavigate('notifications')} />
+
+        <button
+          onClick={() => onNavigate('invitations')}
+          aria-label="Invitations"
+          className={`relative p-2 rounded-lg transition-colors duration-150 cursor-pointer ${
+            activeView === 'invitations' ? 'bg-cyan-50 text-cyan-700' : 'text-slate-400 hover:bg-slate-100 hover:text-slate-700'
+          }`}
+        >
+          <Mail size={16} />
+          {pendingInvitationsCount > 0 && (
+            <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[8px] font-bold w-4.5 h-4.5 flex items-center justify-center rounded-full scale-90">
+              {pendingInvitationsCount}
+            </span>
+          )}
+        </button>
 
         <div className="flex flex-col items-center gap-1 mt-1">
           {navItems.map(({ id, Icon }) => (
@@ -170,6 +188,28 @@ export default function Sidebar({ data, activeView, onNavigate, onLogout = () =>
             Ctrl+K
           </span>
         </div>
+      </div>
+
+      {/* Invitations */}
+      <div className="px-3 mb-2">
+        <button
+          onClick={() => onNavigate('invitations')}
+          className={`w-full flex items-center justify-between px-3 py-2 rounded-lg font-body text-sm font-medium transition-colors duration-150 cursor-pointer ${
+            activeView === 'invitations'
+              ? 'bg-cyan-50 text-cyan-700 font-semibold'
+              : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+          }`}
+        >
+          <div className="flex items-center gap-2.5">
+            <Mail size={14} className="flex-shrink-0" />
+            <span>Invitations</span>
+          </div>
+          {pendingInvitationsCount > 0 && (
+            <span className="bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center">
+              {pendingInvitationsCount}
+            </span>
+          )}
+        </button>
       </div>
 
       {/* User search results */}

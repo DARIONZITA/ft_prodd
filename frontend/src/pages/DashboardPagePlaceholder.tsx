@@ -11,6 +11,7 @@ import OrganizationMembersPage from './organization/OrganizationMembersPage.tsx'
 import AnalyticsPage from './organization/AnalyticsPage.tsx'
 import KanbanBoardPage from '../components/tasks/KanbanBoardPage.tsx'
 import NotificationsPage from './NotificationsPage.tsx'
+import InvitationsPage from './InvitationsPage.tsx'
 import type { User, UserResponse } from '../types/user.ts'
 import { useGetUserRequest } from '../api/user.ts'
 import { useCreateWorkspaceMutation, useDeleteWorkspaceMutation, useUpdateWorkspaceMutation, useUserWorkspacesQuery } from '../api/workspace.ts'
@@ -51,6 +52,7 @@ type ActiveView =
   | `user-${string | number}`
   | 'kanbanBoard'
   | 'analytics'
+  | 'invitations'
 
 // ─── Placeholder ─────────────────────────────────────────────────────────────
 
@@ -67,9 +69,9 @@ function PlaceholderView({ title }: { title: string }) {
 export default function DashboardPagePlaceholder() {
   const navigate = useNavigate()
   const location = useLocation()
-  const dataQuery: UserResponse | undefined = useGetUserRequest({ refetchOnMount: false }).data
+  const dataQuery: UserResponse | undefined = useGetUserRequest({ refetchOnMount: true }).data
   const userDataQuery: User | null = dataQuery?.success ? dataQuery.data : null
-  const workspaceQuery = useUserWorkspacesQuery({ refetchOnMount: false })
+  const workspaceQuery = useUserWorkspacesQuery({ refetchOnMount: true })
   const createWorkspaceMutation = useCreateWorkspaceMutation()
   const updateWorkspaceMutation = useUpdateWorkspaceMutation()
   const deleteWorkspaceMutation = useDeleteWorkspaceMutation()
@@ -240,6 +242,7 @@ export default function DashboardPagePlaceholder() {
         )
     }
     if (activeView === 'notifications') return <NotificationsPage />
+    if (activeView === 'invitations') return <InvitationsPage />
     if (activeView === 'all-boards') return <PlaceholderView title="All Boards" />
     if (activeView === 'completed') return <PlaceholderView title="Completed Tasks" />
     if (activeView === 'kanbanBoard') {

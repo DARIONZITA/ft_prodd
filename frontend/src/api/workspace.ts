@@ -2,7 +2,7 @@ import { useMutation, useQuery, type UseMutationOptions, type UseQueryOptions } 
 import api from './axios'
 import { queryClient } from '../main'
 
-export type WorkspaceRole = 'admin' | 'member' | 'guest'
+export type WorkspaceRole = 'admin' | 'member' | 'guest' | 'pending' | 'requesting'
 
 export interface WorkspaceUser {
   id: string | number
@@ -30,9 +30,24 @@ export interface WorkspaceMember {
   workspaceId: number
   userId: number
   role: WorkspaceRole
+  invitedRole?: WorkspaceRole
+  invitedById?: number
   createdAt?: string
   updatedAt?: string
   user?: WorkspaceUser
+}
+
+export interface WorkspaceInvitation {
+  workspaceId: number
+  workspace: {
+    id: number
+    name: string
+    description: string
+    createdAt: string
+  }
+  invitedRole: WorkspaceRole
+  invitedBy: { id: number; username: string; avatarUrl: string } | null
+  invitedAt: string
 }
 
 export interface Workspace {
@@ -78,18 +93,10 @@ const workspaceKeys = {
   detail: (id: number | string) => ['workspace', id] as const,
   members: (id: number | string) => ['workspace-members', id] as const,
   member: (id: number | string, userId: number | string) => ['workspace-member', id, userId] as const,
+  invitations: ['workspace-invitations'] as const,
 }
 
-async function workspaceRequest<T>(endpoint: string, method: 'get' | 'post' | 'put' | 'delete', payload?: T)
-{
-  const response = await api.request<ApiResponse<unknown>>({
-    url: endpoint,
-    method,
-    data: payload,
-  })
-
-  return response.data
-}
+// ─── Raw Requests ─────────────────────────────────────────────────────────────
 
 export const listUserWorkspacesRequest = async (): Promise<ApiResponse<Workspace[]>> => {
   const response = await api.get<ApiResponse<Workspace[]>>('/api/workspaces')
@@ -117,7 +124,7 @@ export const createWorkspaceRequest = async (form: CreateWorkspaceForm) => {
 }
 
 export const updateWorkspaceRequest = async (id: number | string, form: UpdateWorkspaceForm) => {
-  const response = await api.put<ApiResponse<Workspace>>(`/api/workspaces/${id}`, form)
+  const response = await api.patch<ApiResponse<Workspace>>(`/api/workspaces/${id}`, form)
   return response.data.data
 }
 
@@ -126,8 +133,9 @@ export const deleteWorkspaceRequest = async (id: number | string) => {
   return response.data
 }
 
+// Invite user (creates pending membership)
 export const createWorkspaceMemberRequest = async (id: number | string, form: CreateWorkspaceMemberForm) => {
-  const response = await api.post<ApiResponse<WorkspaceMember>>(`/api/workspaces/${id}/members`, form)
+  const response = await api.post<ApiResponse<WorkspaceMember>>(`/api/workspaces/${id}/members/${form.userId}`, { role: form.role ?? 'member' })
   return response.data.data
 }
 
@@ -141,10 +149,54 @@ export const deleteWorkspaceMemberRequest = async (id: number | string, userId: 
   return response.data
 }
 
+// Invitation endpoints
+export const listMyInvitationsRequest = async (): Promise<ApiResponse<WorkspaceInvitation[]>> => {
+  const response = await api.get<ApiResponse<WorkspaceInvitation[]>>('/api/workspaces/invitations')
+  return response.data
+}
+
+export const acceptInvitationRequest = async (workspaceId: number | string) => {
+  const response = await api.post<ApiResponse<WorkspaceMember>>(`/api/workspaces/${workspaceId}/members/invite/accept`)
+  return response.data
+}
+
+export const declineInvitationRequest = async (workspaceId: number | string) => {
+  const response = await api.delete<ApiResponse<null>>(`/api/workspaces/${workspaceId}/members/invite/decline`)
+  return response.data
+}
+
+// Join Request endpoints
+export const requestToJoinWorkspaceRequest = async (workspaceId: number | string): Promise<ApiResponse<WorkspaceMember>> => {
+  const response = await api.post<ApiResponse<WorkspaceMember>>(`/api/workspaces/${workspaceId}/join-request`)
+  return response.data
+}
+
+export interface JoinRequest {
+  userId: number
+  user: WorkspaceUser
+  requestedAt: string
+}
+
+export const listJoinRequestsRequest = async (workspaceId: number): Promise<ApiResponse<JoinRequest[]>> => {
+  const response = await api.get<ApiResponse<JoinRequest[]>>(`/api/workspaces/${workspaceId}/members/requests`)
+  return response.data
+}
+
+export const acceptJoinRequestRequest = async (workspaceId: number | string, userId: number | string): Promise<ApiResponse<WorkspaceMember>> => {
+  const response = await api.post<ApiResponse<WorkspaceMember>>(`/api/workspaces/${workspaceId}/members/requests/${userId}/accept`)
+  return response.data
+}
+
+export const declineJoinRequestRequest = async (workspaceId: number | string, userId: number | string): Promise<ApiResponse<null>> => {
+  const response = await api.delete<ApiResponse<null>>(`/api/workspaces/${workspaceId}/members/requests/${userId}/decline`)
+  return response.data
+}
+
+// ─── React Query Hooks ────────────────────────────────────────────────────────
+
 export function useUserWorkspacesQuery(
   options?: Omit<UseQueryOptions<ApiResponse<Workspace[]>, Error>, 'queryKey' | 'queryFn'>
-)
-{
+) {
   return useQuery({
     queryKey: workspaceKeys.list,
     queryFn: listUserWorkspacesRequest,
@@ -160,8 +212,7 @@ async function listUserWorkspacesForUserRequest(userId: string | number): Promis
 export function useUserWorkspacesForUserQuery(
   userId: string | number | undefined,
   options?: Omit<UseQueryOptions<ApiResponse<Workspace[]>, Error>, 'queryKey' | 'queryFn'>
-)
-{
+) {
   return useQuery({
     queryKey: ['user-workspaces', userId],
     queryFn: () => listUserWorkspacesForUserRequest(userId!),
@@ -173,8 +224,7 @@ export function useUserWorkspacesForUserQuery(
 export function useWorkspaceDetailsQuery(
   id: number | string | undefined,
   options?: Omit<UseQueryOptions<Workspace, Error>, 'queryKey' | 'queryFn'>
-)
-{
+) {
   return useQuery({
     queryKey: id == null ? workspaceKeys.detail('unknown') : workspaceKeys.detail(id),
     queryFn: () => getWorkspaceDetailsRequest(id as number | string),
@@ -186,8 +236,7 @@ export function useWorkspaceDetailsQuery(
 export function useWorkspaceMembersQuery(
   id: number | string | undefined,
   options?: Omit<UseQueryOptions<WorkspaceMember[], Error>, 'queryKey' | 'queryFn'>
-)
-{
+) {
   return useQuery({
     queryKey: id == null ? workspaceKeys.members('unknown') : workspaceKeys.members(id),
     queryFn: () => listWorkspaceMembersRequest(id as number | string),
@@ -200,8 +249,7 @@ export function useWorkspaceMemberQuery(
   id: number | string | undefined,
   userId: number | string | undefined,
   options?: Omit<UseQueryOptions<WorkspaceMember, Error>, 'queryKey' | 'queryFn'>
-)
-{
+) {
   return useQuery({
     queryKey: id == null || userId == null ? workspaceKeys.member('unknown', 'unknown') : workspaceKeys.member(id, userId),
     queryFn: () => getWorkspaceMemberRequest(id as number | string, userId as number | string),
@@ -210,10 +258,19 @@ export function useWorkspaceMemberQuery(
   })
 }
 
+export function useMyInvitationsQuery(
+  options?: Omit<UseQueryOptions<ApiResponse<WorkspaceInvitation[]>, Error>, 'queryKey' | 'queryFn'>
+) {
+  return useQuery({
+    queryKey: workspaceKeys.invitations,
+    queryFn: listMyInvitationsRequest,
+    ...options,
+  })
+}
+
 export function useCreateWorkspaceMutation(
   options?: UseMutationOptions<Workspace, Error, CreateWorkspaceForm>
-)
-{
+) {
   return useMutation({
     mutationFn: createWorkspaceRequest,
     onSuccess: async (data, variables, context) => {
@@ -226,8 +283,7 @@ export function useCreateWorkspaceMutation(
 
 export function useUpdateWorkspaceMutation(
   options?: UseMutationOptions<Workspace, Error, { id: number | string; form: UpdateWorkspaceForm }>
-)
-{
+) {
   return useMutation({
     mutationFn: ({ id, form }) => updateWorkspaceRequest(id, form),
     onSuccess: async (data, variables, context) => {
@@ -241,8 +297,7 @@ export function useUpdateWorkspaceMutation(
 
 export function useDeleteWorkspaceMutation(
   options?: UseMutationOptions<unknown, Error, number | string>
-)
-{
+) {
   return useMutation({
     mutationFn: deleteWorkspaceRequest,
     onSuccess: async (data, variables, context) => {
@@ -255,8 +310,7 @@ export function useDeleteWorkspaceMutation(
 
 export function useCreateWorkspaceMemberMutation(
   options?: UseMutationOptions<WorkspaceMember, Error, { id: number | string; form: CreateWorkspaceMemberForm }>
-)
-{
+) {
   return useMutation({
     mutationFn: ({ id, form }) => createWorkspaceMemberRequest(id, form),
     onSuccess: async (data, variables, context) => {
@@ -271,8 +325,7 @@ export function useCreateWorkspaceMemberMutation(
 
 export function useUpdateWorkspaceMemberRoleMutation(
   options?: UseMutationOptions<WorkspaceMember, Error, { id: number | string; userId: number | string; form: UpdateWorkspaceMemberRoleForm }>
-)
-{
+) {
   return useMutation({
     mutationFn: ({ id, userId, form }) => updateWorkspaceMemberRoleRequest(id, userId, form),
     onSuccess: async (data, variables, context) => {
@@ -288,8 +341,7 @@ export function useUpdateWorkspaceMemberRoleMutation(
 
 export function useDeleteWorkspaceMemberMutation(
   options?: UseMutationOptions<unknown, Error, { id: number | string; userId: number | string }>
-)
-{
+) {
   return useMutation({
     mutationFn: ({ id, userId }) => deleteWorkspaceMemberRequest(id, userId),
     onSuccess: async (data, variables, context) => {
@@ -300,5 +352,81 @@ export function useDeleteWorkspaceMemberMutation(
       await options?.onSuccess?.(data, variables, context)
     },
     ...options,
+  })
+}
+
+export function useAcceptInvitationMutation(
+  options?: UseMutationOptions<unknown, Error, number | string>
+) {
+  return useMutation({
+    mutationFn: acceptInvitationRequest,
+    onSuccess: async (data, variables, context) => {
+      await queryClient.invalidateQueries({ queryKey: workspaceKeys.invitations })
+      await queryClient.invalidateQueries({ queryKey: workspaceKeys.list })
+      await options?.onSuccess?.(data, variables, context)
+    },
+    ...options,
+  })
+}
+
+export function useDeclineInvitationMutation(
+  options?: UseMutationOptions<unknown, Error, number | string>
+) {
+  return useMutation({
+    mutationFn: declineInvitationRequest,
+    onSuccess: async (data, variables, context) => {
+      await queryClient.invalidateQueries({ queryKey: workspaceKeys.invitations })
+      await options?.onSuccess?.(data, variables, context)
+    },
+    ...options,
+  })
+}
+
+export function useRequestToJoinWorkspaceMutation(
+  options?: UseMutationOptions<ApiResponse<WorkspaceMember>, Error, number | string>
+) {
+  return useMutation({
+    mutationFn: requestToJoinWorkspaceRequest,
+    ...options
+  })
+}
+
+export function useWorkspaceJoinRequestsQuery(
+  workspaceId: number,
+  options?: Omit<UseQueryOptions<ApiResponse<JoinRequest[]>, Error>, 'queryKey' | 'queryFn'>
+) {
+  return useQuery({
+    queryKey: ['workspace-join-requests', workspaceId],
+    queryFn: () => listJoinRequestsRequest(workspaceId),
+    enabled: workspaceId != null,
+    ...options
+  })
+}
+
+export function useAcceptJoinRequestMutation(
+  options?: UseMutationOptions<ApiResponse<WorkspaceMember>, Error, { workspaceId: number | string; userId: number | string }>
+) {
+  return useMutation({
+    mutationFn: ({ workspaceId, userId }) => acceptJoinRequestRequest(workspaceId, userId),
+    onSuccess: async (data, variables, context) => {
+      await queryClient.invalidateQueries({ queryKey: ['workspace-join-requests', variables.workspaceId] })
+      await queryClient.invalidateQueries({ queryKey: workspaceKeys.members(variables.workspaceId) })
+      await queryClient.invalidateQueries({ queryKey: workspaceKeys.detail(variables.workspaceId) })
+      await options?.onSuccess?.(data, variables, context)
+    },
+    ...options
+  })
+}
+
+export function useDeclineJoinRequestMutation(
+  options?: UseMutationOptions<ApiResponse<null>, Error, { workspaceId: number | string; userId: number | string }>
+) {
+  return useMutation({
+    mutationFn: ({ workspaceId, userId }) => declineJoinRequestRequest(workspaceId, userId),
+    onSuccess: async (data, variables, context) => {
+      await queryClient.invalidateQueries({ queryKey: ['workspace-join-requests', variables.workspaceId] })
+      await options?.onSuccess?.(data, variables, context)
+    },
+    ...options
   })
 }

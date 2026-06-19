@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { UserPlus, UserCheck, Loader2, Lock, X } from 'lucide-react'
+import { UserPlus, UserCheck, Loader2, Lock, X, Users } from 'lucide-react'
 import ProfileAvatar from '../../components/profile/Avatar'
 import WorkspaceCard from '../../components/profile/WorkspaceCard'
 import {
@@ -14,7 +14,7 @@ import {
   useRemoveFriendMutation,
   getOtherFriendUser,
 } from '../../api/friends'
-import { useUserWorkspacesForUserQuery } from '../../api/workspace'
+import { useUserWorkspacesForUserQuery, useRequestToJoinWorkspaceMutation } from '../../api/workspace'
 import type { User } from '../../types/user'
 
 type Section = 'workspaces' | 'friends'
@@ -61,6 +61,17 @@ export default function OtherProfile({ userId, currentUserId, onNavigate }: Othe
     requestId: r.id,
   }))
 
+  const requestJoinMutation = useRequestToJoinWorkspaceMutation()
+
+  const handleRequestJoin = async (workspaceId: number | string) => {
+    try {
+      await requestJoinMutation.mutateAsync(workspaceId)
+      workspacesQuery.refetch()
+    } catch (err) {
+      console.error('Failed to request to join workspace:', err)
+    }
+  }
+
   const refreshAll = () => {
     friendsQuery.refetch()
     outgoingQuery.refetch()
@@ -72,7 +83,8 @@ export default function OtherProfile({ userId, currentUserId, onNavigate }: Othe
   const isMutationPending =
     sendMutation.isPending ||
     removeMutation.isPending ||
-    respondMutation.isPending
+    respondMutation.isPending ||
+    requestJoinMutation.isPending
 
   const isLoading = profileQuery.isLoading || friendsQuery.isLoading || outgoingQuery.isLoading || incomingQuery.isLoading
 
@@ -214,16 +226,81 @@ export default function OtherProfile({ userId, currentUserId, onNavigate }: Othe
                   <p className="font-body text-sm text-slate-400 py-6 text-center">No workspaces yet.</p>
                 ) : (
                   <div className="space-y-2">
-                    {workspaces.map(ws => (
-                      <WorkspaceCard
-                        key={ws.id}
-                        name={ws.name}
-                        description={ws.description}
-                        memberCount={ws.memberCount}
-                        role={ws.role}
-                        onClick={() => onNavigate?.('workspace', ws.id)}
-                      />
-                    ))}
+                    {workspaces.map(ws => {
+                      const userRole = (ws as any).currentUserRole
+                      const hasAccess = userRole && ['admin', 'member', 'guest'].includes(userRole)
+                      const isRequestPending = userRole === 'requesting'
+                      const isInvitePending = userRole === 'pending'
+                      const isProcessing = requestJoinMutation.isPending && requestJoinMutation.variables === ws.id
+
+                      return (
+                        <div key={ws.id} className="relative bg-white border border-slate-200 rounded-xl p-5 flex items-center justify-between gap-4 transition-all duration-200 hover:border-slate-300 shadow-sm">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <h3 className="font-display font-bold text-sm text-slate-900 truncate">{ws.name}</h3>
+                              {userRole && (
+                                <span className={`font-mono text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded ${
+                                  hasAccess 
+                                    ? 'text-cyan-600 bg-cyan-50' 
+                                    : isInvitePending 
+                                      ? 'text-amber-600 bg-amber-50' 
+                                      : 'text-slate-500 bg-slate-100'
+                                }`}>
+                                  {userRole === 'admin' ? 'Admin' : userRole === 'member' ? 'Member' : userRole === 'guest' ? 'Guest' : userRole === 'pending' ? 'Invited' : 'Requesting'}
+                                </span>
+                              )}
+                            </div>
+                            {ws.description && (
+                              <p className="font-body text-xs text-slate-500 mt-1 line-clamp-2 leading-relaxed">
+                                {ws.description}
+                              </p>
+                            )}
+                            {ws.memberCount != null && (
+                              <div className="flex items-center gap-1.5 mt-2">
+                                <Users size={12} className="text-slate-400" />
+                                <span className="font-mono text-[10px] font-bold text-slate-400">
+                                  {ws.memberCount} {ws.memberCount === 1 ? 'member' : 'members'}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+
+                          <div className="flex-shrink-0">
+                            {hasAccess ? (
+                              <button
+                                type="button"
+                                onClick={() => onNavigate?.('workspace', ws.id)}
+                                className="px-3 py-1.5 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg font-mono text-[10px] font-bold uppercase transition-colors cursor-pointer"
+                              >
+                                Enter
+                              </button>
+                            ) : isRequestPending ? (
+                              <span className="px-3 py-1.5 bg-slate-100 text-slate-500 rounded-lg font-mono text-[10px] font-bold uppercase border border-slate-200">
+                                Request Pending
+                              </span>
+                            ) : isInvitePending ? (
+                              <button
+                                type="button"
+                                onClick={() => onNavigate?.('invitations')}
+                                className="px-3 py-1.5 bg-amber-50 text-amber-700 border border-amber-200 rounded-lg font-mono text-[10px] font-bold uppercase hover:bg-amber-100 transition-colors cursor-pointer"
+                              >
+                                Accept Invite
+                              </button>
+                            ) : (
+                              <button
+                                type="button"
+                                disabled={isProcessing}
+                                onClick={() => handleRequestJoin(ws.id)}
+                                className="px-3 py-1.5 bg-cyan-50 hover:bg-cyan-100 text-cyan-700 border border-cyan-200 rounded-lg font-mono text-[10px] font-bold uppercase transition-colors disabled:opacity-50 flex items-center gap-1 cursor-pointer"
+                              >
+                                {isProcessing && <Loader2 size={10} className="animate-spin" />}
+                                Request to Join
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      )
+                    })}
                   </div>
                 )}
               </section>
