@@ -85,43 +85,43 @@ export default function NotificationsPage() {
 
   return (
     <div className="flex-1 min-h-full overflow-y-auto bg-slate-50 text-slate-700">
-      <div className="mx-auto w-full max-w-5xl px-6 py-8">
-        <div className="mb-6 flex items-center justify-between">
+      <div className="mx-auto w-full max-w-5xl px-4 py-6 sm:px-6 sm:py-8">
+        <div className="mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
-            <h1 className="font-display text-3xl font-bold text-slate-900">All Notifications</h1>
+            <h1 className="font-display text-2xl sm:text-3xl font-bold text-slate-900">All Notifications</h1>
             <p className="text-sm text-slate-500">
               <span className="font-semibold text-slate-700">{unreadCount} unread</span> · {notifications.length} total
             </p>
           </div>
 
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={markAllRead}
-              className="inline-flex items-center gap-2 rounded-lg border border-cyan-200 bg-cyan-50 px-4 py-2 text-sm font-medium text-cyan-700 hover:bg-cyan-100"
-            >
-              <CheckCheck size={15} /> Mark all as read
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={markAllRead}
+            className="inline-flex items-center gap-2 rounded-lg border border-cyan-200 bg-cyan-50 px-4 py-2 text-sm font-medium text-cyan-700 hover:bg-cyan-100 self-start sm:self-auto"
+          >
+            <CheckCheck size={15} /> Mark all as read
+          </button>
         </div>
 
-        <div className="mb-5 inline-flex items-center gap-1 rounded-xl bg-slate-100 p-1">
-          {filters.map(filter => {
-            const count = filter.id === 'all' ? notifications.length : notifications.filter(item => item.type === filter.id).length
-            const active = activeFilter === filter.id
-            return (
-              <button
-                key={filter.id}
-                type="button"
-                onClick={() => setActiveFilter(filter.id)}
-                className={`rounded-lg px-4 py-1.5 text-sm font-medium transition-colors ${
-                  active ? 'bg-white text-cyan-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'
-                }`}
-              >
-                {filter.label} <span className="ml-1 font-mono text-xs opacity-60">{count}</span>
-              </button>
-            )
-          })}
+        <div className="mb-5 -mx-4 sm:mx-0 overflow-x-auto scrollbar-none">
+          <div className="inline-flex items-center gap-1 rounded-xl bg-slate-100 p-1 mx-4 sm:mx-0">
+            {filters.map(filter => {
+              const count = filter.id === 'all' ? notifications.length : notifications.filter(item => item.type === filter.id).length
+              const active = activeFilter === filter.id
+              return (
+                <button
+                  key={filter.id}
+                  type="button"
+                  onClick={() => setActiveFilter(filter.id)}
+                  className={`rounded-lg px-3 sm:px-4 py-1.5 text-xs sm:text-sm font-medium transition-colors whitespace-nowrap ${
+                    active ? 'bg-white text-cyan-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'
+                  }`}
+                >
+                  {filter.label} <span className="ml-1 font-mono text-xs opacity-60">{count}</span>
+                </button>
+              )
+            })}
+          </div>
         </div>
 
         <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
@@ -144,7 +144,7 @@ export default function NotificationsPage() {
 
               return (
                 <div key={group}>
-                  <div className="border-b border-slate-100 bg-slate-50 px-5 py-2">
+                  <div className="border-b border-slate-100 bg-slate-50 px-4 sm:px-5 py-2">
                     <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-slate-400">{groupLabels[group]}</p>
                   </div>
 
@@ -153,11 +153,11 @@ export default function NotificationsPage() {
                       key={row.id}
                       type="button"
                       onClick={() => markRead(row.id)}
-                      className={`group flex w-full gap-4 border-b border-slate-100 px-5 py-4 text-left last:border-b-0 ${
+                      className={`group flex w-full gap-3 sm:gap-4 border-b border-slate-100 px-4 sm:px-5 py-3 sm:py-4 text-left last:border-b-0 ${
                         row.unread ? 'bg-cyan-50/60 hover:bg-cyan-50' : 'hover:bg-slate-50'
                       }`}
                     >
-                      <span className={`mt-0.5 flex h-9 w-9 items-center justify-center rounded-full text-xs font-bold ${typeChip[row.type]}`}>
+                      <span className={`mt-0.5 flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-full text-xs font-bold flex-shrink-0 ${typeChip[row.type]}`}>
                         {row.type.slice(0, 1).toUpperCase()}
                       </span>
 
@@ -168,7 +168,7 @@ export default function NotificationsPage() {
                       </span>
 
                       <span className="flex items-start gap-2 pt-1">
-                        {row.unread && <span className="h-2.5 w-2.5 rounded-full bg-cyan-500" />}
+                        {row.unread && <span className="mt-0.5 h-2 w-2 rounded-full bg-cyan-500" />}
                       </span>
                     </button>
                   ))}
@@ -179,8 +179,8 @@ export default function NotificationsPage() {
         </div>
 
         {filtered.length > 0 && (
-          <div className="mt-5 flex items-center justify-between">
-            <p className="font-mono text-sm text-slate-500">
+          <div className="mt-5 flex flex-col sm:flex-row items-center justify-between gap-3">
+            <p className="font-mono text-xs sm:text-sm text-slate-500">
               Showing <span className="font-semibold text-slate-700">1–{Math.min(12, filtered.length)}</span> of{' '}
               <span className="font-semibold text-slate-700">{filtered.length}</span>
             </p>

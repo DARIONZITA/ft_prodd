@@ -185,14 +185,14 @@ export default function OtherProfile({ userId, currentUserId, onNavigate }: Othe
 
   return (
     <div className="flex-1 h-full overflow-y-auto bg-slate-50">
-      <div className="max-w-[680px] mx-auto px-6 py-8 flex flex-col gap-5">
+      <div className="max-w-[680px] mx-auto px-4 py-6 sm:px-6 sm:py-8 flex flex-col gap-5">
         {/* Header card */}
-        <div className="bg-white border border-slate-200 rounded-xl p-6 flex items-start gap-5">
+        <div className="bg-white border border-slate-200 rounded-xl p-4 sm:p-6 flex flex-col sm:flex-row items-start gap-4 sm:gap-5">
           <ProfileAvatar name={user.username} avatarUrl={user.avatarUrl} size="lg" />
-          <div className="flex-1 min-w-0 pt-1">
-            <h1 className="font-display font-bold text-2xl text-slate-900">{user.username}</h1>
+          <div className="flex-1 min-w-0 pt-0 sm:pt-1 w-full sm:w-auto">
+            <h1 className="font-display font-bold text-xl sm:text-2xl text-slate-900">{user.username}</h1>
             {user.bio && (
-              <p className="font-body text-sm text-slate-500 mt-2 leading-relaxed max-w-lg">{user.bio}</p>
+              <p className="font-body text-sm text-slate-500 mt-2 leading-relaxed">{user.bio}</p>
             )}
             <div className="mt-4">{renderFriendButton()}</div>
           </div>
@@ -234,8 +234,8 @@ export default function OtherProfile({ userId, currentUserId, onNavigate }: Othe
                       const isProcessing = requestJoinMutation.isPending && requestJoinMutation.variables === ws.id
 
                       return (
-                        <div key={ws.id} className="relative bg-white border border-slate-200 rounded-xl p-5 flex items-center justify-between gap-4 transition-all duration-200 hover:border-slate-300 shadow-sm">
-                          <div className="flex-1 min-w-0">
+                        <div key={ws.id} className="relative bg-white border border-slate-200 rounded-xl p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 transition-all duration-200 hover:border-slate-300 shadow-sm">
+                          <div className="flex-1 min-w-0 w-full sm:w-auto">
                             <div className="flex items-center gap-2 flex-wrap">
                               <h3 className="font-display font-bold text-sm text-slate-900 truncate">{ws.name}</h3>
                               {userRole && (
@@ -265,7 +265,7 @@ export default function OtherProfile({ userId, currentUserId, onNavigate }: Othe
                             )}
                           </div>
 
-                          <div className="flex-shrink-0">
+                          <div className="flex-shrink-0 self-start sm:self-auto">
                             {hasAccess ? (
                               <button
                                 type="button"

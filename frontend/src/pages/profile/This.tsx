@@ -77,14 +77,14 @@ export default function ThisProfile({ user, onProfileUpdate, onNavigate }: ThisP
 
   return (
     <div className="flex-1 h-full overflow-y-auto bg-slate-50">
-      <div className="max-w-[680px] mx-auto px-6 py-8 flex flex-col gap-5">
+      <div className="max-w-[680px] mx-auto px-4 py-6 sm:px-6 sm:py-8 flex flex-col gap-5">
 
         {/* Header card */}
-        <div className="bg-white border border-slate-200 rounded-xl p-6 flex items-start gap-5">
+        <div className="bg-white border border-slate-200 rounded-xl p-4 sm:p-6 flex flex-col sm:flex-row items-start gap-4 sm:gap-5">
           <ProfileAvatar name={user.username} avatarUrl={user.avatarUrl} size="lg" />
-          <div className="flex-1 min-w-0 pt-1">
+          <div className="flex-1 min-w-0 pt-0 sm:pt-1 w-full sm:w-auto">
             <div className="flex items-center gap-3 flex-wrap">
-              <h1 className="font-display font-bold text-2xl text-slate-900">{user.username}</h1>
+              <h1 className="font-display font-bold text-xl sm:text-2xl text-slate-900">{user.username}</h1>
               <button
                 onClick={() => setEditOpen(true)}
                 className="flex items-center gap-1.5 font-mono text-[10px] font-bold text-slate-400 uppercase hover:text-cyan-600 transition-colors duration-150"
@@ -94,11 +94,11 @@ export default function ThisProfile({ user, onProfileUpdate, onNavigate }: ThisP
               </button>
             </div>
             {user.bio && (
-              <p className="font-body text-sm text-slate-500 mt-2 leading-relaxed max-w-lg">{user.bio}</p>
+              <p className="font-body text-sm text-slate-500 mt-2 leading-relaxed">{user.bio}</p>
             )}
             <div className="flex items-center gap-1.5 mt-3">
-              <Mail size={13} className="text-slate-400" />
-              <span className="font-body text-xs text-slate-500">{user.email}</span>
+              <Mail size={13} className="text-slate-400 flex-shrink-0" />
+              <span className="font-body text-xs text-slate-500 break-all">{user.email}</span>
             </div>
           </div>
         </div>

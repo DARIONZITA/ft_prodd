@@ -1,4 +1,5 @@
-import { Plus, Search, Filter, ArrowUpDown, Settings } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react'
+import { Plus, Search, Filter, ArrowUpDown, Settings, MoreHorizontal, Users, Key, Tag } from 'lucide-react';
 
 interface PropsHeaderkanbanBoard {
   onModalCreate: () => void
@@ -29,13 +30,24 @@ export function HeaderKanbanBoard({
   onOpenLabels,
   userMode = 'Viewer'
 }: PropsHeaderkanbanBoard) {
+    const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+    const menuRef = useRef<HTMLDivElement>(null)
+
+    useEffect(() => {
+      const handleClickOutside = (e: MouseEvent) => {
+        if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+          setMobileMenuOpen(false)
+        }
+      }
+      document.addEventListener('mousedown', handleClickOutside)
+      return () => document.removeEventListener('mousedown', handleClickOutside)
+    }, [])
+
     console.log(workspaceCreatedAt)
     return (
       <>
-      <header className="min-h-[3.5rem] py-2 border-b border-slate-200 bg-white flex flex-col md:flex-row items-center justify-between px-4 sm:px-6 sticky top-0 z-20 flex-shrink-0 gap-3 md:gap-0">
+      <header className="min-h-[3.5rem] py-2 border-b border-slate-200 bg-white flex flex-col md:flex-row items-center justify-between px-4 sm:px-6 sticky top-0 z-10 md:z-20 flex-shrink-0 gap-3 md:gap-0">
         <div className="flex items-center gap-2 text-sm w-full md:w-auto overflow-x-auto pb-1 md:pb-0">
-          <div className="flex items-center justify-center w-6 h-6 rounded bg-indigo-50 text-indigo-600 font-bold font-mono text-xs border border-indigo-100">42</div>
-          <span className="text-slate-400 mx-1">|</span>
           <span className="font-semibold text-slate-700 px-2 py-1 rounded bg-slate-100 border border-slate-200 hidden sm:inline-block">
             User Mode: {userMode}
           </span>
@@ -62,44 +74,88 @@ export function HeaderKanbanBoard({
         </nav>
 
         <div className="flex items-center justify-between w-full md:w-auto gap-4">
-          {/* Members avatars - clickable to open members page */}
-          <button 
-            onClick={onOpenMembers}
-            className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-slate-600 bg-white border border-slate-200 hover:bg-slate-50 rounded-lg transition-colors"
-            title="Manage members"
-          >
-           Members
-          </button>
-          {userMode === 'Admin' && (
-            <>
-              <button 
-                onClick={onOpenManagerAPI}
-                className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-slate-600 bg-white border border-slate-200 hover:bg-slate-50 rounded-lg transition-colors"
-                title="Manage API Keys"
-              >
-                Manager Api Keys
-              </button>
-              <button 
-                onClick={onOpenLabels}
-                className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-slate-600 bg-white border border-slate-200 hover:bg-slate-50 rounded-lg transition-colors"
-                title="Manage Labels"
-              >
-                Labels
-              </button>
-            </>
-          )}
-          
-          <div className="h-6 w-px bg-slate-200"></div>
-          {/* Settings button */}
-          <button
-            onClick={onOpenSettings}
-            className="p-2 rounded-lg text-slate-500 hover:text-cyan-700 hover:bg-cyan-50 transition-colors duration-150"
-            title="Settings"
-          >
-            <Settings className="w-5 h-5" />
-          </button>
-          
-          <div className="h-6 w-px bg-slate-200"></div>
+          {/* Desktop buttons */}
+          <div className="hidden md:flex items-center gap-4">
+            <button 
+              onClick={onOpenMembers}
+              className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-slate-600 bg-white border border-slate-200 hover:bg-slate-50 rounded-lg transition-colors"
+              title="Manage members"
+            >
+             Members
+            </button>
+            {userMode === 'Admin' && (
+              <>
+                <button 
+                  onClick={onOpenManagerAPI}
+                  className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-slate-600 bg-white border border-slate-200 hover:bg-slate-50 rounded-lg transition-colors"
+                  title="Manage API Keys"
+                >
+                  Manager Api Keys
+                </button>
+                <button 
+                  onClick={onOpenLabels}
+                  className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-slate-600 bg-white border border-slate-200 hover:bg-slate-50 rounded-lg transition-colors"
+                  title="Manage Labels"
+                >
+                  Labels
+                </button>
+              </>
+            )}
+            <div className="h-6 w-px bg-slate-200"></div>
+            <button
+              onClick={onOpenSettings}
+              className="p-2 rounded-lg text-slate-500 hover:text-cyan-700 hover:bg-cyan-50 transition-colors duration-150"
+              title="Settings"
+            >
+              <Settings className="w-5 h-5" />
+            </button>
+            <div className="h-6 w-px bg-slate-200"></div>
+          </div>
+
+          {/* Mobile menu dropdown */}
+          <div className="md:hidden relative" ref={menuRef}>
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="p-2 rounded-lg text-slate-500 hover:text-cyan-700 hover:bg-cyan-50 transition-colors"
+              title="More options"
+            >
+              <MoreHorizontal className="w-5 h-5" />
+            </button>
+            {mobileMenuOpen && (
+              <div className="absolute left-0 top-full mt-1 z-50 w-48 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-lg">
+                <button
+                  onClick={() => { onOpenMembers?.(); setMobileMenuOpen(false) }}
+                  className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors"
+                >
+                  <Users className="w-4 h-4" /> Members
+                </button>
+                {userMode === 'Admin' && (
+                  <>
+                    <button
+                      onClick={() => { onOpenManagerAPI?.(); setMobileMenuOpen(false) }}
+                      className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors"
+                    >
+                      <Key className="w-4 h-4" /> Manager API Keys
+                    </button>
+                    <button
+                      onClick={() => { onOpenLabels?.(); setMobileMenuOpen(false) }}
+                      className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors"
+                    >
+                      <Tag className="w-4 h-4" /> Labels
+                    </button>
+                  </>
+                )}
+                <div className="border-t border-slate-100" />
+                <button
+                  onClick={() => { onOpenSettings?.(); setMobileMenuOpen(false) }}
+                  className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors"
+                >
+                  <Settings className="w-4 h-4" /> Settings
+                </button>
+              </div>
+            )}
+          </div>
+
           <button
             onClick={onModalCreate}
             className="bg-cyan-600 hover:bg-cyan-700 text-white text-sm font-medium px-4 py-2 rounded-lg shadow-sm transition-colors flex items-center gap-2"
@@ -128,14 +184,6 @@ export function HeaderKanbanBoard({
                       className="pl-8 pr-3 py-1.5 text-sm border border-slate-200 rounded-lg bg-white text-slate-700 placeholder-slate-400 outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 w-full sm:w-52 transition-all"
                     />
                   </div>
-                  <button className="flex-1 sm:flex-none justify-center flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-slate-600 bg-white border border-slate-200 hover:bg-slate-50 rounded-lg transition-colors">
-                    <Filter className="w-4 h-4 text-slate-400" />
-                    Filter
-                  </button>
-                  <button className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-slate-600 bg-white border border-slate-200 hover:bg-slate-50 rounded-lg transition-colors">
-                    <ArrowUpDown className="w-4 h-4 text-slate-400" />
-                    Sort
-                  </button>
                 </div>
               </div>
       </>)

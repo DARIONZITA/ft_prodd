@@ -160,7 +160,7 @@ export default function CreateTaskModal({ workspaceId, onClose, onCreateTask, co
         </div>
 
         {/* Body */}
-        <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
+        <div className="flex-1 overflow-y-auto px-4 py-4 sm:px-6 sm:py-5 space-y-5">
           {/* Title */}
           <div>
             <label className="block font-mono text-[11px] uppercase tracking-wider text-slate-400 mb-1.5">
@@ -190,7 +190,7 @@ export default function CreateTaskModal({ workspaceId, onClose, onCreateTask, co
           </div>
 
           {/* Assignees & Priority */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block font-mono text-[11px] uppercase tracking-wider text-slate-400 mb-2">Assignees</label>
               <div className="flex flex-wrap gap-2">
@@ -273,7 +273,7 @@ export default function CreateTaskModal({ workspaceId, onClose, onCreateTask, co
           </div>
 
           {/* Column & Due Date */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block font-mono text-[11px] uppercase tracking-wider text-slate-400 mb-2">Due Date</label>
               <input

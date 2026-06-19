@@ -79,14 +79,14 @@ export default function Edit({ user, isSaving = false, onClose, onSave }: EditPr
     >
       <div className="bg-white w-full max-w-[500px] mx-4 rounded-2xl shadow-2xl overflow-hidden">
 
-        <div className="flex items-center justify-between px-6 py-5 border-b border-slate-200">
-          <h2 className="font-display font-bold text-xl text-slate-900">Edit Profile</h2>
+        <div className="flex items-center justify-between px-4 sm:px-6 py-4 sm:py-5 border-b border-slate-200">
+          <h2 className="font-display font-bold text-lg sm:text-xl text-slate-900">Edit Profile</h2>
           <button onClick={onClose} aria-label="Close" className="text-slate-500 hover:text-slate-800 transition-colors duration-150">
             <X size={22} />
           </button>
         </div>
 
-        <div className="p-6 space-y-6 max-h-[70vh] overflow-y-auto">
+        <div className="p-4 sm:p-6 space-y-5 sm:space-y-6 max-h-[70vh] overflow-y-auto">
 
           {/* Avatar */}
           <div>
@@ -147,7 +147,7 @@ export default function Edit({ user, isSaving = false, onClose, onSave }: EditPr
 
         </div>
 
-        <div className="px-6 py-5 bg-slate-50/50 border-t border-slate-100 flex justify-end gap-4">
+        <div className="px-4 sm:px-6 py-4 sm:py-5 bg-slate-50/50 border-t border-slate-100 flex justify-end gap-4">
           <button onClick={onClose} className="font-body text-sm font-bold text-slate-600 hover:text-slate-900 transition-colors duration-150">
             Cancel
           </button>

@@ -58,10 +58,6 @@ export default function Sidebar({ data, activeView, onNavigate, onLogout = () =>
 
   const initials = data.name?.trim()[0]?.toUpperCase() ?? '?'
 
-  const navItems = [
-    { id: 'leaderboard', label: 'Leaderboard', Icon: Trophy },
-    { id: 'badges', label: 'Badges', Icon: Medal },
-  ]
 
   const renderAvatar = () => data.avatarUrl ? (
     <img src={data.avatarUrl} alt={data.name} className="w-8 h-8 rounded-full object-cover flex-shrink-0" />
@@ -104,26 +100,21 @@ export default function Sidebar({ data, activeView, onNavigate, onLogout = () =>
           )}
         </button>
 
-        <div className="flex flex-col items-center gap-1 mt-1">
-          {navItems.map(({ id, Icon }) => (
-            <button
-              key={id}
-              onClick={() => onNavigate(id)}
-              className={`p-2 rounded-lg transition-colors duration-150 cursor-pointer ${
-                activeView === id ? 'bg-cyan-50 text-cyan-700' : 'text-slate-400 hover:bg-slate-100 hover:text-slate-700'
-              }`}
-            >
-              <Icon size={16} />
-            </button>
-          ))}
-        </div>
+       
       </aside>
     )
   }
 
   // ── Expanded ──────────────────────────────────────────────────────────────
   return (
-    <aside className={`flex flex-col w-60 min-w-60 h-screen bg-white border-r border-slate-200 ${className}`}>
+    <>
+      {/* Backdrop for mobile */}
+      <div
+        className="fixed inset-0 bg-slate-900/40 z-10 md:hidden"
+        onClick={() => setIsOpen(false)}
+      />
+
+      <aside className={`fixed md:relative inset-y-0 left-0 z-20 flex flex-col w-screen md:w-60 md:min-w-60 h-screen bg-white border-r border-slate-200 md:border-r-slate-200 transition-transform duration-200 ${className}`}>
 
       {/* Top bar */}
       <div className="flex items-center gap-2 px-4 pt-4 pb-3">
@@ -291,5 +282,6 @@ export default function Sidebar({ data, activeView, onNavigate, onLogout = () =>
       </div>
 
     </aside>
+    </>
   )
 }
