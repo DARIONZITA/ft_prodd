@@ -69,7 +69,6 @@ export default function PrivacyPolicy() {
             <li>To provide, maintain, and improve the Service</li>
             <li>To authenticate your identity and authorize your actions</li>
             <li>To send notifications about workspace activity, friend requests, and mentions</li>
-            <li>To display analytics and productivity insights</li>
             <li>To communicate with you about service updates or security issues</li>
           </ul>
 
