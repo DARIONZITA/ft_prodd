@@ -1,21 +1,17 @@
 services:
-  # ===========================
-  # REVERSE PROXY (TLS Termination)
-  # ===========================
-
   nginx:
-    image: nginx:alpine
+    image: nginx:stable
     container_name: ft_prodd_nginx
-    restart: unless-stopped
-    ports:
-      - "443:443"
     volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ft_prodd.conf:/etc/nginx/conf.d/ft_prodd.conf:ro
+      - ./nginx/proxy_params:/etc/nginx/proxy_params:ro
       - ./certs:/etc/nginx/certs:ro
     depends_on:
       - backend
       - frontend
-      - adminer
+    ports:
+      - "443:443"
+    restart: unless-stopped
     healthcheck:
       test: ["CMD", "nginx", "-t"]
       interval: 30s
