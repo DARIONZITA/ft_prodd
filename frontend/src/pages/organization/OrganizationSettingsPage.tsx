@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from 'react'
+import { useState, type FormEvent } from 'react'
 import { ChevronLeft } from 'lucide-react'
 
 interface WorkspaceSettingsContext {
@@ -13,7 +13,6 @@ interface OrganizationSettingsPageProps {
   onOpenMembers?: () => void
   onSave?: (data: { name: string; description: string }) => void | Promise<void>
   onDelete?: () => void | Promise<void>
-  onOpenAnalytics?: () => void
 }
 
 export default function OrganizationSettingsPage({ workspace, onBack, onOpenMembers, onSave, onDelete }: OrganizationSettingsPageProps) {
@@ -53,13 +52,6 @@ export default function OrganizationSettingsPage({ workspace, onBack, onOpenMemb
             <ChevronLeft size={16} /> Back
           </button>
 
-          <button
-            type="button"
-            onClick={onOpenAnalytics}
-            className="rounded-lg bg-cyan-600 px-4 py-2 text-sm font-bold text-white shadow-[0_6px_18px_rgba(8,145,178,0.2)] hover:bg-cyan-700"
-          >
-            Analytics
-          </button>
           <button
             type="button"
             onClick={onOpenMembers}

@@ -4,6 +4,7 @@ import { prisma }                                   from '../../../lib/prisma';
 import { ApiError }                                 from '../../../utils/ApiError';
 import { requireFriendship }                        from './friends';
 import { idSchema, parseOrThrow, parseQueryString } from '../../../validations/utils';
+import { notify } from '../../../utils/notify';
 
 export async function   getWorkspaceDetails(req: Request, res: Response, next: NextFunction)
 {
@@ -177,13 +178,14 @@ export async function   updateWorkspace(req: Request, res: Response, next: NextF
             });
 
             if (members.length > 0) {
-                await tx.notification.createMany({
-                    data: members.map(m => ({
-                        userId: m.userId,
+                await notify(
+                    {
+                        userIds: members.map(m => m.userId),
                         type: NotificationType.workspace,
-                        message: `Workspace "${workspace.name}" updated: ${changes.join(', ')}`
-                    }))
-                });
+                        message: `Workspace "${workspace.name}" updated: ${changes.join(', ')}` 
+                    },
+                    tx
+                );
             }
 
             return workspace;
@@ -208,13 +210,14 @@ export async function   deleteWorkspace(req: Request, res: Response, next: NextF
             });
 
             if (members.length > 0) {
-                await tx.notification.createMany({
-                    data: members.map(m => ({
-                        userId: m.userId,
+                await notify(
+                    {
+                        userIds: members.map(m => m.userId),
                         type: NotificationType.workspace,
                         message: `Workspace "${req.workspace!.name}" has been deleted by ${req.user!.username}`
-                    }))
-                });
+                    },
+                    tx
+                );
             }
 
             await tx.workspaceMember.deleteMany({ where: { workspaceId: req.workspace!.id } });

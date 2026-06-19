@@ -10,7 +10,7 @@ import {
   parseQueryString, parseQueryDate,
   parseQueryBool
 } from '../../../validations/utils';
-import { wsEmitter }    from '../../../ws/emitter';
+import { wsEmitter }    from '../../../ws/backend/emitter';
 import { notify } from '../../../utils/notify';
 
 const orderSchema = z.array( z.object({ id: idSchema, order: z.coerce.number().int().min(0) }) ).min(1);
@@ -125,13 +125,14 @@ export async function createColumnTask(req: Request, res: Response, next: NextFu
       });
 
       if (members.length > 0) {
-        await tx.notification.createMany({
-          data: members.map(m => ({
-            userId: m.userId,
-            message: `${req.user!.username} created task "${title}" in column "${req.column!.name}" of workspace "${req.workspace!.name}"`,
-            type: NotificationType.task
-          }))
-        });
+        await notify(
+          {
+              userIds: members.map(m => m.userId),
+              message: `${req.user!.username} created task "${title}" in column "${req.column!.name}" of workspace "${req.workspace!.name}"`,
+              type: NotificationType.task
+          },
+          tx
+        );
       }
 
       return t;
@@ -218,16 +219,6 @@ export async function updateTask(req: Request, res: Response, next: NextFunction
         select: { userId: true }
       });
 
-      if (members.length > 0) {
-        await tx.notification.createMany({
-          data: members.map(m => ({
-            userId: m.userId,
-            type: NotificationType.task,
-            message: `${req.user!.username} updated task "${req.task?.title}" in column "${req.column!.name}" of workspace "${req.workspace!.name}"`
-          }))
-        });
-      }
-
       const updated = await tx.task.findUnique({
         where: { id: taskId },
         include: {
@@ -244,6 +235,17 @@ export async function updateTask(req: Request, res: Response, next: NextFunction
 
       const totalComments = await tx.comment.count({ where: { taskId } });
 
+      if (members.length > 0)
+      {
+        await notify(
+          {
+            userIds: members.map(m => m.userId),
+            type: NotificationType.task,
+            message: `${req.user!.username} updated task "${req.task?.title}" in column "${req.column!.name}" of workspace "${req.workspace!.name}"`
+          },
+          tx
+        );
+      }
       return { updated, totalComments };
     });
 
@@ -275,13 +277,14 @@ export async function deleteTask(req: Request, res: Response, next: NextFunction
       });
 
       if (members.length > 0) {
-        await tx.notification.createMany({
-          data: members.map(m => ({
-            userId: m.userId,
+        await notify(
+          {
+            userIds: members.map(m => m.userId),
             type: NotificationType.task,
             message: `${req.user!.username} deleted task "${req.task?.title}" in column "${req.column!.name}" of workspace "${req.workspace!.name}"`
-          }))
-        });
+          },
+          tx
+        );
       }
     });
 
@@ -349,13 +352,14 @@ export async function moveTask(req: Request, res: Response, next: NextFunction)
       });
 
       if (members.length > 0) {
-        await tx.notification.createMany({
-          data: members.map(m => ({
-            userId: m.userId,
+        await notify(
+          {
+            userIds: members.map(m => m.userId),
             type: NotificationType.task,
             message: `${req.user!.username} moved task "${req.task?.title}" to column "${targetColumn.name}" in workspace "${req.workspace!.name}"`
-          }))
-        });
+          },
+          tx
+         );
       }
 
       return tx.task.findUnique({
@@ -396,14 +400,16 @@ export async function reorderColumnTasks(req: Request, res: Response, next: Next
         select: { userId: true }
       });
 
-      if (members.length > 0) {
-        await tx.notification.createMany({
-          data: members.map(m => ({
-            userId: m.userId,
+      if (members.length > 0)
+      {
+        await notify(
+          {
+            userIds: members.map(m => m.userId),
             type: NotificationType.task,
             message: `Tasks have been reordered in column "${req.column!.name}" of workspace "${req.workspace!.name}" by ${req.user!.username}`
-          }))
-        });
+          },
+          tx
+        );
       }
 
       return tx.task.findMany({ where: { columnId }, orderBy: { orderInColumn: 'asc' } });

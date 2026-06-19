@@ -4,6 +4,7 @@ import { prisma }                                   from '../../../lib/prisma';
 import { ApiError }                                 from '../../../utils/ApiError';
 import { NotificationType, ColumnType }             from '@prisma/client';
 import { idSchema, parseOrThrow, parseQueryString } from '../../../validations/utils';
+import { notify } from '../../../utils/notify';
 
 const orderSchema = z.array( z.object({ id: idSchema, order: z.coerce.number().int().min(0) }) ).min(1);
 
@@ -87,13 +88,14 @@ export async function createColumn(req: Request, res: Response, next: NextFuncti
       });
 
       if (members.length > 0) {
-        await tx.notification.createMany({
-          data: members.map(m => ({
-            userId: m.userId,
+        await notify(
+          {
+            userIds: members.map(m => m.userId),
             type: NotificationType.workspace,
             message: `Column "${name}" has been added to workspace "${req.workspace!.name}" by ${req.user!.username}`
-          }))
-        });
+          },
+          tx
+);
       }
 
       return col;
@@ -127,13 +129,14 @@ export async function updateColumn(req: Request, res: Response, next: NextFuncti
       });
 
       if (members.length > 0) {
-        await tx.notification.createMany({
-          data: members.map(m => ({
-            userId: m.userId,
+        await notify(
+          {
+            userIds: members.map(m => m.userId),
             type: NotificationType.workspace,
             message: `Column "${existing.name}" has been renamed to "${name}" in workspace "${req.workspace!.name}" by ${req.user!.username}`
-          }))
-        });
+          },
+          tx
+        );
       }
 
       return col;
@@ -169,13 +172,14 @@ export async function reorderColumns(req: Request, res: Response, next: NextFunc
       });
 
       if (members.length > 0) {
-        await tx.notification.createMany({
-          data: members.map(m => ({
-            userId: m.userId,
+        await notify(
+          {
+            userIds: members.map(m => m.userId),
             type: NotificationType.workspace,
             message: `Columns have been reordered in workspace "${req.workspace!.name}" by ${req.user!.username}`
-          }))
-        });
+          },
+          tx
+        );
       }
 
       return await tx.column.findMany({
@@ -208,13 +212,14 @@ export async function deleteColumn(req: Request, res: Response, next: NextFuncti
       await tx.column.delete({ where: { id: columnId } });
 
       if (members.length > 0) {
-        await tx.notification.createMany({
-          data: members.map(m => ({
-            userId: m.userId,
+        await notify(
+          {
+            userIds: members.map(m => m.userId),
             type: NotificationType.workspace,
             message: `Column "${column.name}" has been removed from workspace "${req.workspace!.name}" by ${req.user!.username}`
-          }))
-        });
+          },
+          tx
+        );
       }
     });
 

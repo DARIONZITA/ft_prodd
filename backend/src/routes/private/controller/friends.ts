@@ -4,6 +4,7 @@ import { ApiError }                         				from '../../../utils/ApiError';
 import { FriendRequestStatuses }							from '../../../types/constants';
 import { parseOrThrow, parseQueryEnum, idSchema }			from '../../../validations/utils';
 import { Prisma, NotificationType, FriendRequestStatus }	from '@prisma/client';
+import { notify } from '../../../utils/notify';
 
 export async function requireFriendship( userId: number, targetUserId: number, message?: string, tx?: Prisma.TransactionClient ): Promise<void>
 {
@@ -113,13 +114,14 @@ export async function   sendFriendRequest(req: Request, res: Response, next: Nex
 							receiver: { select: { id: true, username: true, email: true, avatarUrl: true } }
 						}
 					});
-					await tx.notification.create({
-						data: {
-							userId: friendId,
+					await notify(
+						{
+							userIds: [friendId],
 							type: NotificationType.friendship,
 							message: `${senderUsername} accepted your friend request`
-						}
-					});
+						},
+						tx
+					);
 					message = 'Friend request accepted';
 				}
 			}
@@ -135,13 +137,14 @@ export async function   sendFriendRequest(req: Request, res: Response, next: Nex
 						receiver: { select: { id: true, username: true, email: true, avatarUrl: true } }
 					}
 				});
-				await tx.notification.create({
-					data: {
-						userId: friendId,
+				await notify(
+					{
+						userIds: [friendId],
 						type: NotificationType.friendship,
 						message: `${senderUsername} sent you a friend request`
-					}
-				});
+					},
+					tx
+				);
 				message = 'Friend request sent successfully';
 			}
 
@@ -182,25 +185,25 @@ export async function   updateFriendRequest(req: Request, res: Response, next: N
 					}
 				});
 
-				await tx.notification.create({
-					data: {
-						userId: friendId,
+				await notify(
+					{
+						userIds: [friendId],
 						type: NotificationType.friendship,
 						message: `${req.user!.username} accepted your friend request`
-					}
-				});
-
+					},
+					tx
+				);
 				return { accepted: true, data: updatedRequest };
 			} else {
 				await tx.friendRequest.delete({ where: { id: friendRequest.id } });
-
-				await tx.notification.create({
-					data: {
-						userId: friendId,
+				await notify(
+					{
+						userIds: [friendId],
 						type: NotificationType.friendship,
 						message: `${req.user!.username} rejected your friend request`
-					}
-				});
+					},
+					tx
+				);
 
 				return { accepted: false };
 			}
@@ -243,15 +246,14 @@ export async function   removeFriend(req: Request, res: Response, next: NextFunc
 			await tx.friendRequest.delete({
 				where: { id: friendRequest.id }
 			});
-
-			await tx.notification.create({
-				data: {
-					userId: friendId,
+			await notify(
+				{
+					userIds: [friendId],
 					type: NotificationType.friendship,
 					message: `${req.user!.username} removed you as a friend`
-				}
-			});
-
+				},
+				tx
+			);
 			res.json({
 				success: true,
 				message: 'Friend removed successfully'

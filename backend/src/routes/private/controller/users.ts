@@ -7,6 +7,7 @@ import { ApiError }									from '../../../utils/ApiError';
 import { NotificationType }							from '@prisma/client';
 import { idSchema, parseOrThrow, parseQueryInt }	from '../../../validations/utils';
 import { updateUserProfileSchema }					from '../../../validations/user';
+import { notify } from '../../../utils/notify';
 
 export async function   listUsers( req: Request, res: Response, next: NextFunction )
 {
@@ -179,13 +180,14 @@ export async function   deleteUserAccount( req: Request, res: Response, next: Ne
 					continue;
 				}
 
-				await tx.notification.createMany({
-					data: remainingMembers.map(member => ({
-					userId: member.userId,
-					type: NotificationType.workspace,
-					message: `${user.username} has left workspace "${membership.workspace.name}"`
-					}))
-				});
+				await notify(
+					{
+						userIds: remainingMembers.map(m => m.userId),
+						type: NotificationType.workspace,
+						message: `${user.username} has left workspace "${membership.workspace.name}"`
+					},
+					tx
+				);
 
 				if (membership.role !== 'admin')
 					continue;
@@ -196,13 +198,14 @@ export async function   deleteUserAccount( req: Request, res: Response, next: Ne
 
 				const replacement = remainingMembers.find( m => m.role === 'member' );
 				if (!replacement) {
-					await tx.notification.createMany({
-						data: remainingMembers.map(member => ({
-							userId: member.userId,
+					await notify(
+						{
+							userIds: remainingMembers.map(m => m.userId),
 							type: NotificationType.workspace,
 							message: `Workspace "${membership.workspace.name}" was deleted because its last administrator left.`
-						}))
-					});
+						},
+						tx
+					);
 					await tx.workspace.delete({ where: { id: membership.workspaceId } });
 					continue;
 				}
@@ -212,23 +215,23 @@ export async function   deleteUserAccount( req: Request, res: Response, next: Ne
 					data: { role: 'admin' }
 				});
 
-				await tx.notification.create({
-					data: {
-						userId: replacement.userId,
+				await notify(
+					{
+						userIds: [replacement.userId],
 						type: NotificationType.workspace,
 						message: `You have been promoted to admin in workspace "${membership.workspace.name}" because the previous administrator left.`
-					}
-				});
+					},
+					tx
+				);
 
-				await tx.notification.createMany({
-					data: remainingMembers
-						.filter(member => member.userId !== replacement.userId)
-						.map(member => ({
-							userId: member.userId,
-							type: NotificationType.workspace,
-							message: `${replacement.user.username} has been promoted to admin in workspace "${membership.workspace.name}".`
-						}))
-				});
+				await notify(
+					{
+						userIds: remainingMembers.filter(m => m.userId !== replacement.userId).map(m => m.userId),
+						type: NotificationType.workspace,
+						message: `${replacement.user.username} has been promoted to admin in workspace "${membership.workspace.name}".`
+					},
+					tx
+				);
 			}
 
 			await tx.user.delete({ where: { id: req.user!.id } });

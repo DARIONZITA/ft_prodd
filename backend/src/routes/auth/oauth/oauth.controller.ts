@@ -3,9 +3,9 @@ import { pkceStore }                                from '../../../middleware/pk
 import { handleOauthCallback }                      from './oauth.service';
 import { OauthCallbackSchema }                      from '../../../validations/auth';
 import { env }                                      from '../../../config/env';
-import { presenceStore }                            from '../../../ws/store';
-import { wsEmitter }                                from '../../../ws/emitter';
-import { getFriendAndWorkspaceMembersIds }          from '../../../ws/ws.server';
+import { presenceStore }                            from '../../../ws/backend/store';
+import { wsEmitter }                                from '../../../ws/backend/emitter';
+import { getFriendAndWorkspaceMembersIds }          from '../../../ws/backend/ws.server';
 
 export async function   oauthLoginController( req : Request, res : Response )
 {

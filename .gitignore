@@ -67,5 +67,3 @@ config/ssl/*.pem
 *.gz
 *.zip
 *.tar
-config/certs/*.key
-config/certs/*.crt

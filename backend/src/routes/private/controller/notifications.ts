@@ -4,7 +4,7 @@ import { ApiError }                             from '../../../utils/ApiError';
 import { idSchema, parseOrThrow,
     parseQueryEnum, parseQueryInt }                            from '../../../validations/utils';
 import { NotificationTypes, SortOptions }       from '../../../types/constants';
-import { wsEmitter }                            from '../../../ws/emitter';
+import { wsEmitter }                            from '../../../ws/backend/emitter';
 
 
 //Estas rotas muito provavelmente não serão usadas — as notificações são criadas por eventos (ex: menção num comentário) e não por acção directa do user. Mas ficam aqui para eventuais necessidades futuras de CRUD manual de notificações (ex: para testes ou admin).

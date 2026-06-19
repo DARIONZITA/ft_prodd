@@ -4,6 +4,7 @@ import { prisma }                               from '../../../lib/prisma';
 import { ApiError }                             from '../../../utils/ApiError';
 import { LabelColor }                           from '../../../types/constants';
 import { parseQueryEnum, parseQueryString }     from '../../../validations/utils';
+import { notify } from '../../../utils/notify';
 
 export async function listWorkspaceLabels(req: Request, res: Response, next: NextFunction)
 {
@@ -40,13 +41,14 @@ export async function createLabel(req: Request, res: Response, next: NextFunctio
             });
 
             if (members.length > 0) {
-                await tx.notification.createMany({
-                    data: members.map(m => ({
-                        userId: m.userId,
+                await notify(
+                    {
+                        userIds: members.map(m => m.userId),
                         type: NotificationType.workspace,
                         message: `Label "${name}" has been added to workspace "${req.workspace!.name}" by ${req.user!.username}`
-                    }))
-                });
+                    },
+                    tx
+                );
             }
 
             return lbl;
@@ -87,13 +89,14 @@ export async function updateLabel(req: Request, res: Response, next: NextFunctio
                 if (name !== undefined) changes.push(`name changed to "${name}"`);
                 if (color !== undefined) changes.push(`color changed to "${color}"`);
 
-                await tx.notification.createMany({
-                    data: members.map(m => ({
-                        userId: m.userId,
+                await notify(
+                    {
+                        userIds: members.map(m => m.userId),
                         type: NotificationType.workspace,
                         message: `Label "${req.label!.name}" updated: ${changes.join(', ')} in workspace "${req.workspace!.name}" by ${req.user!.username}`
-                    }))
-                });
+                    },
+                    tx
+                );
             }
 
             return lbl;
@@ -119,13 +122,14 @@ export async function deleteLabel(req: Request, res: Response, next: NextFunctio
             await tx.label.delete({ where: { id: labelId } });
 
             if (members.length > 0) {
-                await tx.notification.createMany({
-                    data: members.map(m => ({
-                        userId: m.userId,
+                await notify(
+                    {
+                        userIds: members.map(m => m.userId),
                         type: NotificationType.workspace,
                         message: `Label "${req.label!.name}" has been removed from workspace "${req.workspace!.name}" by ${req.user!.username}`
-                    }))
-                });
+                    },
+                    tx
+                );
             }
         });
 
@@ -171,13 +175,14 @@ export async function attachLabel(req: Request, res: Response, next: NextFunctio
       });
 
       if (members.length > 0) {
-        await tx.notification.createMany({
-          data: members.map(m => ({
-            userId: m.userId,
-            type: NotificationType.task,
-            message: `${req.user!.username} attached label "${req.label!.name}" to task "${req.task!.title}" in workspace "${req.workspace!.name}"`
-          }))
-        });
+        await notify(
+            {
+                userIds: members.map(m => m.userId),
+                type: NotificationType.task,
+                message: `${req.user!.username} attached label "${req.label!.name}" to task "${req.task!.title}" in workspace "${req.workspace!.name}"`
+            },
+            tx
+        );
       }
 
       return tl;
@@ -209,13 +214,14 @@ export async function detachLabel(req: Request, res: Response, next: NextFunctio
       });
 
       if (members.length > 0) {
-        await tx.notification.createMany({
-          data: members.map(m => ({
-            userId: m.userId,
-            type: NotificationType.task,
-            message: `${req.user!.username} detached label "${req.label!.name}" from task "${req.task!.title}" in workspace "${req.workspace!.name}"`
-          }))
-        });
+        await notify(
+            {
+                userIds: members.map(m => m.userId),
+                type: NotificationType.task,
+                message: `${req.user!.username} detached label "${req.label!.name}" from task "${req.task!.title}" in workspace "${req.workspace!.name}"`
+            },
+            tx
+        );
       }
     });
 

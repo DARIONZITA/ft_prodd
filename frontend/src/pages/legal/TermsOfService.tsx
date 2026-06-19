@@ -41,7 +41,7 @@ export default function TermsOfService() {
             ft_prodd( ... ) provides a kanban-style project management tool designed for 42 students. Users
             can create workspaces, organize tasks into columns, manage assignments, track progress, and
             collaborate with peers. The Service includes features such as task creation, labeling, checklist
-            management, commenting, notifications, and productivity analytics.
+            management, commenting, and notifications.
           </p>
 
           <h2 className="font-display font-bold text-xl sm:text-2xl text-slate-900 pt-4">2. Eligibility</h2>

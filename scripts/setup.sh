@@ -1,126 +1,95 @@
 #!/bin/bash
+set -e
 
-# Colors for output
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-NC='\033[0m' # No Color
-
-PROJECT_NAME="ft_prodd"
 COMPOSE_FILE="./config/docker-compose.yaml"
 ENV_FILE="./config/.env"
 ENV_EXAMPLE="./config/.env.example"
 DOCKER="docker compose -f $COMPOSE_FILE --env-file $ENV_FILE"
 
-echo -e "${BLUE}╔════════════════════════════════════════════════════════╗${NC}"
-echo -e "${BLUE}║                                                        ║${NC}"
-echo -e "${BLUE}║          ${PROJECT_NAME} - Setup Inicial               ║${NC}"
-echo -e "${BLUE}║                                                        ║${NC}"
-echo -e "${BLUE}╚════════════════════════════════════════════════════════╝${NC}"
-echo ""
+echo "ft_prodd( ... ) - Setup"
+
+# Generate TLS certificates
+CERTS_DIR="./config/certs"
+if [ ! -f "$CERTS_DIR/nginx-selfsigned.crt" ]; then
+	echo "Generating TLS certificates..."
+	openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+		-keyout "$CERTS_DIR/nginx-selfsigned.key" \
+		-out "$CERTS_DIR/nginx-selfsigned.crt" \
+		-subj "/C=PT/ST=Lisboa/L=Lisboa/O=ft_prodd/CN=localhost" \
+		-addext "subjectAltName=DNS:localhost,IP:127.0.0.1"
+	echo "Certificates generated in $CERTS_DIR"
+fi
 
 # Check if Docker is running
 if ! docker info > /dev/null 2>&1; then
-    echo -e "${RED}✗ Docker não está rodando. Por favor, inicie o Docker e tente novamente.${NC}"
-    exit 1
+	echo "Docker is not running. Please start Docker and try again."
+	exit 1
 fi
 
-echo -e "${GREEN}✓ Docker está rodando${NC}"
+echo "Docker is running"
 
 # Check if .env exists, if not create from .env.example
 if [ ! -f "$ENV_FILE" ]; then
-    echo -e "${YELLOW}⚠ Arquivo .env não encontrado. Criando a partir de .env.example...${NC}"
+	echo ".env file not found. Creating from .env.example..."
 
-    if [ -f "$ENV_EXAMPLE" ]; then
-        cp "$ENV_EXAMPLE" "$ENV_FILE"
-        echo -e "${GREEN}✓ Arquivo .env criado${NC}"
-        echo -e "${YELLOW}⚠ IMPORTANTE: Edite o arquivo .env com suas credenciais antes de continuar!${NC}"
-        echo -e "${YELLOW}  Especialmente os seguintes campos:${NC}"
-        echo -e "${YELLOW}  - INTRA_42_CLIENT_ID${NC}"
-        echo -e "${YELLOW}  - INTRA_42_CLIENT_SECRET${NC}"
-        echo -e "${YELLOW}  - JWT_SECRET${NC}"
-        echo -e "${YELLOW}  - JWT_REFRESH_SECRET${NC}"
-        echo ""
-        read -p "Pressione ENTER depois de configurar o .env para continuar..."
-    else
-        echo -e "${RED}✗ Arquivo .env.example não encontrado!${NC}"
-        exit 1
-    fi
+	if [ -f "$ENV_EXAMPLE" ]; then
+		cp "$ENV_EXAMPLE" "$ENV_FILE"
+		echo ".env file created"
+		echo "IMPORTANT: Edit the .env file with your credentials before continuing!"
+		read -p "Press ENTER after configuring .env to continue..."
+	else
+		echo ".env.example file not found!"
+		exit 1
+	fi
 else
-    echo -e "${GREEN}✓ Arquivo .env encontrado${NC}"
+	echo ".env file found"
 fi
 
 # Stop any running containers
-echo -e "${YELLOW}⏸  Parando containers existentes...${NC}"
+echo "Stopping existing containers..."
 $DOCKER down
 
-# Remove old volumes (optional - ask user)
-read -p "Deseja remover volumes antigos? (dados serão perdidos) [y/N]: " -n 1 -r
+# Remove old volumes (optional)
+read -p "Remove old volumes? (data will be lost) [y/N]: " -n 1 -r
 echo
 if [[ $REPLY =~ ^[Yy]$ ]]; then
-    echo -e "${YELLOW}⏸  Removendo volumes...${NC}"
-    $DOCKER down -v
-    echo -e "${GREEN}✓ Volumes removidos${NC}"
+	echo "Removing volumes..."
+	$DOCKER down -v
+	echo "Volumes removed"
 fi
 
 # Build all images
-echo -e "${BLUE}🔨 Construindo imagens Docker...${NC}"
+echo "Building Docker images..."
 $DOCKER build
 
-if [ $? -ne 0 ]; then
-    echo -e "${RED}✗ Erro ao construir imagens Docker${NC}"
-    exit 1
-fi
-
-echo -e "${GREEN}✓ Imagens construídas com sucesso${NC}"
+echo "Images built successfully"
 
 # Start containers
-echo -e "${BLUE}🚀 Iniciando containers...${NC}"
+echo "Starting containers..."
 $DOCKER up -d
 
-if [ $? -ne 0 ]; then
-    echo -e "${RED}✗ Erro ao iniciar containers${NC}"
-    exit 1
-fi
-
-# Wait for services to be healthy
-echo -e "${YELLOW}⏳ Aguardando serviços ficarem prontos...${NC}"
+# Wait for services to be ready
+echo "Waiting for services..."
 sleep 10
 
 # Check service health
-echo -e "${BLUE}🏥 Verificando saúde dos serviços...${NC}"
+echo "Checking service health..."
 
-services=("postgres" "redis" "backend" "frontend")
+services=("nginx" "postgres" "backend" "frontend")
 
 for service in "${services[@]}"; do
-    status=$($DOCKER ps "$service" | grep -i "up\|healthy" || echo "down")
-    if [[ $status == *"down"* ]]; then
-        echo -e "${RED}✗ $service - não está rodando${NC}"
-    else
-        echo -e "${GREEN}✓ $service - rodando${NC}"
-    fi
+	status=$($DOCKER ps "$service" | grep -i "up\|healthy" || echo "down")
+	if [[ $status == *"down"* ]]; then
+		echo "$service - not running"
+	else
+		echo "$service - running"
+	fi
 done
 
 echo ""
-echo -e "${GREEN}╔════════════════════════════════════════════════════════╗${NC}"
-echo -e "${GREEN}║                                                        ║${NC}"
-echo -e "${GREEN}║         Setup Concluído com Sucesso! 🎉                ║${NC}"
-echo -e "${GREEN}║                                                        ║${NC}"
-echo -e "${GREEN}╚════════════════════════════════════════════════════════╝${NC}"
+echo "Setup complete"
 echo ""
-echo -e "${BLUE}📍 Serviços disponíveis:${NC}"
-echo -e "   Frontend:              ${GREEN}http://localhost:3000${NC}"
-echo -e "   Backend API:           ${GREEN}http://localhost:3001${NC}"
-echo -e "   Health Check:          ${GREEN}http://localhost:3001/api/health${NC}"
-echo -e "   PostgreSQL:            ${GREEN}localhost:5432${NC}"
-echo -e "   Redis:                 ${GREEN}localhost:6379${NC}"
-echo ""
-echo -e "${BLUE}📋 Comandos úteis:${NC}"
-echo -e "   Ver logs:              ${YELLOW}make logs${NC}"
-echo -e "   Parar tudo:            ${YELLOW}make down${NC}"
-echo -e "   Reiniciar:             ${YELLOW}make restart${NC}"
-echo -e "   Ver status:            ${YELLOW}make ps${NC}"
-echo -e "   Health check:          ${YELLOW}make health${NC}"
-echo -e "   Ver todos comandos:    ${YELLOW}make help${NC}"
-echo ""
+echo "Services:"
+echo "  Frontend:    https://localhost:3000"
+echo "  Backend API: https://localhost:3001"
+echo "  Health:      https://localhost:3001/api/health"

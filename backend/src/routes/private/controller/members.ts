@@ -4,6 +4,7 @@ import { prisma }                                   from '../../../lib/prisma';
 import { ApiError }                                 from '../../../utils/ApiError';
 import { WorkspaceRole }                            from '../../../types/constants';
 import { idSchema, parseOrThrow, parseQueryEnum }   from '../../../validations/utils';
+import { notify } from '../../../utils/notify';
 
 const MEMBER_SELECT = {
     role: true,
@@ -191,14 +192,15 @@ export async function acceptInvitation(req: Request, res: Response, next: NextFu
                 select: { userId: true }
             });
 
-            if (otherMembers.length > 0) {
-                await tx.notification.createMany({
-                    data: otherMembers.map(m => ({
-                        userId: m.userId,
+            if (otherMembers.length) {
+                await notify(
+                    {
+                        userIds: otherMembers.map(m => m.userId),
                         type: NotificationType.workspace,
-                        message: `${req.user!.username} accepted the invitation to workspace "${member.user?.username}"`
-                    }))
-                });
+                        message: `${member.user.username} has been added to workspace "${req.workspace!.name}" by ${req.user!.username}`
+                    },
+                    tx
+                );
             }
 
             return member;
@@ -280,13 +282,14 @@ export async function updateMemberRole(req: Request, res: Response, next: NextFu
             });
 
             if (otherMembers.length > 0) {
-                await tx.notification.createMany({
-                    data: otherMembers.map(m => ({
-                        userId: m.userId,
+                await notify(
+                    {
+                        userIds: otherMembers.map(m => m.userId),
                         type: NotificationType.workspace,
                         message: `${member.user.username}'s role has been changed to ${role} in workspace "${req.workspace!.name}" by ${req.user!.username}`
-                    }))
-                });
+                    },
+                    tx
+                );
             }
 
             return member;
@@ -363,13 +366,14 @@ export async function deleteMember(req: Request, res: Response, next: NextFuncti
             });
 
             if (otherMembers.length > 0) {
-                await tx.notification.createMany({
-                    data: otherMembers.map(m => ({
-                        userId: m.userId,
+                await notify(
+                    {
+                        userIds: otherMembers.map(m => m.userId),
                         type: NotificationType.workspace,
                         message: `${targetUser!.username} has been removed from workspace "${req.workspace!.name}" by ${req.user!.username}`
-                    }))
-                });
+                    },
+                    tx
+                );
             }
 
             return { message: 'Member successfully removed.' };

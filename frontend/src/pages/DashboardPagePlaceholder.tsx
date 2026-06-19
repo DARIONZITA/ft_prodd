@@ -8,7 +8,6 @@ import { useFriendsQuery } from '../api/friends'
 import CreateOrganizationModal from './organization/CreateOrganizationModal'
 import OrganizationSettingsPage from './organization/OrganizationSettingsPage.tsx'
 import OrganizationMembersPage from './organization/OrganizationMembersPage.tsx'
-import AnalyticsPage from './organization/AnalyticsPage.tsx'
 import KanbanBoardPage from '../components/tasks/KanbanBoardPage.tsx'
 import NotificationsPage from './NotificationsPage.tsx'
 import InvitationsPage from './InvitationsPage.tsx'
@@ -139,13 +138,6 @@ export default function DashboardPagePlaceholder() {
       return
     }
 
-    if (view === 'analytics' && payload != null) {
-      nextParams.set('workspace', String(payload))
-      nextParams.set('view', 'analytics')
-      navigate(`/dashboard?${nextParams.toString()}`)
-      return
-    }
-
     if (view.startsWith('workspace-')) {
       const workspaceId = view.replace('workspace-', '')
       nextParams.set('workspace', workspaceId)
@@ -265,7 +257,6 @@ export default function DashboardPagePlaceholder() {
           onOpenMembers={() => handleNavigate('organization-members')}
           onSave={handleUpdateWorkspace}
           onDelete={handleDeleteWorkspace}
-          onOpenAnalytics={() => handleNavigate('analytics', currentWorkspace.id)}
         />
       ) : (
         <PlaceholderView title="Organization Settings" />
@@ -277,24 +268,6 @@ export default function DashboardPagePlaceholder() {
         <OrganizationMembersPage workspace={currentWorkspace} onBackToSettings={() => handleNavigate('organization-settings')} />
       ) : (
         <PlaceholderView title="Organization Members" />
-      )
-    }
-
-
-    if (activeView === 'analytics') {
-      return currentWorkspace ? (
-        <AnalyticsPage
-          workspaceId={currentWorkspace.id}
-          workspaceName={currentWorkspace.name}
-          onBack={() => {
-            const nextParams = new URLSearchParams()
-            nextParams.set('workspace', String(currentWorkspace.id))
-            nextParams.set('view', 'kanbanBoard')
-            navigate(`/dashboard?${nextParams.toString()}`)
-          }}
-        />
-      ) : (
-        <PlaceholderView title="Analytics" />
       )
     }
 

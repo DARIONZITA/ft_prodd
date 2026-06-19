@@ -3,6 +3,7 @@ import { prisma }                               from '../../../lib/prisma';
 import { ApiError }                             from '../../../utils/ApiError';
 import { idSchema, parseOrThrow }               from '../../../validations/utils';
 import { WorkspaceRole, NotificationType }      from '@prisma/client';
+import { notify } from '../../../utils/notify';
 
 export async function listAssignedUsers(req: Request, res: Response, next: NextFunction)
 {
@@ -66,9 +67,7 @@ export async function assignTask(req: Request, res: Response, next: NextFunction
           ? `${req.user!.username} self-assigned to task "${req.task!.title}" in workspace "${req.workspace!.name}"`
           : `${req.user!.username} assigned ${targetUser.username} to task "${req.task!.title}" in workspace "${req.workspace!.name}"`;
 
-        await tx.notification.createMany({
-          data: members.map(m => ({ userId: m.userId, type: NotificationType.workspace, message }))
-        });
+        await notify({ userIds: members.map(m => m.userId), message, type: NotificationType.workspace }, tx);
       }
 
       return a;
@@ -115,9 +114,7 @@ export async function unassignTask(req: Request, res: Response, next: NextFuncti
           ? `${req.user!.username} self-unassigned from task "${req.task!.title}" in workspace "${req.workspace!.name}"`
           : `${req.user!.username} unassigned ${targetUser.username} from task "${req.task!.title}" in workspace "${req.workspace!.name}"`;
 
-        await tx.notification.createMany({
-          data: members.map(m => ({ userId: m.userId, type: NotificationType.task, message }))
-        });
+        await notify({ userIds: members.map(m => m.userId), message, type: NotificationType.task }, tx);
       }
     });
 

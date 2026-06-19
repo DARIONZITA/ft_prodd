@@ -1,7 +1,7 @@
 import type { Server }                  from 'socket.io';
 import type { ServerToClientEvents,
     ClientToServerEvents, SocketData,
-    NotificationPayload }               from './types';
+    NotificationPayload }               from '../types';
 
 type IO = Server<ClientToServerEvents, ServerToClientEvents, Record<string, never>, SocketData>;
 
