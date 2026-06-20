@@ -23,7 +23,7 @@ COPY . .
 RUN npx prisma generate
 EXPOSE 3001
 EXPOSE 5555
-CMD ["sh", "-c", "npx prisma migrate deploy && npm run dev"]
+CMD ["sh", "-c", "npx prisma db push && npm run dev"]
 
 # Stage 5: Builder
 FROM base AS builder
