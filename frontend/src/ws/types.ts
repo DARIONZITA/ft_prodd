@@ -1,9 +1,5 @@
 export type NotificationType = 'friendship' | 'workspace' | 'task' | 'mention' | 'comment' | 'invite';
 
-// Socket.IO é totalmente tipado com generics:
-// Server<ClientToServer, ServerToClient, ServerToServer, SocketData>
-// O TypeScript garante que só emites eventos que existem, com o payload correto.
-
 export interface    ServerToClientEvents
 {
     'authenticated'         :   (data : { userId : number; workspaceIds : number[] }) => void;
@@ -24,18 +20,15 @@ export interface    ServerToClientEvents
 export interface   NotificationPayload
 {
     type        : NotificationType;
-    //message?     :   string;
     data?       :   unknown; // payload específico do tipo (ex: o objecto FriendRequest)
     persisted?  :   unknown; // o registo Notification da DB, quando existe
 };
 
 export interface    ClientToServerEvents
 {
-    // Callback-based → o cliente recebe a resposta directamente, sem evento separado
     'ping'  :   (callback : (res : { timestamp : string }) => void) => void;
 };
 
-// Dados persistentes em cada socket após autenticação
 export interface    SocketData
 {
     userId?          :   number;

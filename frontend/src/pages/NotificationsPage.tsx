@@ -13,33 +13,41 @@ interface NotificationRow {
   group: 'today' | 'yesterday' | 'older'
 }
 
-const initialNotifications: NotificationRow[] = [
-  {
-    id: 'n1',
-    title: 'Alex K. mentioned you in TASK-092 · Auth API integration',
-    detail: '"@Jose can you check the token expiry logic here?"',
-    meta: '2 min ago',
-    type: 'mention',
-    unread: true,
-    group: 'today',
-  },
-  {
-    id: 'n2',
-    title: 'Maria L. assigned you to TASK-108 · WebSocket event refactor',
-    detail: 'Due Feb 22 · High priority',
-    meta: '14 min ago',
-    type: 'task',
-    unread: true,
-    group: 'today',
-  },
-  { id: 'n3', title: 'You earned the Sprint Hero badge for completing all tasks this sprint!', detail: '+200 XP earned', meta: '1 hr ago', type: 'badge', unread: true, group: 'today' },
-  { id: 'n4', title: 'Level Up! You reached Level 9. Keep it up!', detail: '1,160 XP remaining to Level 10', meta: '1 hr ago', type: 'badge', unread: true, group: 'today' },
-  { id: 'n5', title: 'TASK-101 · Login flow UI is due tomorrow', meta: '3 hr ago', type: 'task', unread: true, group: 'today' },
-  { id: 'n6', title: 'Sam T. commented on TASK-089 · Dashboard layout', meta: 'Yesterday, 4:12 PM', type: 'task', unread: false, group: 'yesterday' },
-  { id: 'n7', title: 'TASK-095 · Token refresh logic was moved to Code Review', meta: 'Yesterday, 2:00 PM', type: 'task', unread: false, group: 'yesterday' },
-  { id: 'n8', title: 'Leo N. sent you a friend request', meta: 'Yesterday, 11:30 AM', type: 'friend', unread: false, group: 'yesterday' },
-  { id: 'n9', title: 'Priya R. approved your PR on TASK-092 · Auth API', meta: '2 days ago', type: 'mention', unread: false, group: 'older' },
-]
+import { useNotificationsQuery, useMarkNotificationReadMutation, useMarkAllNotificationsReadMutation, type ApiNotification } from '../api/notifications'
+import { formatRelativeTime } from '../api/friends'
+
+const getGroup = (createdAtStr: string): 'today' | 'yesterday' | 'older' => {
+  const date = new Date(createdAtStr)
+  const today = new Date()
+
+  // Reset time to compare only dates
+  const dDate = new Date(date.getFullYear(), date.getMonth(), date.getDate())
+  const dToday = new Date(today.getFullYear(), today.getMonth(), today.getDate())
+
+  const diffTime = dToday.getTime() - dDate.getTime()
+  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24))
+
+  if (diffDays < 1) return 'today'
+  if (diffDays < 2) return 'yesterday'
+  return 'older'
+}
+
+const mapNotificationRow = (n: ApiNotification): NotificationRow => {
+  let mappedType: NotificationType = 'task'
+  if (n.type === 'mention') mappedType = 'mention'
+  else if (n.type === 'friendship' || n.type === 'invite') mappedType = 'friend'
+  else if (n.type === 'task' || n.type === 'workspace' || n.type === 'comment') mappedType = 'task'
+  else mappedType = 'badge'
+
+  return {
+    id: String(n.id),
+    title: n.message,
+    meta: formatRelativeTime(n.createdAt),
+    type: mappedType,
+    unread: !n.isRead,
+    group: getGroup(n.createdAt),
+  }
+}
 
 const filters: Array<{ id: 'all' | NotificationType; label: string }> = [
   { id: 'all', label: 'All' },
@@ -64,7 +72,15 @@ const typeChip: Record<NotificationType, string> = {
 
 export default function NotificationsPage() {
   const [activeFilter, setActiveFilter] = useState<'all' | NotificationType>('all')
-  const [notifications, setNotifications] = useState<NotificationRow[]>(initialNotifications)
+
+  const { data: notificationsData } = useNotificationsQuery({ take: 100 })
+  const markReadMutation = useMarkNotificationReadMutation()
+  const markAllReadMutation = useMarkAllNotificationsReadMutation()
+
+  const notifications = useMemo(() => {
+    if (!notificationsData?.success) return []
+    return notificationsData.data.notifications.map(mapNotificationRow)
+  }, [notificationsData])
 
   const unreadCount = useMemo(() => notifications.filter(item => item.unread).length, [notifications])
 
@@ -76,11 +92,11 @@ export default function NotificationsPage() {
   }, [activeFilter, notifications])
 
   const markAllRead = () => {
-    setNotifications(current => current.map(item => ({ ...item, unread: false })))
+    markAllReadMutation.mutate()
   }
 
   const markRead = (id: string) => {
-    setNotifications(current => current.map(item => (item.id === id ? { ...item, unread: false } : item)))
+    markReadMutation.mutate(Number(id))
   }
 
   return (

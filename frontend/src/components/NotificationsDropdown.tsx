@@ -16,14 +16,24 @@ interface NotificationsDropdownProps {
   onViewAll: () => void
 }
 
-const INITIAL_NOTIFICATIONS: NotificationItem[] = [
-  { id: 'n1', text: 'Alex K. mentioned you in TASK-092 · Auth API', meta: '2 min ago', type: 'mention', unread: true },
-  { id: 'n2', text: 'Maria L. assigned TASK-108 · WebSocket refactor', meta: '14 min ago', type: 'task', unread: true },
-  { id: 'n3', text: 'You earned Sprint Hero badge (+200 XP)', meta: '1 hr ago', type: 'badge', unread: true },
-  { id: 'n4', text: 'Level Up! You reached Level 9', meta: '1 hr ago', type: 'badge', unread: true },
-  { id: 'n5', text: 'TASK-101 · Login flow is due tomorrow', meta: '3 hr ago', type: 'task', unread: true },
-  { id: 'n6', text: 'Sam T. commented on TASK-089 · Dashboard layout', meta: 'Yesterday', type: 'task', unread: false },
-]
+import { useNotificationsQuery, useMarkNotificationReadMutation, useMarkAllNotificationsReadMutation, type ApiNotification } from '../api/notifications'
+import { formatRelativeTime } from '../api/friends'
+
+const mapNotification = (n: ApiNotification): NotificationItem => {
+  let mappedType: 'task' | 'mention' | 'badge' | 'friend' = 'task'
+  if (n.type === 'mention') mappedType = 'mention'
+  else if (n.type === 'friendship' || n.type === 'invite') mappedType = 'friend'
+  else if (n.type === 'task' || n.type === 'workspace' || n.type === 'comment') mappedType = 'task'
+  else mappedType = 'badge'
+
+  return {
+    id: String(n.id),
+    text: n.message,
+    meta: formatRelativeTime(n.createdAt),
+    type: mappedType,
+    unread: !n.isRead,
+  }
+}
 
 const TYPE_BADGE: Record<NotificationItem['type'], string> = {
   mention: 'bg-indigo-100 text-indigo-700',
@@ -39,8 +49,17 @@ export default function NotificationsDropdown({
   onViewAll,
 }: NotificationsDropdownProps) {
   const [open, setOpen] = useState(false)
-  const [notifications, setNotifications] = useState<NotificationItem[]>(INITIAL_NOTIFICATIONS)
   const wrapperRef = useRef<HTMLDivElement | null>(null)
+
+  const { data: notificationsData } = useNotificationsQuery({ take: 10 })
+  const markReadMutation = useMarkNotificationReadMutation()
+  const markAllReadMutation = useMarkAllNotificationsReadMutation()
+
+  const notifications = useMemo(() => {
+    if (!notificationsData?.success) return []
+    return notificationsData.data.notifications.map(mapNotification)
+  }, [notificationsData])
+
   const unreadCount = useMemo(() => notifications.filter(item => item.unread).length, [notifications])
   const isEmpty = notifications.length === 0
 
@@ -66,11 +85,11 @@ export default function NotificationsDropdown({
   }, [])
 
   const onMarkAllRead = () => {
-    setNotifications(current => current.map(item => ({ ...item, unread: false })))
+    markAllReadMutation.mutate()
   }
 
   const onMarkRead = (id: string) => {
-    setNotifications(current => current.map(item => (item.id === id ? { ...item, unread: false } : item)))
+    markReadMutation.mutate(Number(id))
   }
 
   return (

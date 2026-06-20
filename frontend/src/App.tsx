@@ -8,10 +8,11 @@ import OAuthCallbackPage            from "./pages/OauthCallbackPage"
 import DashboardPagePlaceholder     from './pages/DashboardPagePlaceholder'
 import PrivacyPolicy                from './pages/legal/PrivacyPolicy'
 import TermsOfService               from './pages/legal/TermsOfService'
+import { WebSocketProvider }        from './ws-client/socket'
 
 function App() {
   return (
-    <>
+    <WebSocketProvider>
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/signin" element={<SignInPage />} />
@@ -30,7 +31,7 @@ function App() {
         />
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
-    </>
+    </WebSocketProvider>
   )
 }
 

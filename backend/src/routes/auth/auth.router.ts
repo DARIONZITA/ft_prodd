@@ -99,6 +99,11 @@ authRouter.post('/signin', signinController);
 
 authRouter.post('/signout', authenticate, signoutController);
 
+authRouter.get('/token', authenticate, (req, res) => {
+  const token = req.cookies?.token || req.headers.authorization?.split(' ')[1];
+  res.status(200).json({ success: true, token });
+});
+
 authRouter.use( '/42', oauthRouter ); // Rota para OAuth 42
 
 export default	authRouter;

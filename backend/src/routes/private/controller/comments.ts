@@ -77,7 +77,11 @@ export async function createComment(req: Request, res: Response, next: NextFunct
       }
       return c;
     });
-    wsEmitter.commentNew(workspace.id, task.id, comment, req.user!.id);
-    res.status(201).json({ success: true, data: comment });
+    const commentWithUser = await prisma.comment.findUnique({
+      where: { id: comment.id },
+      include: { user: { select: { id: true, username: true, avatarUrl: true } } }
+    });
+    wsEmitter.commentNew(workspace.id, task.id, commentWithUser, req.user!.id);
+    res.status(201).json({ success: true, data: commentWithUser });
   } catch (err) { next(err); }
 }
