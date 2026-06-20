@@ -24,7 +24,8 @@ interface WebSocketProviderProps {
 }
 
 export function WebSocketProvider({ children }: WebSocketProviderProps) {
-  const userQuery = useGetUserRequest({ retry: false })
+  const isPublicPath = ['/signin', '/signup', '/'].includes(window.location.pathname)
+  const userQuery = useGetUserRequest({ retry: false, enabled: !isPublicPath })
   const isAuthenticated = !!userQuery.data?.success
 
   const [socket, setSocket] = useState<Socket<ServerToClientEvents, ClientToServerEvents> | null>(null)

@@ -34,7 +34,10 @@ api.interceptors.response.use(
       ${getApiErrorMessage(error)}`
     )
     if (error.response?.status === HttpStatusCode.Unauthorized) {
-      window.location.href = '/signin'
+      const publicPaths = ['/signin', '/signup', '/']
+      if (!publicPaths.includes(window.location.pathname)) {
+        window.location.href = '/signin'
+      }
     }
     return Promise.reject(error)
   }
