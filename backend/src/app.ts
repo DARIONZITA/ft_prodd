@@ -1,5 +1,6 @@
 import express, { Request, Response } from 'express';
 import cors								            from 'cors';
+import cookieParser                  from 'cookie-parser';
 import http								            from 'http';
 import helmet							            from 'helmet';
 import morgan							            from 'morgan';
@@ -23,6 +24,7 @@ app.set('trust proxy', 1);
 
 app.use(helmet());
 app.use(cors({ origin: process.env.CORS_ORIGIN || 'https://localhost', credentials: true }));
+app.use(cookieParser());
 app.use(morgan('combined'));
 app.use(express.json({ limit: '10mb' }));
 

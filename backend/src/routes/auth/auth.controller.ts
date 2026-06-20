@@ -9,6 +9,14 @@ import { wsEmitter }                            from '../../ws/backend/emitter';
 import { getFriendAndWorkspaceMembersIds }      from '../../ws/backend/ws.server';
 import { avatarDir }                            from '../../types/constants';
 
+const COOKIE_OPTIONS = {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === 'production',
+  sameSite: 'strict' as const,
+  path: '/',
+  maxAge: 24 * 60 * 60 * 1000, // 1 day (same as JWT expiry)
+};
+
 export async function   signupController( req : Request, res : Response, next : NextFunction )
 {
 	const   result = signupSchema.safeParse(req.body);
@@ -32,6 +40,7 @@ export async function   signupController( req : Request, res : Response, next : 
 		});
 		const	token = generateToken( user.id, user.email );
 
+		res.cookie('token', token, COOKIE_OPTIONS);
 		res.status(201).json( { success: true, message: "User created", token, user } );
 	}
 	catch ( err ) { next( err ); }
@@ -70,6 +79,7 @@ export async function   signinController( req : Request, res : Response, next : 
             wsEmitter.userOnline( user.id, user.username, user.avatarUrl, workspaceIds, friendIds );
         }
 
+        res.cookie('token', token, COOKIE_OPTIONS);
         res.status(200).json( { success: true, message: "Signin successfully", token, user: userWithoutPassword } );
     }
     catch ( err ) { next( err ); }
@@ -95,9 +105,10 @@ export async function   signoutController( req : Request, res : Response, next :
                 wsEmitter.userOffline( userId, user.username, workspaceIds, friendIds );
             }
         }
+        res.clearCookie('token', { path: '/' });
         console.log(`[Auth] User ${userId} logged out successfully`);
 
-        res.status(200).json({ success: true, message: "user logged out successfully. Token removed in the client's side"});
+        res.status(200).json({ success: true, message: "user logged out successfully"});
     }
     catch ( err ) { next( err ); }
 }

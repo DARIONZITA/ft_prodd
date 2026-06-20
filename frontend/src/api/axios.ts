@@ -1,21 +1,17 @@
-import axios, { HttpStatusCode } from "axios"
-import type { AxiosInstance, InternalAxiosRequestConfig, AxiosResponse } from 'axios'
+import axios, { HttpStatusCode, type AxiosInstance, type InternalAxiosRequestConfig, type AxiosResponse } from "axios"
 
 const api: AxiosInstance = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
-  timeout: 5000
+  timeout: 5000,
+  withCredentials: true,
 })
 
 api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
-  const token = localStorage.getItem('token')
-
   console.log(
     `[FRONTEND] REQUEST -> 
     ${config.method?.toUpperCase()} 
-    ${config.url} Token: ${token ?? 'null'}`
+    ${config.url}`
   )
-  if (token)
-    config.headers.set("Authorization", `Bearer ${token}`)
   return config
 })
 
@@ -38,12 +34,7 @@ api.interceptors.response.use(
       ${getApiErrorMessage(error)}`
     )
     if (error.response?.status === HttpStatusCode.Unauthorized) {
-      const token = localStorage.getItem('token')
-
-      if (token) {
-        localStorage.removeItem('token')
-        window.location.href = '/signin'
-      }
+      window.location.href = '/signin'
     }
     return Promise.reject(error)
   }

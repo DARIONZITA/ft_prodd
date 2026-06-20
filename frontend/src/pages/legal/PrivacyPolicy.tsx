@@ -96,7 +96,7 @@ export default function PrivacyPolicy() {
 
           <h2 className="font-display font-bold text-xl sm:text-2xl text-slate-900 pt-4">6. Cookies &amp; Local Storage</h2>
           <p>
-            We use <strong>localStorage</strong> to persist your authentication token and sidebar preferences.
+            We use <strong>httpOnly cookies</strong> to persist your authentication token and <strong>localStorage</strong> for sidebar preferences.
             No third-party cookies are used. You can clear this data at any time through your browser settings.
           </p>
 

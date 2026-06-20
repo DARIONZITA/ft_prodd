@@ -212,7 +212,6 @@ export function useDeleteUserRequest(
     ...options,
     mutationFn: deleteUserRequest,
     onSuccess: async (data, variables, context) => {
-      localStorage.removeItem('token')
       queryClient.clear()
       await options?.onSuccess?.(data, variables, context)
     },

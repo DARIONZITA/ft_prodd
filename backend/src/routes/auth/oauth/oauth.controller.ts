@@ -7,6 +7,14 @@ import { presenceStore }                            from '../../../ws/backend/st
 import { wsEmitter }                                from '../../../ws/backend/emitter';
 import { getFriendAndWorkspaceMembersIds }          from '../../../ws/backend/ws.server';
 
+const COOKIE_OPTIONS = {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === 'production',
+  sameSite: 'strict' as const,
+  path: '/',
+  maxAge: 24 * 60 * 60 * 1000,
+};
+
 export async function   oauthLoginController( req : Request, res : Response )
 {
     const   { state, codeChallenge } = pkceStore.generate( );
@@ -49,18 +57,17 @@ export async function   oauthCallbackController( req : Request, res : Response, 
     if (!callbackResult.user || !callbackResult.success || !callbackResult.token)
         return (res.redirect(`${env.FRONTEND_URL}/oauth/callback?error=${encodeURIComponent(callbackResult.message)}`));
 
-    const   token = callbackResult.token; // assured by the service's return type
-    const   redirectUrl = new URL( `${env.FRONTEND_URL}/oauth/callback` );
+    const   token = callbackResult.token;
     const   user = callbackResult.user;
 
-    redirectUrl.searchParams.set( 'token', token );
+    res.cookie('token', token, COOKIE_OPTIONS);
 
-    console.log("OAuth callback successful, redirecting to frontend with token...");
+    console.log("OAuth callback successful, redirecting to frontend...");
 
     if (presenceStore.connect( user.id )) //if it's the first login
     {
         const   { workspaceIds, friendIds } = await getFriendAndWorkspaceMembersIds( user.id );
         wsEmitter.userOnline( user.id, user.username, user.avatarUrl, workspaceIds, friendIds );
     }
-    res.redirect( redirectUrl.toString( ) );
+    res.redirect( `${env.FRONTEND_URL}/oauth/callback` );
 }

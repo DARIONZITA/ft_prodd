@@ -5,6 +5,7 @@ import ThisProfile from './profile/This'
 import OtherProfile from './profile/Other'
 import Friends from './profile/Friends'
 import { useFriendsQuery } from '../api/friends'
+import api from '../api/axios'
 import CreateOrganizationModal from './organization/CreateOrganizationModal'
 import OrganizationSettingsPage from './organization/OrganizationSettingsPage.tsx'
 import OrganizationMembersPage from './organization/OrganizationMembersPage.tsx'
@@ -160,15 +161,12 @@ export default function DashboardPagePlaceholder() {
     navigate(`/dashboard?${nextParams.toString()}`)
   }
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     try {
-      // Clear auth-related localStorage keys (adjust keys if your app uses different ones)
-      localStorage.removeItem('token')
-      localStorage.removeItem('auth')
+      await api.post('/api/auth/signout')
     } catch {
       // ignore
     }
-    // Replace history entry so user cannot go back to protected page
     navigate('/signin', { replace: true })
   }
 
