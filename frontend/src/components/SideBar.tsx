@@ -3,6 +3,7 @@ import { Menu, Plus, Search, ChevronsLeft, LogOut, Grid2x2, FileText, ArrowLeftR
 import NotificationsDropdown from './NotificationsDropdown'
 import { useUsersQuery } from '../api/user'
 import { useMyInvitationsQuery } from '../api/workspace'
+import ApiKeyManagerModal from './tasks/ApiKeyManagerModal';
 
 interface Workspace {
   id: string | number
@@ -35,6 +36,7 @@ const WORKSPACE_ICONS = [Grid2x2, FileText, ArrowLeftRight]
 
 export default function Sidebar({ data, activeView, onNavigate, onLogout = () => {}, onCreateWorkspace = () => {}, className = '', activeWorkspace = null }: SidebarProps) {
   const [searchQuery, setSearchQuery] = useState('')
+  const [showApiKeysModal, setShowApiKeysModal] = useState(false);
   const [committedSearch, setCommittedSearch] = useState('')
   const [isOpen, setIsOpen] = useState(() => {
     const saved = localStorage.getItem('sidebar-open')
@@ -183,6 +185,7 @@ export default function Sidebar({ data, activeView, onNavigate, onLogout = () =>
 
       {/* Invitations */}
       <div className="px-3 mb-2">
+        
         <button
           onClick={() => onNavigate('invitations')}
           className={`w-full flex items-center justify-between px-3 py-2 rounded-lg font-body text-sm font-medium transition-colors duration-150 cursor-pointer ${
@@ -270,7 +273,13 @@ export default function Sidebar({ data, activeView, onNavigate, onLogout = () =>
 
       {/* Footer */}
       <div className="border-t border-slate-200 px-2 py-2.5 flex flex-col gap-0.5">
-        
+            <button 
+              onClick={() => setShowApiKeysModal(true)}
+              className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-slate-600 bg-white border border-slate-200 hover:bg-slate-50 rounded-lg transition-colors"
+              title="Manage API Keys"
+            >
+              Manager Api Keys
+            </button>
         
         <button
           onClick={onLogout}
@@ -280,8 +289,12 @@ export default function Sidebar({ data, activeView, onNavigate, onLogout = () =>
           Logout
         </button>
       </div>
-
+  
     </aside>
+      <ApiKeyManagerModal
+          isOpen={showApiKeysModal}
+          onClose={() => setShowApiKeysModal(false)}
+        />
     </>
   )
 }

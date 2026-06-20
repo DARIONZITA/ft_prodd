@@ -11,7 +11,6 @@ interface PropsHeaderkanbanBoard {
   workspaceCreatedAt: Date
   onOpenSettings?: () => void
   onOpenMembers?: () => void
-  onOpenManagerAPI?: () => void
   onOpenLabels?: () => void
   userMode?: 'Admin' | 'Member' | 'Viewer'
 }
@@ -26,7 +25,6 @@ export function HeaderKanbanBoard({
   workspaceCreatedAt,
   onOpenSettings,
   onOpenMembers,
-  onOpenManagerAPI,
   onOpenLabels,
   userMode = 'Viewer'
 }: PropsHeaderkanbanBoard) {
@@ -86,13 +84,6 @@ export function HeaderKanbanBoard({
             {userMode === 'Admin' && (
               <>
                 <button 
-                  onClick={onOpenManagerAPI}
-                  className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-slate-600 bg-white border border-slate-200 hover:bg-slate-50 rounded-lg transition-colors"
-                  title="Manage API Keys"
-                >
-                  Manager Api Keys
-                </button>
-                <button 
                   onClick={onOpenLabels}
                   className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-slate-600 bg-white border border-slate-200 hover:bg-slate-50 rounded-lg transition-colors"
                   title="Manage Labels"
@@ -131,12 +122,6 @@ export function HeaderKanbanBoard({
                 </button>
                 {userMode === 'Admin' && (
                   <>
-                    <button
-                      onClick={() => { onOpenManagerAPI?.(); setMobileMenuOpen(false) }}
-                      className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors"
-                    >
-                      <Key className="w-4 h-4" /> Manager API Keys
-                    </button>
                     <button
                       onClick={() => { onOpenLabels?.(); setMobileMenuOpen(false) }}
                       className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors"

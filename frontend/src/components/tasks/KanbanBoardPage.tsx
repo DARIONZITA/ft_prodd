@@ -10,7 +10,6 @@ import {move} from '@dnd-kit/helpers';
 import TaskDetailPanel from './TaskDetailPanel';
 import { HeaderKanbanBoard } from './HeaderKanbanBoard';
 import TaskListPage from './TaskListPage';
-import ApiKeyManagerModal from './ApiKeyManagerModal';
 import ManageLabelsModal from './ManageLabelsModal';
 import {
   useWorkspaceDashboardQuery,
@@ -454,7 +453,6 @@ export default function KanbanBoardPage({ workspaceId, onOpenSettings, onOpenMem
   const [tasks, setTasks] = useState<Task[]>([]);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [showApiKeysModal, setShowApiKeysModal] = useState(false);
   const [showLabelsModal, setShowLabelsModal] = useState(false);
   const [showCreateColumnModal, setShowCreateColumnModal] = useState(false);
   const [createTaskColumnId, setCreateTaskColumnId] = useState<string>(DEFAULT_COLUMNS[0]?.id ?? '');
@@ -919,7 +917,6 @@ export default function KanbanBoardPage({ workspaceId, onOpenSettings, onOpenMem
         workspaceCreatedAt={dateWorkspace}
         onOpenSettings={onOpenSettings}
         onOpenMembers={onOpenMembers}
-        onOpenManagerAPI={() => setShowApiKeysModal(true)}
         onOpenLabels={() => setShowLabelsModal(true)}
         userMode={userMode}
       />
@@ -1017,11 +1014,7 @@ export default function KanbanBoardPage({ workspaceId, onOpenSettings, onOpenMem
         />
       )}
 
-      <ApiKeyManagerModal
-        isOpen={showApiKeysModal}
-        onClose={() => setShowApiKeysModal(false)}
-      />
-
+  
       <ManageLabelsModal
         isOpen={showLabelsModal}
         onClose={() => setShowLabelsModal(false)}
