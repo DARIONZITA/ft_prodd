@@ -198,9 +198,9 @@ export function useUpdateUserRequest(
   return useMutation({
     ...options,
     mutationFn: updateUserRequest,
-    onSuccess: async (data, variables, context) => {
+    onSuccess: async (data, variables, context, mutationContext) => {
       await queryClient.invalidateQueries({ queryKey: userKeys.me })
-      await options?.onSuccess?.(data, variables, context)
+      await options?.onSuccess?.(data, variables, context, mutationContext)
     },
   })
 }
@@ -211,9 +211,9 @@ export function useDeleteUserRequest(
   return useMutation({
     ...options,
     mutationFn: deleteUserRequest,
-    onSuccess: async (data, variables, context) => {
+    onSuccess: async (data, variables, context, mutationContext) => {
       queryClient.clear()
-      await options?.onSuccess?.(data, variables, context)
+      await options?.onSuccess?.(data, variables, context, mutationContext)
     },
   })
 }

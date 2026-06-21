@@ -65,9 +65,9 @@ export function useCreateApiKeyMutation(
   return useMutation({
     ...options,
     mutationFn: createApiKeyRequest,
-    onSuccess: async (data, variables, context) => {
+    onSuccess: async (data, variables, context, mutationContext) => {
       await queryClient.invalidateQueries({ queryKey: keyKeys.list })
-      await options?.onSuccess?.(data, variables, context)
+      await options?.onSuccess?.(data, variables, context, mutationContext)
     },
   })
 }
@@ -78,9 +78,9 @@ export function useDeleteApiKeyMutation(
   return useMutation({
     ...options,
     mutationFn: deleteApiKeyRequest,
-    onSuccess: async (data, variables, context) => {
+    onSuccess: async (data, variables, context, mutationContext) => {
       await queryClient.invalidateQueries({ queryKey: keyKeys.list })
-      await options?.onSuccess?.(data, variables, context)
+      await options?.onSuccess?.(data, variables, context, mutationContext)
     },
   })
 }

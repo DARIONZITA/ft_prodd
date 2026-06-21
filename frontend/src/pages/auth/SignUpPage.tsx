@@ -8,7 +8,7 @@ import { authInit, reportFieldError } from './utils'
 import { useSignUpMutation }          from '../../api/auth'
 import type { SignUpForm }            from '../../types/auth'
 
-type Fields = 'username' | 'password'
+type Fields = 'username' | 'password' | 'repeat'
 
 export default function SignUpPage()
 {

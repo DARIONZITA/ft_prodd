@@ -13,20 +13,7 @@ import NotificationsPage from './NotificationsPage.tsx'
 import InvitationsPage from './InvitationsPage.tsx'
 import type { User, UserResponse } from '../types/user.ts'
 import { useGetUserRequest } from '../api/user.ts'
-import { useCreateWorkspaceMutation, useDeleteWorkspaceMutation, useUpdateWorkspaceMutation, useUserWorkspacesQuery } from '../api/workspace.ts'
-
-interface Workspace {
-  id: string | number
-  name: string
-  description?: string
-  taskCount?: number
-  memberCount?: number
-  onlineCount?: number
-  sprintDaysLeft?: number
-  healthScore?: number
-  createdAt?: string
-  role?: 'admin' | 'member' | 'guest'
-}
+import { useCreateWorkspaceMutation, useDeleteWorkspaceMutation, useUpdateWorkspaceMutation, useUserWorkspacesQuery, type Workspace } from '../api/workspace.ts'
 
 // ─── View type ────────────────────────────────────────────────────────────────
 

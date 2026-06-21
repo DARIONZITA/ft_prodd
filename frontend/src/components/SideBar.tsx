@@ -60,6 +60,10 @@ export default function Sidebar({ data, activeView, onNavigate, onLogout = () =>
 
   const initials = data.name?.trim()[0]?.toUpperCase() ?? '?'
 
+  const handleNavigate = (view: string, payload?: string | number) => {
+    if (window.innerWidth < 768) setIsOpen(false)
+    return onNavigate(view, payload)
+  }
 
   const renderAvatar = () => data.avatarUrl ? (
     <img src={data.avatarUrl} alt={data.name} className="w-8 h-8 rounded-full object-cover flex-shrink-0" />
@@ -81,14 +85,14 @@ export default function Sidebar({ data, activeView, onNavigate, onLogout = () =>
           <Menu size={18} />
         </button>
 
-        <button onClick={() => onNavigate('profile')} aria-label="View profile" className="mt-1 cursor-pointer">
+        <button onClick={() => handleNavigate('profile')} aria-label="View profile" className="mt-1 cursor-pointer">
           {renderAvatar()}
         </button>
 
-        <NotificationsDropdown active={activeView === 'notifications'} bellSize={16} bellPaddingClassName="p-2" onViewAll={() => onNavigate('notifications')} />
+        <NotificationsDropdown active={activeView === 'notifications'} bellSize={16} bellPaddingClassName="p-2" onViewAll={() => handleNavigate('notifications')} />
 
         <button
-          onClick={() => onNavigate('invitations')}
+          onClick={() => handleNavigate('invitations')}
           aria-label="Invitations"
           className={`relative p-2 rounded-lg transition-colors duration-150 cursor-pointer ${
             activeView === 'invitations' ? 'bg-cyan-50 text-cyan-700' : 'text-slate-400 hover:bg-slate-100 hover:text-slate-700'
@@ -121,7 +125,7 @@ export default function Sidebar({ data, activeView, onNavigate, onLogout = () =>
       {/* Top bar */}
       <div className="flex items-center gap-2 px-4 pt-4 pb-3">
         <button
-          onClick={() => onNavigate('profile')}
+          onClick={() => handleNavigate('profile')}
           aria-label="View profile"
           className={`flex items-center gap-2 flex-1 min-w-0 text-left rounded-lg transition-colors duration-150 p-1 -ml-1 cursor-pointer ${
             activeView === 'profile' ? 'bg-cyan-50' : 'hover:bg-slate-100'
@@ -133,7 +137,7 @@ export default function Sidebar({ data, activeView, onNavigate, onLogout = () =>
           </span>
         </button>
 
-        <NotificationsDropdown active={activeView === 'notifications'} onViewAll={() => onNavigate('notifications')} />
+        <NotificationsDropdown active={activeView === 'notifications'} onViewAll={() => handleNavigate('notifications')} />
 
         <button
           aria-label="Close sidebar"
@@ -187,7 +191,7 @@ export default function Sidebar({ data, activeView, onNavigate, onLogout = () =>
       <div className="px-3 mb-2">
         
         <button
-          onClick={() => onNavigate('invitations')}
+          onClick={() => handleNavigate('invitations')}
           className={`w-full flex items-center justify-between px-3 py-2 rounded-lg font-body text-sm font-medium transition-colors duration-150 cursor-pointer ${
             activeView === 'invitations'
               ? 'bg-cyan-50 text-cyan-700 font-semibold'
@@ -219,7 +223,7 @@ export default function Sidebar({ data, activeView, onNavigate, onLogout = () =>
             userResults.map(u => (
               <button
                 key={u.id}
-                onClick={() => { setSearchQuery(''); setCommittedSearch(''); onNavigate('user', u.id) }}
+                onClick={() => { setSearchQuery(''); setCommittedSearch(''); handleNavigate('user', u.id) }}
                 className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left transition-colors duration-150 cursor-pointer hover:bg-slate-100"
               >
                 <Users size={14} className="text-slate-400 flex-shrink-0" />
@@ -248,7 +252,7 @@ export default function Sidebar({ data, activeView, onNavigate, onLogout = () =>
               <button
                 key={ws.id}
                 role="listitem"
-                onClick={() => onNavigate('workspace', ws.id)}
+                onClick={() => handleNavigate('workspace', ws.id)}
                 title={ws.name}
                 className={`flex items-center gap-2.5 px-3 py-2 rounded-lg font-body text-sm font-medium w-full text-left transition-colors duration-150 cursor-pointer ${
                   isActive

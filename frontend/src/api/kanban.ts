@@ -415,7 +415,7 @@ export function useUnassignTaskUserMutation(workspaceId: number | string, taskId
 }
 
 // Task Comments
-export function useCreateTaskCommentMutation(workspaceId: number | string, taskId: number | string) {
+export function useCreateTaskCommentMutation(_workspaceId: number | string, taskId: number | string) {
   return useMutation({
     mutationFn: async ({ columnId, content }: { columnId: number | string; content: string }) => {
       const response = await api.post(`/api/columns/${columnId}/tasks/${taskId}/comments`, { content })

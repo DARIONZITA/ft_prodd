@@ -155,9 +155,9 @@ export function useSendFriendRequestMutation(
   return useMutation({
     ...options,
     mutationFn: (friendId: string | number) => sendFriendRequestRequest(friendId),
-    onSuccess: async (data, variables, context) => {
+    onSuccess: async (data, variables, context, mutationContext) => {
       await invalidateFriendQueries(userId)
-      await options?.onSuccess?.(data, variables, context)
+      await options?.onSuccess?.(data, variables, context, mutationContext)
     },
   })
 }
@@ -169,9 +169,9 @@ export function useRespondFriendRequestMutation(
   return useMutation({
     ...options,
     mutationFn: ({ friendId, status }) => updateFriendRequestRequest(friendId, status),
-    onSuccess: async (data, variables, context) => {
+    onSuccess: async (data, variables, context, mutationContext) => {
       await invalidateFriendQueries(userId)
-      await options?.onSuccess?.(data, variables, context)
+      await options?.onSuccess?.(data, variables, context, mutationContext)
     },
   })
 }
@@ -183,9 +183,9 @@ export function useRemoveFriendMutation(
   return useMutation({
     ...options,
     mutationFn: (friendId: string | number) => removeFriendRequest(friendId),
-    onSuccess: async (data, variables, context) => {
+    onSuccess: async (data, variables, context, mutationContext) => {
       await invalidateFriendQueries(userId)
-      await options?.onSuccess?.(data, variables, context)
+      await options?.onSuccess?.(data, variables, context, mutationContext)
     },
   })
 }

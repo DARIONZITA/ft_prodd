@@ -11,6 +11,7 @@ import TaskDetailPanel from './TaskDetailPanel';
 import { HeaderKanbanBoard } from './HeaderKanbanBoard';
 import TaskListPage from './TaskListPage';
 import ManageLabelsModal from './ManageLabelsModal';
+import type { WorkspaceRole } from '../../api/workspace';
 import {
   useWorkspaceDashboardQuery,
   useCreateColumnMutation,
@@ -19,7 +20,6 @@ import {
   useMoveTaskMutation,
   useReorderTasksMutation,
   useReorderColumnsMutation,
-  useUpdateTaskMutation,
   kanbanKeys,
 } from '../../api/kanban';
 import { queryClient } from '../../main';
@@ -342,7 +342,7 @@ interface KanbanBoardPageProps {
   onOpenSettings?: () => void
   onOpenMembers?: () => void
   dateWorkspace: string
-  workspaceRole?: 'admin' | 'member' | 'guest'
+  workspaceRole?: WorkspaceRole
 }
 
 export default function KanbanBoardPage({ workspaceId, onOpenSettings, onOpenMembers, dateWorkspace, workspaceRole }: KanbanBoardPageProps) {
@@ -476,23 +476,15 @@ export default function KanbanBoardPage({ workspaceId, onOpenSettings, onOpenMem
   const moveColumnMutation = useReorderColumnsMutation(workspaceId ?? 0);
   const moveTaskMutation = useMoveTaskMutation(workspaceId ?? 0);
   const reorderTasksMutation = useReorderTasksMutation(workspaceId ?? 0);
-  const updateTaskMutation = useUpdateTaskMutation(workspaceId ?? 0);
-
   const userMode: 'Admin' | 'Member' | 'Viewer' = useMemo(() => {
     if (workspaceRole === 'admin') return 'Admin';
     if (workspaceRole === 'member') return 'Member';
     return 'Viewer';
   }, [workspaceRole]);
-  const todayIso = new Date().toISOString().slice(0, 10);
-
   const doneColumnIds = useMemo(
     () => new Set(columns.filter((column) => column.columnTypeId === 'done').map((column) => column.id)),
     [columns]
   );
-
-  const completedTodayCount = useMemo(() => {
-    return tasks.filter((task) => doneColumnIds.has(task.columnId) && task.completedAt === todayIso).length;
-  }, [tasks, doneColumnIds, todayIso]);
 
   const filteredTasks = useMemo(() => {
     if (!searchQuery) return tasks;
@@ -564,13 +556,13 @@ export default function KanbanBoardPage({ workspaceId, onOpenSettings, onOpenMem
     }
   };
 
-  const handleAddTask = (newTask: Task) => {
+  const handleAddTask = (newTask: Omit<Task, 'id' | 'createdBy' | 'createdAt'>) => {
     createTaskMutation.mutate({
       columnId: Number(newTask.columnId),
       title: newTask.title,
       description: newTask.description,
       priority: newTask.priority.toUpperCase() as 'LOW' | 'MEDIUM' | 'HIGH',
-      dueDate: newTask.dueDate ? new Date(newTask.dueDate).toISOString() : null,
+      dueDate: newTask.dueDate ? new Date(newTask.dueDate).toISOString() : undefined,
       assignees: newTask.assignees.map(a => Number(a.id)).filter(n => !isNaN(n) && n > 0),
       labels: newTask.labels.map(l => Number(l.id)).filter(n => !isNaN(n) && n > 0),
       linkedBacklogId: newTask.linkedBacklogId ? Number(newTask.linkedBacklogId) : null,
@@ -580,46 +572,6 @@ export default function KanbanBoardPage({ workspaceId, onOpenSettings, onOpenMem
         queryClient.invalidateQueries({ queryKey: kanbanKeys.dashboard(workspaceId ?? 0) });
       }
     });
-  };
-
-
-  const handleUpdateTask = (updatedTask: Task) => {
-    const currentTask = tasks.find((task) => task.id === updatedTask.id);
-    const isDoneColumn = doneColumnIds.has(updatedTask.columnId);
-    const wasDone = currentTask ? doneColumnIds.has(currentTask.columnId) : false;
-
-    const priorityMapRev: Record<TaskPriority, 'LOW' | 'MEDIUM' | 'HIGH'> = {
-      High: 'HIGH',
-      Medium: 'MEDIUM',
-      Low: 'LOW'
-    };
-
-    updateTaskMutation.mutate({
-      columnId: updatedTask.columnId,
-      taskId: updatedTask.id,
-      payload: {
-        title: updatedTask.title,
-        description: updatedTask.description,
-        priority: priorityMapRev[updatedTask.priority]
-      }
-    }, {
-      onSuccess: () => {
-        if (updatedTask.linkedBacklogId && isDoneColumn !== wasDone) {
-          const backlogTask = tasks.find(t => t.id === updatedTask.linkedBacklogId);
-          if (backlogTask) {
-            const item = backlogTask.checklist?.find(ci => ci.linkedTaskId === `TASK-${updatedTask.id}` || ci.linkedTaskId === updatedTask.id);
-            if (item) {
-              api.patch(`/api/columns/${backlogTask.columnId}/tasks/${backlogTask.id}/checklists/${item.id}`, {
-                isCompleted: isDoneColumn
-              }).then(() => {
-                queryClient.invalidateQueries({ queryKey: kanbanKeys.dashboard(workspaceId ?? 0) });
-              });
-            }
-          }
-        }
-      }
-    });
-    setSelectedTask(null);
   };
 
   const handleAddColumn = () => {
@@ -665,10 +617,11 @@ export default function KanbanBoardPage({ workspaceId, onOpenSettings, onOpenMem
         }))
       );
       // Sync: move call
-      moveColumnMutation.mutate({
-        columnId: Number(activeId),
-        targetColumnId: Number(targetColumnId)
-      });
+      const reordered = move(columns, event).map((column, index) => ({
+        id: Number(column.id),
+        order: index + 1,
+      }));
+      moveColumnMutation.mutate(reordered);
       return;
     }
 
@@ -795,8 +748,7 @@ export default function KanbanBoardPage({ workspaceId, onOpenSettings, onOpenMem
         viewMode={viewMode}
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
-        completedTodayCount={completedTodayCount}
-        workspaceCreatedAt={dateWorkspace}
+        workspaceCreatedAt={new Date(dateWorkspace)}
         onOpenSettings={onOpenSettings}
         onOpenMembers={onOpenMembers}
         onOpenLabels={() => setShowLabelsModal(true)}
@@ -892,7 +844,7 @@ export default function KanbanBoardPage({ workspaceId, onOpenSettings, onOpenMem
           task={selectedTask}
           columns={columns}
           onClose={() => setSelectedTask(null)}
-          onUpdateTask={handleUpdateTask}
+
         />
       )}
 

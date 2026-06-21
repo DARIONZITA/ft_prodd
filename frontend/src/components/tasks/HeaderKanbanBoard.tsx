@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { Plus, Search, Settings, MoreHorizontal, Users, Key, Tag } from 'lucide-react';
+import { Plus, Search, Settings, MoreHorizontal, Users, Tag } from 'lucide-react';
 
 interface PropsHeaderkanbanBoard {
   onModalCreate: () => void
@@ -153,7 +153,7 @@ export function HeaderKanbanBoard({
               <div className="px-4 sm:px-8 py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between flex-shrink-0 gap-4 sm:gap-0">
                 <div className="flex flex-wrap items-center gap-2 sm:gap-3">
                   <span className="bg-slate-100 text-slate-500 text-xs font-mono px-2 py-0.5 rounded-full border border-slate-200">
-                    Created {workspaceCreatedAt}
+                    Created {workspaceCreatedAt.toLocaleDateString()}
                   </span>
                 </div>
                 <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">

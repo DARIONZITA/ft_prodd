@@ -23,7 +23,7 @@ const COLOR_MAP: Record<string, { color: string; bgColor: string; borderColor: s
 interface CreateTaskModalProps {
   workspaceId: number | string;
   onClose: () => void;
-  onCreateTask: (task: Task) => void;
+  onCreateTask: (task: Omit<Task, 'id' | 'createdBy' | 'createdAt'>) => void;
   columns: Column[];
   initialColumnId?: string;
   backlogTasks?: Task[];
@@ -117,7 +117,7 @@ export default function CreateTaskModal({ workspaceId, onClose, onCreateTask, co
       return;
     }
 
-    const newTask: Task = {
+    const newTask: Omit<Task, 'id' | 'createdBy' | 'createdAt'> = {
       title,
       description,
       columnId,

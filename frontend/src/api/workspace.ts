@@ -273,9 +273,9 @@ export function useCreateWorkspaceMutation(
 ) {
   return useMutation({
     mutationFn: createWorkspaceRequest,
-    onSuccess: async (data, variables, context) => {
+    onSuccess: async (data, variables, context, mutationContext) => {
       await queryClient.invalidateQueries({ queryKey: workspaceKeys.list })
-      await options?.onSuccess?.(data, variables, context)
+      await options?.onSuccess?.(data, variables, context, mutationContext)
     },
     ...options,
   })
@@ -286,10 +286,10 @@ export function useUpdateWorkspaceMutation(
 ) {
   return useMutation({
     mutationFn: ({ id, form }) => updateWorkspaceRequest(id, form),
-    onSuccess: async (data, variables, context) => {
+    onSuccess: async (data, variables, context, mutationContext) => {
       await queryClient.invalidateQueries({ queryKey: workspaceKeys.list })
       await queryClient.invalidateQueries({ queryKey: workspaceKeys.detail(variables.id) })
-      await options?.onSuccess?.(data, variables, context)
+      await options?.onSuccess?.(data, variables, context, mutationContext)
     },
     ...options,
   })
@@ -300,9 +300,9 @@ export function useDeleteWorkspaceMutation(
 ) {
   return useMutation({
     mutationFn: deleteWorkspaceRequest,
-    onSuccess: async (data, variables, context) => {
+    onSuccess: async (data, variables, context, mutationContext) => {
       await queryClient.invalidateQueries({ queryKey: workspaceKeys.list })
-      await options?.onSuccess?.(data, variables, context)
+      await options?.onSuccess?.(data, variables, context, mutationContext)
     },
     ...options,
   })
@@ -313,11 +313,11 @@ export function useCreateWorkspaceMemberMutation(
 ) {
   return useMutation({
     mutationFn: ({ id, form }) => createWorkspaceMemberRequest(id, form),
-    onSuccess: async (data, variables, context) => {
+    onSuccess: async (data, variables, context, mutationContext) => {
       await queryClient.invalidateQueries({ queryKey: workspaceKeys.members(variables.id) })
       await queryClient.invalidateQueries({ queryKey: workspaceKeys.detail(variables.id) })
       await queryClient.invalidateQueries({ queryKey: workspaceKeys.list })
-      await options?.onSuccess?.(data, variables, context)
+      await options?.onSuccess?.(data, variables, context, mutationContext)
     },
     ...options,
   })
@@ -328,28 +328,28 @@ export function useUpdateWorkspaceMemberRoleMutation(
 ) {
   return useMutation({
     mutationFn: ({ id, userId, form }) => updateWorkspaceMemberRoleRequest(id, userId, form),
-    onSuccess: async (data, variables, context) => {
+    onSuccess: async (data, variables, context, mutationContext) => {
       await queryClient.invalidateQueries({ queryKey: workspaceKeys.members(variables.id) })
       await queryClient.invalidateQueries({ queryKey: workspaceKeys.member(variables.id, variables.userId) })
       await queryClient.invalidateQueries({ queryKey: workspaceKeys.detail(variables.id) })
       await queryClient.invalidateQueries({ queryKey: workspaceKeys.list })
-      await options?.onSuccess?.(data, variables, context)
+      await options?.onSuccess?.(data, variables, context, mutationContext)
     },
     ...options,
   })
 }
 
 export function useDeleteWorkspaceMemberMutation(
-  options?: UseMutationOptions<unknown, Error, { id: number | string; userId: number | string }>
+  options?: UseMutationOptions<ApiResponse<null>, Error, { id: number | string; userId: number | string }>
 ) {
   return useMutation({
     mutationFn: ({ id, userId }) => deleteWorkspaceMemberRequest(id, userId),
-    onSuccess: async (data, variables, context) => {
+    onSuccess: async (data, variables, context, mutationContext) => {
       await queryClient.invalidateQueries({ queryKey: workspaceKeys.members(variables.id) })
       await queryClient.invalidateQueries({ queryKey: workspaceKeys.member(variables.id, variables.userId) })
       await queryClient.invalidateQueries({ queryKey: workspaceKeys.detail(variables.id) })
       await queryClient.invalidateQueries({ queryKey: workspaceKeys.list })
-      await options?.onSuccess?.(data, variables, context)
+      await options?.onSuccess?.(data, variables, context, mutationContext)
     },
     ...options,
   })
@@ -360,10 +360,10 @@ export function useAcceptInvitationMutation(
 ) {
   return useMutation({
     mutationFn: acceptInvitationRequest,
-    onSuccess: async (data, variables, context) => {
+    onSuccess: async (data, variables, context, mutationContext) => {
       await queryClient.invalidateQueries({ queryKey: workspaceKeys.invitations })
       await queryClient.invalidateQueries({ queryKey: workspaceKeys.list })
-      await options?.onSuccess?.(data, variables, context)
+      await options?.onSuccess?.(data, variables, context, mutationContext)
     },
     ...options,
   })
@@ -374,9 +374,9 @@ export function useDeclineInvitationMutation(
 ) {
   return useMutation({
     mutationFn: declineInvitationRequest,
-    onSuccess: async (data, variables, context) => {
+    onSuccess: async (data, variables, context, mutationContext) => {
       await queryClient.invalidateQueries({ queryKey: workspaceKeys.invitations })
-      await options?.onSuccess?.(data, variables, context)
+      await options?.onSuccess?.(data, variables, context, mutationContext)
     },
     ...options,
   })
@@ -408,11 +408,11 @@ export function useAcceptJoinRequestMutation(
 ) {
   return useMutation({
     mutationFn: ({ workspaceId, userId }) => acceptJoinRequestRequest(workspaceId, userId),
-    onSuccess: async (data, variables, context) => {
+    onSuccess: async (data, variables, context, mutationContext) => {
       await queryClient.invalidateQueries({ queryKey: ['workspace-join-requests', variables.workspaceId] })
       await queryClient.invalidateQueries({ queryKey: workspaceKeys.members(variables.workspaceId) })
       await queryClient.invalidateQueries({ queryKey: workspaceKeys.detail(variables.workspaceId) })
-      await options?.onSuccess?.(data, variables, context)
+      await options?.onSuccess?.(data, variables, context, mutationContext)
     },
     ...options
   })
@@ -423,9 +423,9 @@ export function useDeclineJoinRequestMutation(
 ) {
   return useMutation({
     mutationFn: ({ workspaceId, userId }) => declineJoinRequestRequest(workspaceId, userId),
-    onSuccess: async (data, variables, context) => {
+    onSuccess: async (data, variables, context, mutationContext) => {
       await queryClient.invalidateQueries({ queryKey: ['workspace-join-requests', variables.workspaceId] })
-      await options?.onSuccess?.(data, variables, context)
+      await options?.onSuccess?.(data, variables, context, mutationContext)
     },
     ...options
   })
