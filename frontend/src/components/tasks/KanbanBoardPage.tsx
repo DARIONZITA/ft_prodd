@@ -109,6 +109,8 @@ function TaskCard({ task, onClick, index, isBacklogTask, isCompletedBacklog }: {
     data: { type: 'TASK_INSERT', taskId: task.id, fromColumnId: task.columnId, side: 'after', taskIndex: index }
   });
 
+  const isExpired = task.dueDate ? new Date(task.dueDate) <= new Date() : false;
+
   // Checklist progress for backlog cards
   const checklistTotal = task.checklist?.length ?? 0;
   const checklistDone = task.checklist?.filter(i => i.completed).length ?? 0;
@@ -147,9 +149,11 @@ function TaskCard({ task, onClick, index, isBacklogTask, isCompletedBacklog }: {
               } relative p-4 rounded-xl border transition-all group ${
                 isCompletedBacklog
                   ? 'bg-slate-100 border-slate-200 opacity-60 cursor-default'
-                  : isBacklogTask
-                    ? 'bg-white border-slate-200 hover:shadow-md cursor-pointer'
-                    : 'bg-white border-slate-200 hover:shadow-md hover:-translate-y-0.5 cursor-pointer hover:border-slate-300'
+                  : isExpired
+                    ? 'bg-white border-red-300 hover:shadow-md hover:-translate-y-0.5 cursor-pointer hover:border-red-400'
+                    : isBacklogTask
+                      ? 'bg-white border-slate-200 hover:shadow-md cursor-pointer'
+                      : 'bg-white border-slate-200 hover:shadow-md hover:-translate-y-0.5 cursor-pointer hover:border-slate-300'
               }`}
             >
               {!isCompletedBacklog && (
@@ -196,7 +200,7 @@ function TaskCard({ task, onClick, index, isBacklogTask, isCompletedBacklog }: {
 
               <div className="space-y-2 mb-3 font-mono text-xs">
                 {task.dueDate && (
-                  <div className={isCompletedBacklog ? 'text-slate-300' : 'text-slate-500'}>
+                  <div className={isCompletedBacklog ? 'text-slate-300' : isExpired ? 'text-red-500' : 'text-slate-500'}>
                     <Calendar className="w-3 h-3 inline mr-1" /> {new Date(task.dueDate).toLocaleDateString()}
                   </div>
                 )}
@@ -418,6 +422,7 @@ export default function KanbanBoardPage({ workspaceId, onOpenSettings, onOpenMem
             columnId: String(col.id),
             priority: priorityMap[t.priority] || 'Medium',
             order: index + 1,
+            dueDate: t.dueDate ?? undefined,
             assignees: t.assignments.map((username, aIdx) => ({
               id: `assignee-${aIdx}-${username}`,
               name: username,
