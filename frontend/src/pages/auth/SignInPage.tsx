@@ -1,3 +1,4 @@
+import { Navigate }                     from 'react-router-dom'
 import logo42                           from '../../assets/42.svg'
 import Layout                           from '../../components/auth/Layout'
 import Divider                          from '../../components/auth/Divider'
@@ -5,6 +6,7 @@ import LegalText                        from '../../components/auth/LegalText'
 import FooterLink                       from '../../components/auth/FooterLink'
 import PasswordInput                    from '../../components/auth/PasswordInput'
 import { useSignInMutation }            from '../../api/auth'
+import { useGetUserRequest }            from '../../api/user'
 import { getApiErrorMessage }           from '../../api/axios'
 import type { SignInForm }              from '../../types/auth'
 import { authInit }                     from './utils'
@@ -12,8 +14,8 @@ import { signInSchema, parseSchema }    from '../../validation/auth'
 
 export default function SignInPage()
 {
+    const userQuery = useGetUserRequest({ retry: false })
     const { form, srvError, setSrvError, navigate, updateField } = authInit<SignInForm>({ identifier: '', password: '' })
-
     const signInMutation = useSignInMutation({
         onSuccess: () => {
             console.log('sign-in successful, navigating to dashboard.')
@@ -23,6 +25,14 @@ export default function SignInPage()
             setSrvError(getApiErrorMessage(error))
         },
     })
+
+    if (userQuery.isLoading) {
+        return null
+    }
+
+    if (userQuery.data?.success) {
+        return <Navigate to="/dashboard" replace />
+    }
 
     const handleOAuthLogin = () => {
         setSrvError(null)
