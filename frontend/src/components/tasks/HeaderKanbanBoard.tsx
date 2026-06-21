@@ -39,7 +39,6 @@ export function HeaderKanbanBoard({
       return () => document.removeEventListener('mousedown', handleClickOutside)
     }, [])
 
-    console.log(workspaceCreatedAt)
     return (
       <>
       <header className="min-h-[3.5rem] py-2 border-b border-slate-200 bg-white flex flex-col md:flex-row items-center justify-between px-4 sm:px-6 sticky top-0 z-10 md:z-20 flex-shrink-0 gap-3 md:gap-0">
