@@ -324,7 +324,7 @@ export default function TaskDetailPanel({ workspaceId, task, columns, onClose }:
                     </span>
                     <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-2.5 py-1 shadow-sm">
                       <Calendar className="w-3.5 h-3.5" />
-                      {task.dueDate ? new Date(task.dueDate).toLocaleDateString('en-US') : 'No due date'}
+                      {taskDetails?.dueDate ? new Date(taskDetails.dueDate).toLocaleDateString('en-US') : 'No due date'}
                     </span>
                   </div>
                 </div>
