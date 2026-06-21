@@ -38,6 +38,7 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY --from=builder /app/dist ./dist
 COPY package*.json ./
 COPY prisma ./prisma
+COPY uploads ./uploads
 RUN npx prisma generate
 EXPOSE 3001
 EXPOSE 5555

@@ -10,6 +10,7 @@ export default defineConfig({
   ],
   server: {
     allowedHosts: ['ft_prodd'],
+    host: true,
     proxy: {
       '/api': {
         target:  process.env.VITE_UPLOADS_PROXY,   // ← usa 127.0.0.1 em vez de localhost
