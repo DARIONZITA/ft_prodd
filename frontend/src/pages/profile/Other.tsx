@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { UserPlus, UserCheck, Loader2, Lock, X, Users } from 'lucide-react'
 import ProfileAvatar from '../../components/profile/Avatar'
-import WorkspaceCard from '../../components/profile/WorkspaceCard'
 import {
   useUserProfileQuery,
 } from '../../api/user'

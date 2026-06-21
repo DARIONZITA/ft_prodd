@@ -1,4 +1,4 @@
-import { useQuery, useMutation, type UseMutationOptions, type UseQueryOptions } from '@tanstack/react-query'
+import { useQuery, useMutation, type UseQueryOptions } from '@tanstack/react-query'
 import api from './axios'
 import { queryClient } from '../main'
 

@@ -47,10 +47,9 @@ interface TaskDetailPanelProps {
   task: Task
   columns: Column[]
   onClose: () => void
-  onUpdateTask: (task: Task) => void
 }
 
-export default function TaskDetailPanel({ workspaceId, task, columns, onClose, onUpdateTask }: TaskDetailPanelProps) {
+export default function TaskDetailPanel({ workspaceId, task, columns, onClose }: TaskDetailPanelProps) {
   // Queries
   const { data: taskData } = useTaskQuery(task.columnId, task.id)
   const { data: labelsQuery } = useWorkspaceLabelsQuery(workspaceId)

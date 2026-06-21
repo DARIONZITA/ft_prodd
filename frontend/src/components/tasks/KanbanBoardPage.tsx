@@ -1,6 +1,6 @@
-import { useMemo, useState, useRef, useCallback, useEffect } from 'react';
+import { useMemo, useState, useRef, useEffect } from 'react';
 import { Plus, Calendar, Link2, Circle, Trash2 } from 'lucide-react';
-import type { ChecklistItem, Column, ColumnTypeId, Task, TaskPriority } from './Types';
+import type { Column, ColumnTypeId, Task, TaskPriority } from './Types';
 import { useDroppable, DragDropProvider, useDragDropManager} from '@dnd-kit/react';
 import {useSortable} from '@dnd-kit/react/sortable';
 import { PointerSensor, PointerActivationConstraints } from '@dnd-kit/dom';
@@ -47,97 +47,6 @@ const sortColumns = (columnList: Column[]) =>
 
 const SORTED_DEFAULT_COLUMNS = sortColumns(DEFAULT_COLUMNS);
 
-const INITIAL_TASKS: Task[] = [
- {
-    id: 'TASK-101',
-    title: 'Research authentication providers for OAuth',
-    description: 'Evaluate OAuth providers',
-    columnId: 'col-1',
-    priority: 'Medium',
-    order: 2,
-    assignees: [{ id: '1', name: 'Gama', avatar: 'https://ui-avatars.com/api/?name=Gama&background=4f46e5&color=fff', initials: 'GA' }],
-    labels: [{ id: 'l1', name: 'Research', color: 'text-indigo-600', bgColor: 'bg-indigo-50', borderColor: 'border-indigo-100' }],
-    createdBy: { id: '1', name: 'Gama', avatar: 'https://ui-avatars.com/api/?name=Gama', initials: 'GA' },
-    createdAt: '2026-02-15',
-  },
-  {
-    id: 'TASK-102',
-    title: 'Define DB schema for user profiles',
-    description: 'Create database schema',
-    columnId: 'col-1',
-    priority: 'Low',
-    order: 1,
-    dueDate: '2026-02-22',
-    assignees: [{ id: '1', name: 'Gama', avatar: 'https://ui-avatars.com/api/?name=Gama', initials: 'GA' }],
-    labels: [{ id: 'l2', name: 'Database', color: 'text-yellow-700', bgColor: 'bg-yellow-50', borderColor: 'border-yellow-100' }],
-    createdBy: { id: '1', name: 'Gama', avatar: 'https://ui-avatars.com/api/?name=Gama', initials: 'GA' },
-    createdAt: '2026-02-15',
-  },
-  {
-    id: 'TASK-103',
-    title: 'Setup CI/CD pipeline',
-    description: 'Configure deployment',
-    columnId: 'col-1',
-    priority: 'High',
-    order: 3,
-    assignees: [],
-    labels: [{ id: 'l3', name: 'DevOps', color: 'text-green-600', bgColor: 'bg-green-50', borderColor: 'border-green-100' }],
-    createdBy: { id: '1', name: 'Gama', avatar: 'https://ui-avatars.com/api/?name=Gama', initials: 'GA' },
-    createdAt: '2026-02-15',
-  },
-  {
-    id: 'TASK-104',
-    title: 'Implement authentication routes',
-    description: 'Create auth endpoints',
-    columnId: 'col-2',
-    priority: 'High',
-    order: 1,
-    dueDate: '2026-02-20',
-    assignees: [{ id: '2', name: 'Jose M', avatar: 'https://ui-avatars.com/api/?name=Jose+M&background=0891b2&color=fff', initials: 'JM' }],
-    labels: [{ id: 'l4', name: 'Backend', color: 'text-cyan-700', bgColor: 'bg-cyan-50', borderColor: 'border-cyan-100' }],
-    createdBy: { id: '1', name: 'Gama', avatar: 'https://ui-avatars.com/api/?name=Gama', initials: 'GA' },
-    createdAt: '2026-02-15',
-  },
-  {
-    id: 'TASK-092',
-    title: 'Implement WebSocket connection for real-time chat',
-    description: 'Setup Socket.IO',
-    columnId: 'col-3',
-    priority: 'High',
-    order: 1,
-    dueDate: '2026-02-20',
-    assignees: [{ id: '3', name: 'Andre C', avatar: 'https://ui-avatars.com/api/?name=Andre+C&background=0e7490&color=fff', initials: 'AC' }, { id: '2', name: 'Jose M', avatar: 'https://ui-avatars.com/api/?name=Jose+M&background=0891b2&color=fff', initials: 'JM' }],
-    labels: [{ id: 'l4', name: 'Backend', color: 'text-cyan-700', bgColor: 'bg-cyan-50', borderColor: 'border-cyan-100' }, { id: 'l5', name: 'Feature', color: 'text-cyan-700', bgColor: 'bg-cyan-50', borderColor: 'border-cyan-100' }],
-    createdBy: { id: '1', name: 'Gama', avatar: 'https://ui-avatars.com/api/?name=Gama', initials: 'GA' },
-    createdAt: '2026-02-15',
-  },
-  {
-    id: 'TASK-105',
-    title: 'Review client authentication flow',
-    description: 'Code review for auth',
-    columnId: 'col-4',
-    priority: 'Medium',
-    order: 1,
-    dueDate: '2026-02-21',
-    assignees: [{ id: '4', name: 'Ana S', avatar: 'https://ui-avatars.com/api/?name=Ana+S&background=4f46e5&color=fff', initials: 'AS' }],
-    labels: [],
-    createdBy: { id: '1', name: 'Gama', avatar: 'https://ui-avatars.com/api/?name=Gama', initials: 'GA' },
-    createdAt: '2026-02-15',
-  },
-  {
-    id: 'TASK-106',
-    title: 'Deplo staging environment',
-    description: 'Production deployment',
-    columnId: 'col-5',
-    priority: 'High',
-    order: 1,
-    dueDate: '2026-02-18',
-    assignees: [{ id: '3', name: 'Andre C', avatar: 'https://ui-avatars.com/api/?name=Andre+C&background=0e7490&color=fff', initials: 'AC' }],
-    labels: [{ id: 'l3', name: 'DevOps', color: 'text-green-600', bgColor: 'bg-green-50', borderColor: 'border-green-100' }],
-    createdBy: { id: '1', name: 'Gama', avatar: 'https://ui-avatars.com/api/?name=Gama', initials: 'GA' },
-    createdAt: '2026-02-15',
-  },
-];
 
 const getPriorityIcon = (priority: string) => {
   if (priority === 'High') return <Circle className="w-3 h-3 fill-red-500 text-red-500" />;
@@ -149,18 +58,6 @@ const getPriorityTextColor = (priority: string) => {
   if (priority === 'High') return 'text-red-500';
   if (priority === 'Medium') return 'text-slate-500';
   return 'text-green-500';
-};
-
-const getNextColumnId = (currentColumns: Column[]) => {
-  const currentNumbers = currentColumns
-    .map((column) => {
-      const matched = column.id.match(/^col-(\d+)$/);
-      return matched ? Number(matched[1]) : 0;
-    })
-    .filter((value) => value > 0);
-
-  const next = currentNumbers.length > 0 ? Math.max(...currentNumbers) + 1 : 1;
-  return `col-${next}`;
 };
 
 const sortTasks = (taskList: Task[]) =>
@@ -729,21 +626,6 @@ export default function KanbanBoardPage({ workspaceId, onOpenSettings, onOpenMem
     openCreateColumnModal();
   };
 
-  // Helper: recompute backlog completion status
-  const recomputeBacklogCompletion = useCallback((allTasks: Task[], backlogId: string): Task[] => {
-    const backlog = allTasks.find((t) => t.id === backlogId);
-    if (!backlog) return allTasks;
-
-    const checklist = backlog.checklist ?? [];
-    if (checklist.length === 0) return allTasks;
-
-    const allDone = checklist.every((item) => item.completed);
-
-    return allTasks.map((t) =>
-      t.id === backlogId ? { ...t, isCompleted: allDone } : t
-    );
-  }, []);
-
   const handleDragEnd = (event: any) => {
     if (event.canceled || !event.operation.target) return;
 
@@ -861,7 +743,7 @@ export default function KanbanBoardPage({ workspaceId, onOpenSettings, onOpenMem
       (t) => t.columnId !== targetColumnId
     );
 
-    let result = sortTasks([...others, ...newTargetTasks]);
+    const result = sortTasks([...others, ...newTargetTasks]);
 
     // Sync: move call
     if (sourceColumnId !== targetColumnId) {

@@ -4,7 +4,6 @@ import Sidebar from '../components/SideBar'
 import ThisProfile from './profile/This'
 import OtherProfile from './profile/Other'
 import Friends from './profile/Friends'
-import { useFriendsQuery } from '../api/friends'
 import api from '../api/axios'
 import CreateOrganizationModal from './organization/CreateOrganizationModal'
 import OrganizationSettingsPage from './organization/OrganizationSettingsPage.tsx'
@@ -28,13 +27,6 @@ interface Workspace {
   createdAt?: string
   role?: 'admin' | 'member' | 'guest'
 }
-
-interface dataSideBar {
-  name: string
-  avatarUrl: string | null
-  workspaces: Workspace[]
-}
-
 
 // ─── View type ────────────────────────────────────────────────────────────────
 
@@ -98,9 +90,6 @@ export default function DashboardPagePlaceholder() {
 
   const [friendsOpen, setFriendsOpen] = useState(false)
   const [createOrganizationOpen, setCreateOrganizationOpen] = useState(false)
-  const friendsQuery = useFriendsQuery(userDataQuery?.id, { refetchOnMount: false })
-  const friendsCount = friendsQuery.data?.data?.pagination?.total ?? 0
-
   const selectedWorkspaceId = useMemo<string | number>(() => {
     return workspaceParam || workspaceDataQuery[0]?.id || 0
   }, [workspaceParam, workspaceDataQuery])

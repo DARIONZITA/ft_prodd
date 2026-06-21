@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Menu, Plus, Search, ChevronsLeft, LogOut, Grid2x2, FileText, ArrowLeftRight, Trophy, Medal, ScrollText, Users, Loader2, Mail } from 'lucide-react'
+import { Menu, Plus, Search, ChevronsLeft, LogOut, Grid2x2, FileText, ArrowLeftRight, Users, Loader2, Mail } from 'lucide-react'
 import NotificationsDropdown from './NotificationsDropdown'
 import { useUsersQuery } from '../api/user'
 import { useMyInvitationsQuery } from '../api/workspace'

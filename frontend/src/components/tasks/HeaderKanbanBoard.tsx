@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { Plus, Search, Filter, ArrowUpDown, Settings, MoreHorizontal, Users, Key, Tag } from 'lucide-react';
+import { Plus, Search, Settings, MoreHorizontal, Users, Key, Tag } from 'lucide-react';
 
 interface PropsHeaderkanbanBoard {
   onModalCreate: () => void
@@ -7,7 +7,6 @@ interface PropsHeaderkanbanBoard {
   onViewModeChange: (viewMode: 'board' | 'list') => void
   searchQuery: string
   setSearchQuery: (query: string) => void
-  completedTodayCount: number
   workspaceCreatedAt: Date
   onOpenSettings?: () => void
   onOpenMembers?: () => void
@@ -21,7 +20,6 @@ export function HeaderKanbanBoard({
   onViewModeChange,
   searchQuery,
   setSearchQuery,
-  completedTodayCount,
   workspaceCreatedAt,
   onOpenSettings,
   onOpenMembers,

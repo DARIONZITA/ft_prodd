@@ -8,7 +8,7 @@ import { authInit, reportFieldError } from './utils'
 import { useSignUpMutation }          from '../../api/auth'
 import type { SignUpForm }            from '../../types/auth'
 
-type Fields = 'username' | 'password' | 'repeat'
+type Fields = 'username' | 'password'
 
 export default function SignUpPage()
 {
@@ -41,7 +41,7 @@ export default function SignUpPage()
     setSrvError(null)
 
     try {
-      await signUpMutation.mutateAsync((({ repeat, ...rest }) => rest)(form))
+      await signUpMutation.mutateAsync({ email: form.email, username: form.username, password: form.password })
     } catch (error) {
       console.error(error)
     }
