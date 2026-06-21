@@ -3,6 +3,7 @@ import { UserPlus, UserCheck, Loader2, Lock, X, Users } from 'lucide-react'
 import ProfileAvatar from '../../components/profile/Avatar'
 import {
   useUserProfileQuery,
+  type PublicUserProfile,
 } from '../../api/user'
 import {
   useFriendsQuery,
@@ -14,8 +15,6 @@ import {
   getOtherFriendUser,
 } from '../../api/friends'
 import { useUserWorkspacesForUserQuery, useRequestToJoinWorkspaceMutation } from '../../api/workspace'
-import type { User } from '../../types/user'
-
 type Section = 'workspaces' | 'friends'
 
 interface OtherProfileProps {
@@ -31,7 +30,7 @@ export default function OtherProfile({ userId, currentUserId, onNavigate }: Othe
   const meNumeric = typeof currentUserId === 'string' ? Number(currentUserId) : currentUserId
 
   const profileQuery = useUserProfileQuery(profileNumeric, { enabled: !!userId })
-  const user: User | null = profileQuery.data?.data ?? null
+  const user: PublicUserProfile | null = profileQuery.data?.data ?? null
 
   const friendsQuery = useFriendsQuery(meNumeric)
   const areFriends = friendsQuery.data?.data?.friendRequests?.some(
@@ -90,7 +89,7 @@ export default function OtherProfile({ userId, currentUserId, onNavigate }: Othe
   const handleFriendAction = () => {
     if (incomingFromThem && friendshipStatus === 'none') {
       respondMutation.mutate(
-        { friendId: incomingFromThem.id, status: 'accepted' },
+        { friendId: incomingFromThem.senderId, status: 'accepted' },
         { onSuccess: () => refreshAll() },
       )
       return
