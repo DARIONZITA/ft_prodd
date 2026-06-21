@@ -15,7 +15,7 @@ type Fields = 'username' | 'password' | 'repeat'
 
 export default function SignUpPage()
 {
-  const userQuery = useGetUserRequest({ retry: false })
+  const userQuery = useGetUserRequest({ retry: false, refetchOnWindowFocus: false })
   const { form, srvError, setSrvError, navigate, updateField } = authInit<SignUpForm>({ email: '', username: '', password: '', repeat: '' })
   const signUpMutation = useSignUpMutation({
     onSuccess: () => {
@@ -38,9 +38,11 @@ export default function SignUpPage()
 
   const handleSubmit = async (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault()
+    console.log('[SignUp] handleSubmit called', form)
 
     const result = parseSchema(signUpSchema, form)
     if (!result.success) {
+      console.log('[SignUp] validation failed', result.errors)
       reportFieldError(result.errors, fieldRefs.current)
       return
     }

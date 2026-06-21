@@ -14,7 +14,7 @@ import { signInSchema, parseSchema }    from '../../validation/auth'
 
 export default function SignInPage()
 {
-    const userQuery = useGetUserRequest({ retry: false })
+    const userQuery = useGetUserRequest({ retry: false, refetchOnWindowFocus: false })
     const { form, srvError, setSrvError, navigate, updateField } = authInit<SignInForm>({ identifier: '', password: '' })
     const signInMutation = useSignInMutation({
         onSuccess: () => {
