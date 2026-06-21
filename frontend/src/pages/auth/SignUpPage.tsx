@@ -1,4 +1,5 @@
 import { useRef }                     from 'react'
+import { Navigate }                   from 'react-router-dom'
 import Layout                         from '../../components/auth/Layout'
 import LegalText                      from '../../components/auth/LegalText'
 import FooterLink                     from '../../components/auth/FooterLink'
@@ -6,26 +7,34 @@ import PasswordInput                  from '../../components/auth/PasswordInput'
 import { signUpSchema, parseSchema }  from '../../validation/auth'
 import { authInit, reportFieldError } from './utils'
 import { useSignUpMutation }          from '../../api/auth'
+import { useGetUserRequest }          from '../../api/user'
+import { getApiErrorMessage }         from '../../api/axios'
 import type { SignUpForm }            from '../../types/auth'
 
 type Fields = 'username' | 'password' | 'repeat'
 
 export default function SignUpPage()
 {
+  const userQuery = useGetUserRequest({ retry: false })
   const { form, srvError, setSrvError, navigate, updateField } = authInit<SignUpForm>({ email: '', username: '', password: '', repeat: '' })
-
   const signUpMutation = useSignUpMutation({
     onSuccess: () => {
       console.log('sign-up successful, navigating to dashboard.')
       navigate('/dashboard')
     },
     onError: (error) => {
-      console.error(error)
-      setSrvError('Unexpected error while creating the account')
+      setSrvError(getApiErrorMessage(error))
     },
   })
-
   const fieldRefs = useRef<Partial<Record<Fields, HTMLInputElement>>>({})
+
+  if (userQuery.isLoading) {
+    return null
+  }
+
+  if (userQuery.data?.success) {
+    return <Navigate to="/dashboard" replace />
+  }
 
   const handleSubmit = async (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault()
