@@ -332,16 +332,17 @@ export async function requestToJoinWorkspace(req: Request, res: Response, next: 
 
             // Create notification for all admins of the workspace
             const admins = workspace.members;
-            if (admins.length > 0) {
-                await tx.notification.createMany({
-                    data: admins.map(admin => ({
-                        userId: admin.userId,
+            if (admins.length > 0)
+            {
+                await notify(
+                    {
+                        userIds: admins.map(a => a.userId),
                         type: NotificationType.workspace,
                         message: `${req.user!.username} requested to join workspace "${workspace.name}"`
-                    }))
-                });
+                    },
+                    tx
+                );
             }
-
             return membership;
         });
 

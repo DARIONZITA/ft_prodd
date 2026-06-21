@@ -106,14 +106,14 @@ export async function createMember(req: Request, res: Response, next: NextFuncti
             });
 
             // Notify the invited user
-            await tx.notification.create({
-                data: {
-                    userId,
+            await notify(
+                {
+                    userIds: [userId],
                     type: NotificationType.workspace,
                     message: `${req.user!.username} invited you to workspace "${req.workspace!.name}" as ${safeIntendedRole}`
-                }
-            });
-
+                },
+                tx
+            );
             return member;
         });
 
@@ -433,28 +433,30 @@ export async function acceptJoinRequest(req: Request, res: Response, next: NextF
             });
 
             // Notify the user who requested to join
-            await tx.notification.create({
-                data: {
-                    userId: targetUserId,
+            await notify(
+                {
+                    userIds: [targetUserId],
                     type: NotificationType.workspace,
                     message: `Your request to join workspace "${req.workspace!.name}" has been accepted`
-                }
-            });
-
+                },
+                tx
+            );
             // Notify other active members
             const otherMembers = await tx.workspaceMember.findMany({
                 where: { workspaceId, userId: { notIn: [req.user!.id, targetUserId] }, role: { notIn: ['pending', 'requesting'] } },
                 select: { userId: true }
             });
 
-            if (otherMembers.length > 0) {
-                await tx.notification.createMany({
-                    data: otherMembers.map(m => ({
-                        userId: m.userId,
+            if (otherMembers.length > 0)
+            {
+                await notify(
+                    {
+                        userIds: otherMembers.map(m => m.userId),
                         type: NotificationType.workspace,
-                        message: `${updatedMember.user.username} joined the workspace "${req.workspace!.name}"`
-                    }))
-                });
+                        message: `${updatedMember.user.username} has joined workspace "${req.workspace!.name}" by ${req.user!.username}`
+                    },
+                    tx
+                );
             }
 
             return updatedMember;
@@ -485,13 +487,14 @@ export async function declineJoinRequest(req: Request, res: Response, next: Next
             await tx.workspaceMember.delete({ where: { id: invitation.id } });
 
             // Notify the user who requested to join
-            await tx.notification.create({
-                data: {
-                    userId: targetUserId,
+            await notify(
+                {
+                    userIds: [targetUserId],
                     type: NotificationType.workspace,
                     message: `Your request to join workspace "${req.workspace!.name}" has been declined`
-                }
-            });
+                },
+                tx
+            );
         });
 
         res.json({ success: true, message: 'Join request declined' });
