@@ -9,6 +9,7 @@ export default defineConfig({
     tailwindcss(),
   ],
   server: {
+    allowedHosts: ['ft_prodd'],
     proxy: {
       '/api': {
         target:  process.env.VITE_UPLOADS_PROXY,   // ← usa 127.0.0.1 em vez de localhost

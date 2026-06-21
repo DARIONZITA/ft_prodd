@@ -18,16 +18,7 @@ export const envSchema = z.object(
 
   BACKEND_URL: z.string().url('BACKEND_URL must be a valid URL').nonempty('BACKEND_URL is required'),
 
-}).transform((env) => {
-  const backendUrl = new URL(env.BACKEND_URL);
-
-  if (!backendUrl.port)
-    throw new Error('BACKEND_URL must include an explicit port');
-
-  return {
-    ...env,
-    PORT: Number(backendUrl.port),
-  };
+  PORT: z.string().regex(/^\d+$/).transform(Number).refine((val) => val >= 1 && val <= 65535, 'PORT must be a valid port number between 1 and 65535'),
 });
 
 const	result = envSchema.safeParse(process.env);
