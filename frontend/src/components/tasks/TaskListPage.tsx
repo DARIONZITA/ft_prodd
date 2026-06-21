@@ -24,6 +24,7 @@ const getPriorityTextColor = (priority: string) => {
 };
 
 function TaskRow({ task, onTaskClick, index }: { task: Task; onTaskClick: (task: Task) => void; index: number }) {
+  const isExpired = task.dueDate ? new Date(task.dueDate) <= new Date() : false;
   const [element, setElement] = useState<Element | null>(null);
 
   const { isDragging } = useSortable({
@@ -48,7 +49,7 @@ function TaskRow({ task, onTaskClick, index }: { task: Task; onTaskClick: (task:
     <div
       ref={setElement}
       onClick={() => onTaskClick(task)}
-      className={`relative grid grid-cols-[32px_1fr_140px_110px_100px_90px_80px] gap-3 px-4 py-3 cursor-pointer hover:bg-slate-50 transition-colors items-center ${isDragging ? 'opacity-60' : 'opacity-100'}`}
+      className={`relative grid grid-cols-[32px_1fr_140px_110px_100px_90px_80px] gap-3 px-4 py-3 cursor-pointer hover:bg-slate-50 transition-colors items-center border-b ${isExpired ? 'border-red-200 bg-red-50/30' : 'border-slate-100'} ${isDragging ? 'opacity-60' : 'opacity-100'}`}
     >
       <div ref={beforeRef} className="absolute -top-2 left-0 right-0 h-1/2 z-10" />
       {isBeforeDropTarget && !isDragging && (
@@ -73,7 +74,7 @@ function TaskRow({ task, onTaskClick, index }: { task: Task; onTaskClick: (task:
         )}
         {task.assignees.length === 0 && <span className="text-xs text-slate-400">-</span>}
       </div>
-      <span className="font-mono text-xs text-slate-400">{task.dueDate ? new Date(task.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '-'}</span>
+      <span className={`font-mono text-xs ${isExpired ? 'text-red-500 font-bold' : 'text-slate-400'}`}>{task.dueDate ? new Date(task.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '-'}</span>
       <div className="flex items-center gap-1">
         {getPriorityIcon(task.priority)}
         <span className={`text-xs font-medium ${getPriorityTextColor(task.priority)}`}>{task.priority}</span>
