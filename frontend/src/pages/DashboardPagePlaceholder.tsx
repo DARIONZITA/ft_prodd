@@ -212,7 +212,7 @@ export default function DashboardPagePlaceholder() {
     if (activeView === 'all-boards') return <PlaceholderView title="All Boards" />
     if (activeView === 'completed') return <PlaceholderView title="Completed Tasks" />
     if (activeView === 'kanbanBoard') {
-      console.log(workspaceQuery)
+
       return (
         <KanbanBoardPage
           workspaceId={currentWorkspace?.id}

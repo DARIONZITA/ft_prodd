@@ -19,7 +19,7 @@ export default function SignUpPage()
   const { form, srvError, setSrvError, navigate, updateField } = authInit<SignUpForm>({ email: '', username: '', password: '', repeat: '' })
   const signUpMutation = useSignUpMutation({
     onSuccess: () => {
-      console.log('sign-up successful, navigating to dashboard.')
+
       navigate('/dashboard')
     },
     onError: (error) => {
@@ -45,7 +45,7 @@ export default function SignUpPage()
       return
     }
 
-    console.log(`SignUpPage successfully parsed: ${JSON.stringify(form)}`)
+
 
     setSrvError(null)
 

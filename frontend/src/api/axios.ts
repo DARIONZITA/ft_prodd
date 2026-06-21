@@ -7,32 +7,14 @@ const api: AxiosInstance = axios.create({
 })
 
 api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
-  console.log(
-    `[FRONTEND] REQUEST -> 
-    ${config.method?.toUpperCase()} 
-    ${config.url}`
-  )
   return config
 })
 
 api.interceptors.response.use(
   (response: AxiosResponse) => {
-    console.log(
-      `[FRONTEND] RESPONSE <- 
-      ${response.status} 
-      ${response.config.method?.toUpperCase()} 
-      ${response.config.url}`
-    )
     return response
   },
   (error) => {
-    console.log(
-      `[FRONTEND] RESPONSE ERROR <- 
-      ${error.response?.status} 
-      ${error.response?.config?.method?.toUpperCase()} 
-      ${error.response?.config?.url} 
-      ${getApiErrorMessage(error)}`
-    )
     if (error.response?.status === HttpStatusCode.Unauthorized) {
       const publicPaths = ['/signin', '/signup', '/']
       if (!publicPaths.includes(window.location.pathname)) {

@@ -18,7 +18,7 @@ export default function SignInPage()
     const { form, srvError, setSrvError, navigate, updateField } = authInit<SignInForm>({ identifier: '', password: '' })
     const signInMutation = useSignInMutation({
         onSuccess: () => {
-            console.log('sign-in successful, navigating to dashboard.')
+
             navigate('/dashboard')
         },
         onError: (error) => {
@@ -49,7 +49,7 @@ export default function SignInPage()
             return
         }
 
-        console.log(`SignInPage successfully parsed: ${JSON.stringify(form)}`)
+
 
         setSrvError(null)
 

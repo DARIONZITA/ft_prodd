@@ -3,7 +3,7 @@ import SignInPage                   from './pages/auth/SignInPage'
 import SignUpPage                   from './pages/auth/SignUpPage'
 import LoadingPage                  from './pages/LoadingPage'
 import LandingPage                  from './pages/LandingPage'
-//import ProtectedRoute               from './components/ProtectedRoute'
+import ProtectedRoute               from './components/ProtectedRoute'
 import OAuthCallbackPage            from "./pages/OauthCallbackPage"
 import DashboardPagePlaceholder     from './pages/DashboardPagePlaceholder'
 import PrivacyPolicy                from './pages/legal/PrivacyPolicy'
@@ -24,9 +24,9 @@ function App() {
         <Route
           path="/dashboard"
           element={
-            //<ProtectedRoute>
+            <ProtectedRoute>
               <DashboardPagePlaceholder />
-            //</ProtectedRoute>
+            </ProtectedRoute>
           }
         />
         <Route path="*" element={<Navigate to="/dashboard" replace />} />

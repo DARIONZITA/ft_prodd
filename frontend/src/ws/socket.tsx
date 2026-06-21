@@ -59,20 +59,20 @@ export function WebSocketProvider({ children }: WebSocketProviderProps) {
         newSocket.on('connect', () => {
           if (active) {
             setIsConnected(true)
-            console.log('[WS] Connected to Server')
+
           }
         })
 
         newSocket.on('disconnect', () => {
           if (active) {
             setIsConnected(false)
-            console.log('[WS] Disconnected from Server')
+
           }
         })
 
         // Real-time Comments Sync
         newSocket.on('comment:new', ({ taskId, comment }: { taskId: number; comment: any }) => {
-          console.log('[WS] comment:new', { taskId, comment })
+
           // Update the cache directly
           queryClient.setQueriesData({ queryKey: kanbanKeys.task(taskId) }, (oldData: any) => {
             if (!oldData || !oldData.success) return oldData
@@ -98,7 +98,7 @@ export function WebSocketProvider({ children }: WebSocketProviderProps) {
         })
 
         newSocket.on('comment:updated', ({ taskId, comment }: { taskId: number; comment: any }) => {
-          console.log('[WS] comment:updated', { taskId, comment })
+
           queryClient.setQueriesData({ queryKey: kanbanKeys.task(taskId) }, (oldData: any) => {
             if (!oldData || !oldData.success) return oldData
             const items = oldData.data.comments?.items || []
@@ -117,7 +117,7 @@ export function WebSocketProvider({ children }: WebSocketProviderProps) {
         })
 
         newSocket.on('comment:deleted', ({ taskId, commentId }: { taskId: number; commentId: number }) => {
-          console.log('[WS] comment:deleted', { taskId, commentId })
+
           queryClient.setQueriesData({ queryKey: kanbanKeys.task(taskId) }, (oldData: any) => {
             if (!oldData || !oldData.success) return oldData
             const items = oldData.data.comments?.items || []
@@ -141,7 +141,7 @@ export function WebSocketProvider({ children }: WebSocketProviderProps) {
 
         // Real-time Notifications Sync
         newSocket.on('notification', ({ payload }: any) => {
-          console.log('[WS] notification', payload)
+
           const newNotif = payload.persisted
           if (!newNotif) return
 
@@ -165,7 +165,7 @@ export function WebSocketProvider({ children }: WebSocketProviderProps) {
         })
 
         newSocket.on('notification:read', ({ notificationId }: { notificationId: number }) => {
-          console.log('[WS] notification:read', { notificationId })
+
           queryClient.setQueriesData({ queryKey: notificationsKeys.all }, (oldData: any) => {
             if (!oldData || !oldData.success) return oldData
             const list = oldData.data.notifications || []
@@ -183,7 +183,7 @@ export function WebSocketProvider({ children }: WebSocketProviderProps) {
         })
 
         newSocket.on('notification:read_all', () => {
-          console.log('[WS] notification:read_all')
+
           queryClient.setQueriesData({ queryKey: notificationsKeys.all }, (oldData: any) => {
             if (!oldData || !oldData.success) return oldData
             const list = oldData.data.notifications || []
