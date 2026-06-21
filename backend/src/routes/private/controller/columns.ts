@@ -42,6 +42,7 @@ export async function listColumns(req: Request, res: Response, next: NextFunctio
           id: task.id,
           title: task.title,
           priority: task.priority,
+          dueDate: task.dueDate,
           labels: task.taskLabels.map(tl => tl.label.name),
           assignments: task.assignments.map(a => a.user.username)
         }))

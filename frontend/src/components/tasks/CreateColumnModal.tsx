@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { X } from 'lucide-react';
+import { X, ChevronDown } from 'lucide-react';
 import type { ColumnTypeId } from './Types';
 
 interface CreateColumnModalProps {
@@ -58,7 +58,7 @@ export default function CreateColumnModal({ onClose, onCreateColumn, initialType
               placeholder="e.g. QA Review"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full font-body text-sm border font-medium border-slate-300 rounded-lg px-3 py-2.5 outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 text-slate-900 placeholder-slate-400 transition-all"
+              className="w-full font-body text-sm sm:text-base border font-medium border-slate-300 rounded-lg px-3 py-2.5 outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 text-slate-900 placeholder-slate-400 transition-all"
             />
           </div>
 
@@ -66,15 +66,18 @@ export default function CreateColumnModal({ onClose, onCreateColumn, initialType
             <label className="block font-mono text-[11px] uppercase tracking-wider text-slate-400 mb-1.5">
               Column type
             </label>
-            <select
-              value={columnTypeId}
-              onChange={(e) => setColumnTypeId(e.target.value as ColumnTypeId)}
-              className="w-full text-sm border border-slate-200 rounded-lg px-3 py-2 outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 text-slate-700 appearance-none bg-white transition-all cursor-pointer"
-            >
-              {Object.entries(COLUMN_TYPE_LABELS).map(([type, label]) => (
-                <option key={type} value={type}>{label}</option>
-              ))}
-            </select>
+            <div className="relative">
+              <select
+                value={columnTypeId}
+                onChange={(e) => setColumnTypeId(e.target.value as ColumnTypeId)}
+                className="w-full text-sm sm:text-base border border-slate-200 rounded-lg px-3 py-2.5 sm:py-2 outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 text-slate-700 appearance-none bg-white transition-all cursor-pointer pr-10"
+              >
+                {Object.entries(COLUMN_TYPE_LABELS).map(([type, label]) => (
+                  <option key={type} value={type}>{label}</option>
+                ))}
+              </select>
+              <ChevronDown className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+            </div>
           </div>
         </div>
 
