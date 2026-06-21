@@ -74,6 +74,7 @@ export interface DashboardColumn {
     id: number
     title: string
     priority: 'LOW' | 'MEDIUM' | 'HIGH'
+    dueDate: string | null
     labels: string[]
     assignments: string[]
     checklist?: { id: number; description: string; isCompleted: boolean }[]
