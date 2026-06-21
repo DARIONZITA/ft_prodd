@@ -238,40 +238,40 @@ export default function OrganizationMembersPage({ workspace, onBackToSettings }:
 
   return (
     <div className="flex-1 h-full overflow-y-auto bg-slate-100 text-slate-900">
-      <div className="mx-auto max-w-[1380px] px-6 py-8 lg:px-8">
-        <div className="mb-6 flex items-center justify-between border-b border-slate-200 pb-5">
-          <div className="flex items-center gap-4">
-            <h1 className="text-4xl font-black tracking-tight text-slate-900">Members</h1>
-            <span className="inline-flex h-8 min-w-8 items-center justify-center rounded-full bg-slate-200 px-2.5 text-base font-bold text-slate-600">
+      <div className="mx-auto max-w-[1380px] px-4 py-6 sm:px-6 lg:px-8">
+        <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-slate-200 pb-5">
+          <div className="flex items-center gap-3 flex-wrap">
+            <h1 className="text-2xl sm:text-4xl font-black tracking-tight text-slate-900">Members</h1>
+            <span className="inline-flex h-7 sm:h-8 min-w-7 sm:min-w-8 items-center justify-center rounded-full bg-slate-200 px-2 sm:px-2.5 text-sm sm:text-base font-bold text-slate-600">
               {members.length}
             </span>
-            <span className="text-sm text-slate-500">{workspace.name}</span>
+            <span className="text-xs sm:text-sm text-slate-500 w-full sm:w-auto">{workspace.name}</span>
           </div>
 
           <div className="flex items-center gap-3">
             <button
               type="button"
               onClick={onBackToSettings}
-              className="rounded-2xl border border-slate-300 bg-white px-5 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+              className="rounded-2xl border border-slate-300 bg-white px-4 sm:px-5 py-2 text-xs sm:text-sm font-semibold text-slate-700 hover:bg-slate-50"
             >
               Settings
             </button>
             <button
               type="button"
               onClick={() => setInviteOpen(true)}
-              className="inline-flex items-center gap-2 rounded-2xl bg-cyan-600 px-5 py-2.5 text-xl font-bold text-white shadow-[0_10px_24px_rgba(8,145,178,0.24)] hover:bg-cyan-700"
+              className="inline-flex items-center gap-2 rounded-2xl bg-cyan-600 px-4 sm:px-5 py-2.5 text-sm sm:text-xl font-bold text-white shadow-[0_10px_24px_rgba(8,145,178,0.24)] hover:bg-cyan-700"
             >
-              <Plus size={18} /> Invite Member
+              <Plus size={18} /> <span className="hidden sm:inline">Invite Member</span><span className="sm:hidden">Invite</span>
             </button>
           </div>
         </div>
 
         {/* Tabs */}
-        <div className="mb-6 border-b border-slate-200 flex gap-4">
+        <div className="mb-6 border-b border-slate-200 flex gap-4 overflow-x-auto">
           <button
             type="button"
             onClick={() => setActiveTab('members')}
-            className={`pb-3 text-sm font-bold border-b-2 transition-all cursor-pointer ${
+            className={`pb-3 text-xs sm:text-sm font-bold border-b-2 transition-all cursor-pointer whitespace-nowrap ${
               activeTab === 'members'
                 ? 'border-cyan-600 text-cyan-600'
                 : 'border-transparent text-slate-500 hover:text-slate-700'
@@ -282,7 +282,7 @@ export default function OrganizationMembersPage({ workspace, onBackToSettings }:
           <button
             type="button"
             onClick={() => setActiveTab('requests')}
-            className={`pb-3 text-sm font-bold border-b-2 transition-all cursor-pointer ${
+            className={`pb-3 text-xs sm:text-sm font-bold border-b-2 transition-all cursor-pointer whitespace-nowrap ${
               activeTab === 'requests'
                 ? 'border-cyan-600 text-cyan-600'
                 : 'border-transparent text-slate-500 hover:text-slate-700'
@@ -294,24 +294,24 @@ export default function OrganizationMembersPage({ workspace, onBackToSettings }:
 
         {activeTab === 'members' && (
           <>
-            <div className="mb-6 max-w-[420px]">
+            <div className="mb-6 w-full sm:max-w-[420px]">
               <div className="flex items-center gap-3 rounded-2xl border border-slate-300 bg-white px-4 py-3">
-                <Search size={18} className="text-slate-400" />
+                <Search size={18} className="text-slate-400 flex-shrink-0" />
                 <input
                   value={query}
                   onChange={(event: { target: { value: string } }) => setQuery(event.target.value)}
                   placeholder="Search members..."
-                  className="w-full bg-transparent text-lg text-slate-700 outline-none placeholder:text-slate-400"
+                  className="w-full bg-transparent text-base sm:text-lg text-slate-700 outline-none placeholder:text-slate-400"
                 />
               </div>
             </div>
 
             {isEmpty || isFilteredEmpty ? (
-              <div className="rounded-3xl border border-dashed border-slate-300 bg-white px-10 py-14 text-center shadow-sm">
+              <div className="rounded-3xl border border-dashed border-slate-300 bg-white px-6 sm:px-10 py-10 sm:py-14 text-center shadow-sm">
                 <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 font-mono text-xs font-bold text-slate-400">
                   0
                 </div>
-                <h2 className="font-display text-2xl font-bold text-slate-900">
+                <h2 className="font-display text-xl sm:text-2xl font-bold text-slate-900">
                   {isEmpty ? 'No members yet' : 'No members found'}
                 </h2>
                 <p className="mt-2 font-body text-sm text-slate-500">
@@ -331,7 +331,7 @@ export default function OrganizationMembersPage({ workspace, onBackToSettings }:
               </div>
             ) : (
               <section className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
-                <div className="grid grid-cols-[2fr_1.2fr_1.2fr_0.8fr] border-b border-slate-200 bg-slate-50 px-8 py-4 font-mono text-[10px] uppercase tracking-[0.25em] text-slate-500">
+                <div className="hidden md:grid md:grid-cols-[2fr_1.2fr_1.2fr_0.8fr] border-b border-slate-200 bg-slate-50 px-8 py-4 font-mono text-[10px] uppercase tracking-[0.25em] text-slate-500">
                   <span>User</span>
                   <span>Role</span>
                   <span>Joined Date</span>
@@ -339,7 +339,7 @@ export default function OrganizationMembersPage({ workspace, onBackToSettings }:
                 </div>
 
                 {filteredMembers.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-20 px-8 text-center bg-white">
+                  <div className="flex flex-col items-center justify-center py-12 sm:py-20 px-4 sm:px-8 text-center bg-white">
                     <span className="flex h-16 w-16 items-center justify-center rounded-full bg-slate-50 text-slate-300 mb-4">
                       <Search size={28} />
                     </span>
@@ -356,26 +356,30 @@ export default function OrganizationMembersPage({ workspace, onBackToSettings }:
                   </div>
                 ) : (
                   filteredMembers.map(member => (
-                  <div key={member.id} className="grid grid-cols-[2fr_1.2fr_1.2fr_0.8fr] items-center border-b border-slate-100 px-8 py-5 last:border-b-0">
+                  <div key={member.id} className="flex flex-col md:grid md:grid-cols-[2fr_1.2fr_1.2fr_0.8fr] md:items-center gap-3 md:gap-0 border-b border-slate-100 px-4 sm:px-8 py-4 sm:py-5 last:border-b-0">
                     <div className="flex items-center gap-4">
-                      <span className={`flex h-12 w-12 items-center justify-center rounded-full font-display text-lg font-bold text-white ${member.accent}`}>
+                      <span className={`flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-full font-display text-base sm:text-lg font-bold text-white ${member.accent}`}>
                         {member.initials}
                       </span>
                       <span>
-                        <span className="block font-display text-lg font-bold text-slate-900">{member.name}</span>
-                        <span className="block font-body text-sm text-slate-500">{member.username}</span>
+                        <span className="block font-display text-base sm:text-lg font-bold text-slate-900">{member.name}</span>
+                        <span className="block font-body text-xs sm:text-sm text-slate-500">{member.username}</span>
                       </span>
                     </div>
 
-                    <div>
-                      <span className={`inline-flex rounded-full border px-3 py-1 font-mono text-[10px] font-bold uppercase tracking-wider ${roleStyles[member.role]}`}>
+                    <div className="ml-14 sm:ml-16 md:ml-0">
+                      <span className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 font-mono text-[10px] font-bold uppercase tracking-wider ${roleStyles[member.role]}`}>
+                        <span className="md:hidden text-[10px] text-slate-400 font-normal normal-case font-body">Role: </span>
                         {member.role}
                       </span>
                     </div>
 
-                    <p className="font-body text-sm text-slate-500">{member.joinedDate}</p>
+                    <p className="ml-14 sm:ml-16 md:ml-0 font-body text-xs sm:text-sm text-slate-500">
+                      <span className="md:hidden text-xs text-slate-400 font-medium">Joined: </span>
+                      {member.joinedDate}
+                    </p>
 
-                    <div className="flex justify-end">
+                    <div className="flex justify-end mt-1 md:mt-0">
                       {member.editable ? (
                         <button
                           type="button"
@@ -385,7 +389,7 @@ export default function OrganizationMembersPage({ workspace, onBackToSettings }:
                           <EllipsisVertical size={20} />
                         </button>
                       ) : (
-                        <span className="font-body text-sm italic text-slate-400">Cannot edit owner</span>
+                        <span className="font-body text-xs sm:text-sm italic text-slate-400">Cannot edit owner</span>
                       )}
                     </div>
                   </div>
@@ -398,11 +402,11 @@ export default function OrganizationMembersPage({ workspace, onBackToSettings }:
         {activeTab === 'requests' && (
           <div>
             {joinRequests.length === 0 ? (
-              <div className="rounded-3xl border border-dashed border-slate-300 bg-white px-10 py-14 text-center shadow-sm">
+              <div className="rounded-3xl border border-dashed border-slate-300 bg-white px-6 sm:px-10 py-10 sm:py-14 text-center shadow-sm">
                 <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 font-mono text-xs font-bold text-slate-400">
                   0
                 </div>
-                <h2 className="font-display text-2xl font-bold text-slate-900">
+                <h2 className="font-display text-xl sm:text-2xl font-bold text-slate-900">
                   No join requests
                 </h2>
                 <p className="mt-2 font-body text-sm text-slate-500">
@@ -411,7 +415,7 @@ export default function OrganizationMembersPage({ workspace, onBackToSettings }:
               </div>
             ) : (
               <section className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
-                <div className="grid grid-cols-[2fr_1.2fr_1.2fr] border-b border-slate-200 bg-slate-50 px-8 py-4 font-mono text-[10px] uppercase tracking-[0.25em] text-slate-500">
+                <div className="hidden md:grid md:grid-cols-[2fr_1.2fr_1.2fr] border-b border-slate-200 bg-slate-50 px-8 py-4 font-mono text-[10px] uppercase tracking-[0.25em] text-slate-500">
                   <span>User</span>
                   <span>Requested Date</span>
                   <span className="text-right">Actions</span>
@@ -424,27 +428,28 @@ export default function OrganizationMembersPage({ workspace, onBackToSettings }:
                     (declineRequestMutation.isPending && declineRequestMutation.variables?.userId === req.userId)
 
                   return (
-                    <div key={req.userId} className="grid grid-cols-[2fr_1.2fr_1.2fr] items-center border-b border-slate-100 px-8 py-5 last:border-b-0">
+                    <div key={req.userId} className="flex flex-col md:grid md:grid-cols-[2fr_1.2fr_1.2fr] md:items-center gap-3 md:gap-0 border-b border-slate-100 px-4 sm:px-8 py-4 sm:py-5 last:border-b-0">
                       <div className="flex items-center gap-4">
-                        <span className="flex h-12 w-12 items-center justify-center rounded-full font-display text-lg font-bold text-white bg-cyan-600">
+                        <span className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-full font-display text-base sm:text-lg font-bold text-white bg-cyan-600">
                           {initials}
                         </span>
                         <span>
-                          <span className="block font-display text-lg font-bold text-slate-900">{req.user.username}</span>
-                          <span className="block font-body text-sm text-slate-500">{req.user.email}</span>
+                          <span className="block font-display text-base sm:text-lg font-bold text-slate-900">{req.user.username}</span>
+                          <span className="block font-body text-xs sm:text-sm text-slate-500">{req.user.email}</span>
                         </span>
                       </div>
 
-                      <p className="font-body text-sm text-slate-500">
+                      <p className="ml-14 sm:ml-16 md:ml-0 font-body text-xs sm:text-sm text-slate-500">
+                        <span className="md:hidden text-xs text-slate-400 font-medium">Requested: </span>
                         {new Date(req.requestedAt).toLocaleDateString()}
                       </p>
 
-                      <div className="flex justify-end gap-3">
+                      <div className="flex justify-start md:justify-end gap-3 mt-1 md:mt-0">
                         <button
                           type="button"
                           disabled={isProcessing}
                           onClick={() => declineRequestMutation.mutate({ workspaceId: workspace.id, userId: req.userId })}
-                          className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50 cursor-pointer transition-colors"
+                          className="flex-1 sm:flex-none rounded-xl border border-slate-300 bg-white px-4 py-2 text-xs sm:text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50 cursor-pointer transition-colors"
                         >
                           Decline
                         </button>
@@ -452,7 +457,7 @@ export default function OrganizationMembersPage({ workspace, onBackToSettings }:
                           type="button"
                           disabled={isProcessing}
                           onClick={() => acceptRequestMutation.mutate({ workspaceId: workspace.id, userId: req.userId })}
-                          className="inline-flex items-center gap-1.5 rounded-xl bg-cyan-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-cyan-700 disabled:opacity-50 cursor-pointer transition-colors"
+                          className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 rounded-xl bg-cyan-600 px-4 py-2 text-xs sm:text-sm font-semibold text-white shadow-sm hover:bg-cyan-700 disabled:opacity-50 cursor-pointer transition-colors"
                         >
                           {isProcessing && <Loader2 size={14} className="animate-spin" />}
                           Accept
