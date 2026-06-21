@@ -17,6 +17,7 @@ import {
   useCreateColumnMutation,
   useDeleteColumnMutation,
   useCreateTaskMutation,
+  useDeleteTaskMutation,
   useMoveTaskMutation,
   useReorderTasksMutation,
   useReorderColumnsMutation,
@@ -76,6 +77,7 @@ interface ColumnCardProps {
   isBacklog: boolean;
   onAddTask: (id: string) => void;
   onTaskClick: (task: Task) => void;
+  onDeleteTask?: (task: Task) => void;
   onDeleteColumn?: (id: string) => void;
   index: number;
   backlogColumnId?: string;
@@ -83,7 +85,7 @@ interface ColumnCardProps {
 
 
 
-function TaskCard({ task, onClick, index, isBacklogTask, isCompletedBacklog }: { task: Task; onClick: (task: Task) => void; index: number; isBacklogTask?: boolean; isCompletedBacklog?: boolean }) {
+function TaskCard({ task, onClick, onDelete, index, isBacklogTask, isCompletedBacklog }: { task: Task; onClick: (task: Task) => void; onDelete?: (task: Task) => void; index: number; isBacklogTask?: boolean; isCompletedBacklog?: boolean }) {
   const [element, setElement] = useState<Element | null>(null);
   const moveMouse = useRef({ x: 0, y: 0 });
   const [animationLeft, setAnimationLeaft] = useState<boolean>(true);
@@ -156,6 +158,16 @@ function TaskCard({ task, onClick, index, isBacklogTask, isCompletedBacklog }: {
                       : 'bg-white border-slate-200 hover:shadow-md hover:-translate-y-0.5 cursor-pointer hover:border-slate-300'
               }`}
             >
+              {onDelete && !isCompletedBacklog && (
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); onDelete(task) }}
+                  className="absolute top-2 right-2 z-20 p-1 rounded-lg text-slate-300 opacity-0 group-hover:opacity-100 hover:text-red-500 hover:bg-red-50 transition-all"
+                  title="Delete task"
+                >
+                  <Trash2 size={14} />
+                </button>
+              )}
               {!isCompletedBacklog && (
                 <>
                   <div ref={beforeRef} className="absolute -top-2 left-0 right-0 h-1/2 z-10" />
@@ -242,7 +254,7 @@ function TaskCard({ task, onClick, index, isBacklogTask, isCompletedBacklog }: {
             </div>);
 }
 
-function ColumnCard({ column, tasks, isBacklog, onAddTask, onTaskClick, onDeleteColumn, index }: ColumnCardProps) {
+function ColumnCard({ column, tasks, isBacklog, onAddTask, onTaskClick, onDeleteTask, onDeleteColumn, index }: ColumnCardProps) {
   const [element, setElement] = useState<Element | null>(null);
   const handleRef = useRef<HTMLDivElement | null>(null);
 
@@ -314,6 +326,7 @@ function ColumnCard({ column, tasks, isBacklog, onAddTask, onTaskClick, onDelete
               key={task.id}
               task={task}
               onClick={onTaskClick}
+              onDelete={onDeleteTask}
               index={idx}
               isBacklogTask={isBacklog}
               isCompletedBacklog={isBacklog && !!task.isCompleted}
@@ -553,6 +566,13 @@ export default function KanbanBoardPage({ workspaceId, onOpenSettings, onOpenMem
   const handleCreateColumn = (name: string, columnTypeId: ColumnTypeId) => {
     createColumnMutation.mutate({ name, columnType: columnTypeId });
     setShowCreateColumnModal(false);
+  };
+
+  const deleteTaskMutation = useDeleteTaskMutation(workspaceId ?? 0);
+  const handleDeleteTask = (task: Task) => {
+    if (confirm(`Delete task "${task.title}"?`)) {
+      deleteTaskMutation.mutate({ columnId: Number(task.columnId), taskId: Number(task.id) });
+    }
   };
 
   const handleDeleteColumn = (columnId: string) => {
@@ -799,6 +819,7 @@ export default function KanbanBoardPage({ workspaceId, onOpenSettings, onOpenMem
                   isBacklog={isBacklog}
                   onAddTask={openCreateTaskModal}
                   onTaskClick={setSelectedTask}
+                  onDeleteTask={handleDeleteTask}
                   onDeleteColumn={handleDeleteColumn}
                   index={index}
                   backlogColumnId={backlogColumnId}
@@ -821,6 +842,7 @@ export default function KanbanBoardPage({ workspaceId, onOpenSettings, onOpenMem
             columns={columns}
             onTaskClick={setSelectedTask}
             onAddTask={openCreateTaskModal}
+            onDeleteTask={handleDeleteTask}
           />
         )}
       </DragDropProvider>

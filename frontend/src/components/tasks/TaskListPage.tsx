@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ChevronRight, Plus, Circle } from 'lucide-react';
+import { ChevronRight, Plus, Circle, Trash2 } from 'lucide-react';
 import { useDroppable } from '@dnd-kit/react';
 import { useSortable } from '@dnd-kit/react/sortable';
 import type { Column, Task } from './Types';
@@ -9,6 +9,7 @@ interface TaskListPageProps {
   columns: Column[];
   onTaskClick: (task: Task) => void;
   onAddTask: (columnId: string) => void;
+  onDeleteTask?: (task: Task) => void;
 }
 
 const getPriorityIcon = (priority: string) => {
@@ -23,7 +24,7 @@ const getPriorityTextColor = (priority: string) => {
   return 'text-green-500';
 };
 
-function TaskRow({ task, onTaskClick, index }: { task: Task; onTaskClick: (task: Task) => void; index: number }) {
+function TaskRow({ task, onTaskClick, onDeleteTask, index }: { task: Task; onTaskClick: (task: Task) => void; onDeleteTask?: (task: Task) => void; index: number }) {
   const isExpired = task.dueDate ? new Date(task.dueDate) <= new Date() : false;
   const [element, setElement] = useState<Element | null>(null);
 
@@ -49,7 +50,7 @@ function TaskRow({ task, onTaskClick, index }: { task: Task; onTaskClick: (task:
     <div
       ref={setElement}
       onClick={() => onTaskClick(task)}
-      className={`relative grid grid-cols-[32px_1fr_140px_110px_100px_90px_80px] gap-3 px-4 py-3 cursor-pointer hover:bg-slate-50 transition-colors items-center border-b ${isExpired ? 'border-red-200 bg-red-50/30' : 'border-slate-100'} ${isDragging ? 'opacity-60' : 'opacity-100'}`}
+      className={`relative grid grid-cols-[32px_1fr_140px_110px_100px_90px_80px_28px] gap-3 px-4 py-3 cursor-pointer hover:bg-slate-50 transition-colors items-center border-b group ${isExpired ? 'border-red-200 bg-red-50/30' : 'border-slate-100'} ${isDragging ? 'opacity-60' : 'opacity-100'}`}
     >
       <div ref={beforeRef} className="absolute -top-2 left-0 right-0 h-1/2 z-10" />
       {isBeforeDropTarget && !isDragging && (
@@ -90,6 +91,14 @@ function TaskRow({ task, onTaskClick, index }: { task: Task; onTaskClick: (task:
         )}
       </div>
       <span className="font-mono text-[10px] text-slate-400 text-right">{task.id}</span>
+      {onDeleteTask && (
+        <button
+          onClick={(e) => { e.stopPropagation(); onDeleteTask(task); }}
+          className="opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-red-100 rounded text-slate-400 hover:text-red-500"
+        >
+          <Trash2 className="w-3.5 h-3.5" />
+        </button>
+      )}
     </div>
   );
 }
@@ -99,18 +108,20 @@ function TaskGroupRows({
   tasks,
   onTaskClick,
   onAddTask,
+  onDeleteTask,
 }: {
   column: Column;
   tasks: Task[];
   onTaskClick: (task: Task) => void;
   onAddTask: (columnId: string) => void;
+  onDeleteTask?: (task: Task) => void;
 }) {
   const { ref: dropRef } = useDroppable({ id: column.id, data: { type: 'COLUMN_DROP', columnId: column.id } });
 
   return (
     <div ref={dropRef} className="divide-y divide-slate-50">
       {tasks.map((task, index) => (
-        <TaskRow key={task.id} task={task} onTaskClick={onTaskClick} index={index} />
+        <TaskRow key={task.id} task={task} onTaskClick={onTaskClick} onDeleteTask={onDeleteTask} index={index} />
       ))}
 
       {(column.columnTypeId === 'backlog' || column.columnTypeId === 'todo') && (
@@ -129,7 +140,7 @@ function TaskGroupRows({
   );
 }
 
-export default function TaskListPage({ tasks, columns, onTaskClick, onAddTask }: TaskListPageProps) {
+export default function TaskListPage({ tasks, columns, onTaskClick, onAddTask, onDeleteTask }: TaskListPageProps) {
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
@@ -169,7 +180,7 @@ export default function TaskListPage({ tasks, columns, onTaskClick, onAddTask }:
     <div className="flex-1 overflow-hidden flex flex-col">
       {/* Table Header */}
       <div className="px-8 flex-shrink-0">
-        <div className="grid grid-cols-[32px_1fr_140px_110px_100px_90px_80px] gap-3 py-2 px-4 bg-white border border-slate-200 rounded-t-lg text-[11px] font-mono uppercase tracking-wider text-slate-400">
+        <div className="grid grid-cols-[32px_1fr_140px_110px_100px_90px_80px_28px] gap-3 py-2 px-4 bg-white border border-slate-200 rounded-t-lg text-[11px] font-mono uppercase tracking-wider text-slate-400">
           <div></div>
           <div>Title</div>
           <div>Assignee</div>
@@ -177,6 +188,7 @@ export default function TaskListPage({ tasks, columns, onTaskClick, onAddTask }:
           <div>Priority</div>
           <div>Labels</div>
           <div className="text-right">ID</div>
+          <div></div>
         </div>
       </div>
 
@@ -205,6 +217,7 @@ export default function TaskListPage({ tasks, columns, onTaskClick, onAddTask }:
                   tasks={tasksByColumn[column.id] ?? []}
                   onTaskClick={onTaskClick}
                   onAddTask={onAddTask}
+                  onDeleteTask={onDeleteTask}
                 />
               )}
             </div>
