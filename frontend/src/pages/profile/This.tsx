@@ -162,7 +162,7 @@ export default function ThisProfile({ user, onProfileUpdate, onNavigate }: ThisP
             ) : (
               <div className="space-y-2">
                 {incoming.map(req => (
-                  <div key={req.requestId} className="flex items-center gap-3 px-3 py-2.5 bg-slate-50 rounded-lg">
+                  <div key={req.requestId} className="flex items-start gap-3 px-3 py-2.5 bg-slate-50 rounded-lg flex-wrap">
                     <div className="w-9 h-9 rounded-full bg-cyan-500 text-white text-xs font-bold flex items-center justify-center flex-shrink-0 font-display">
                       {req.username.trim()[0]?.toUpperCase() ?? '?'}
                     </div>
@@ -170,12 +170,12 @@ export default function ThisProfile({ user, onProfileUpdate, onNavigate }: ThisP
                       <p className="font-display font-bold text-sm text-slate-900">{req.username}</p>
                       <p className="font-mono text-[10px] text-slate-400">{formatRelativeTime(req.createdAt)}</p>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 w-full sm:w-auto sm:ml-auto">
                       <button
                         type="button"
                         onClick={() => respondMutation.mutate({ friendId: req.id, status: 'accepted' })}
                         disabled={respondMutation.isPending}
-                        className="flex items-center gap-1 px-3 py-1.5 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg font-body text-xs font-bold transition-colors disabled:opacity-50"
+                        className="flex-1 sm:flex-none flex items-center justify-center gap-1 px-3 py-1.5 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg font-body text-xs font-bold transition-colors disabled:opacity-50"
                       >
                         <Check size={12} /> Accept
                       </button>
@@ -183,7 +183,7 @@ export default function ThisProfile({ user, onProfileUpdate, onNavigate }: ThisP
                         type="button"
                         onClick={() => respondMutation.mutate({ friendId: req.id, status: 'rejected' })}
                         disabled={respondMutation.isPending}
-                        className="flex items-center gap-1 px-3 py-1.5 font-body text-xs font-bold text-slate-500 hover:bg-slate-100 rounded-lg transition-colors"
+                        className="flex-1 sm:flex-none flex items-center justify-center gap-1 px-3 py-1.5 font-body text-xs font-bold text-slate-500 hover:bg-slate-100 rounded-lg transition-colors"
                       >
                         <X size={12} /> Decline
                       </button>
