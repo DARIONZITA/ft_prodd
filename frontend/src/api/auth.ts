@@ -6,8 +6,7 @@ import { queryClient } from '../main'
 async function authRequest<T>(endpoint: string, form: T): Promise<AuthResponseData['user']>
 {
   const response = await api.post<AuthResponseData>(endpoint, form)
-  const { token, user } = response.data
-
+  const { user } = response.data
 
   queryClient.setQueryData(['user', 'me'], user)
   return user

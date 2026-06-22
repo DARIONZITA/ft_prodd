@@ -41,7 +41,7 @@ export async function   signupController( req : Request, res : Response, next : 
 		const	token = generateToken( user.id, user.email );
 
 		res.cookie('token', token, COOKIE_OPTIONS);
-		res.status(201).json( { success: true, message: "User created", token, user } );
+		res.status(201).json( { success: true, message: "User created", user } );
 	}
 	catch ( err ) { next( err ); }
 }
@@ -73,14 +73,14 @@ export async function   signinController( req : Request, res : Response, next : 
         const	token = generateToken( user.id, user.email );
         const	{ passwordHash, ...userWithoutPassword } = user;
 
-        if (presenceStore.connect( user.id )) //if it's the first login
+        if (presenceStore.connect( user.id )) // if it's the first login
         {
             const   { workspaceIds, friendIds } = await getFriendAndWorkspaceMembersIds( user.id );
             wsEmitter.userOnline( user.id, user.username, user.avatarUrl, workspaceIds, friendIds );
         }
 
         res.cookie('token', token, COOKIE_OPTIONS);
-        res.status(200).json( { success: true, message: "Signin successfully", token, user: userWithoutPassword } );
+        res.status(200).json( { success: true, message: "Signin successfully", user: userWithoutPassword } );
     }
     catch ( err ) { next( err ); }
 }
