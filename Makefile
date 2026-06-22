@@ -1,4 +1,4 @@
-NAME = ft_prodd
+NAME = ft_prodd( ... )
 DOCKER-COMPOSE = ./config/docker-compose.yaml
 ENV_FILE = ./config/.env
 

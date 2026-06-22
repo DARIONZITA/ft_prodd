@@ -16,7 +16,7 @@ api.interceptors.response.use(
   },
   (error) => {
     if (error.response?.status === HttpStatusCode.Unauthorized) {
-      const publicPaths = ['/signin', '/signup', '/']
+      const publicPaths = ['/', '/signin', '/signup', '/privacy', '/terms', '/loading', '/oauth/callback']
       if (!publicPaths.includes(window.location.pathname)) {
         window.location.href = '/signin'
       }

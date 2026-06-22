@@ -15,18 +15,13 @@ type Fields = 'username' | 'password' | 'repeat'
 
 export default function SignUpPage()
 {
+  const fieldRefs = useRef<Partial<Record<Fields, HTMLInputElement>>>({})
   const userQuery = useGetUserRequest({ retry: false, refetchOnWindowFocus: false })
   const { form, srvError, setSrvError, navigate, updateField } = authInit<SignUpForm>({ email: '', username: '', password: '', repeat: '' })
   const signUpMutation = useSignUpMutation({
-    onSuccess: () => {
-
-      navigate('/dashboard')
-    },
-    onError: (error) => {
-      setSrvError(getApiErrorMessage(error))
-    },
+    onSuccess: () => { navigate('/dashboard') },
+    onError: (error) => { setSrvError(getApiErrorMessage(error)) },
   })
-  const fieldRefs = useRef<Partial<Record<Fields, HTMLInputElement>>>({})
 
   if (userQuery.isLoading) {
     return null
@@ -47,15 +42,11 @@ export default function SignUpPage()
       return
     }
 
-
-
     setSrvError(null)
 
     try {
       await signUpMutation.mutateAsync({ email: form.email, username: form.username, password: form.password })
-    } catch (error) {
-      console.error(error)
-    }
+    } catch (error) { }
   }
 
   return (
