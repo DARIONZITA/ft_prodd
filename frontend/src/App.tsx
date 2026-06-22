@@ -5,14 +5,13 @@ import LoadingPage                  from './pages/LoadingPage'
 import LandingPage                  from './pages/LandingPage'
 import ProtectedRoute               from './components/ProtectedRoute'
 import OAuthCallbackPage            from "./pages/OauthCallbackPage"
-import DashboardPagePlaceholder     from './pages/DashboardPagePlaceholder'
+import DashboardPage                from './pages/DashboardPage'
 import PrivacyPolicy                from './pages/legal/PrivacyPolicy'
 import TermsOfService               from './pages/legal/TermsOfService'
 import { WebSocketProvider }        from './ws-client/socket'
 
 function App() {
   return (
-    <WebSocketProvider>
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/signin" element={<SignInPage />} />
@@ -25,13 +24,14 @@ function App() {
           path="/dashboard"
           element={
             <ProtectedRoute>
-              <DashboardPagePlaceholder />
+              <WebSocketProvider>
+                <DashboardPage />
+              </WebSocketProvider>
             </ProtectedRoute>
           }
         />
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
-    </WebSocketProvider>
   )
 }
 

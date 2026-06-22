@@ -1,11 +1,11 @@
 import { useMemo, useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import Sidebar from '../components/SideBar'
-import ThisProfile from './profile/This'
-import OtherProfile from './profile/Other'
-import Friends from './profile/Friends'
-import api from '../api/axios'
-import CreateOrganizationModal from './organization/CreateOrganizationModal'
+import Sidebar from '../components/SideBar.tsx'
+import ThisProfile from './profile/This.tsx'
+import OtherProfile from './profile/Other.tsx'
+import Friends from './profile/Friends.tsx'
+import api from '../api/axios.ts'
+import CreateOrganizationModal from './organization/CreateOrganizationModal.tsx'
 import OrganizationSettingsPage from './organization/OrganizationSettingsPage.tsx'
 import OrganizationMembersPage from './organization/OrganizationMembersPage.tsx'
 import KanbanBoardPage from '../components/tasks/KanbanBoardPage.tsx'
@@ -45,7 +45,7 @@ function PlaceholderView({ title }: { title: string }) {
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-export default function DashboardPagePlaceholder() {
+export default function DashboardPage() {
   const navigate = useNavigate()
   const location = useLocation()
   const dataQuery: UserResponse | undefined = useGetUserRequest({ refetchOnMount: true }).data

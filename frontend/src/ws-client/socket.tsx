@@ -2,7 +2,6 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from '
 import { io, Socket } from 'socket.io-client'
 import { queryClient } from '../main'
 import api from '../api/axios'
-import { useGetUserRequest } from '../api/user'
 import { kanbanKeys } from '../api/kanban'
 import { notificationsKeys } from '../api/notifications'
 import type { ServerToClientEvents, ClientToServerEvents } from '../ws/types'
@@ -24,23 +23,10 @@ interface WebSocketProviderProps {
 }
 
 export function WebSocketProvider({ children }: WebSocketProviderProps) {
-  const isPublicPath = ['/signin', '/signup', '/'].includes(window.location.pathname)
-  const userQuery = useGetUserRequest({ retry: false, enabled: !isPublicPath })
-  const isAuthenticated = !!userQuery.data?.success
-
   const [socket, setSocket] = useState<Socket<ServerToClientEvents, ClientToServerEvents> | null>(null)
   const [isConnected, setIsConnected] = useState(false)
 
   useEffect(() => {
-    if (!isAuthenticated) {
-      if (socket) {
-        socket.disconnect()
-        setSocket(null)
-        setIsConnected(false)
-      }
-      return
-    }
-
     let active = true
     let newSocket: Socket<ServerToClientEvents, ClientToServerEvents> | null = null
 
@@ -213,7 +199,7 @@ export function WebSocketProvider({ children }: WebSocketProviderProps) {
         newSocket.disconnect()
       }
     }
-  }, [isAuthenticated])
+  }, [])
 
   return (
     <WebSocketContext.Provider value={{ socket, isConnected }}>
