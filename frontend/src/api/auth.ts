@@ -1,7 +1,7 @@
 import { useMutation, type UseMutationOptions } from '@tanstack/react-query'
 import api from './axios'
 import type { AuthResponseData, SignInForm, SignUpForm } from '../types/auth'
-import { queryClient } from '../main'
+import { queryClient } from '../query-client'
 
 async function authRequest<T>(endpoint: string, form: T): Promise<AuthResponseData['user']>
 {

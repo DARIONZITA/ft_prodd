@@ -1,7 +1,7 @@
 import { useQuery, useMutation, type UseMutationOptions, type UseQueryOptions } from '@tanstack/react-query'
 import api from './axios'
 import type { UserResponse } from '../types/user'
-import { queryClient } from '../main'
+import { queryClient } from '../query-client'
 
 export function resolveAvatarUrl(url?: string | null): string | null {
   const trimmed = url?.trim()

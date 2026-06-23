@@ -25,8 +25,8 @@ export default function OAuthCallbackPage() {
     return (
         <LoadingPage
             error={error}
-            message={!error && userQuery.isSuccess ? 'Sign in successful! Redirecting...' : !error ? 'Completing sign in...' : undefined}
-            isSuccess={userQuery.isSuccess}
+                message={!error && userQuery.data?.success ? 'Sign in successful! Redirecting...' : !error ? 'Completing sign in...' : undefined}
+                isSuccess={!!userQuery.data?.success}
             successRedirect="/dashboard"
             successDelay={1500}
         />

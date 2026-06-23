@@ -23,7 +23,7 @@ import {
   useReorderColumnsMutation,
   kanbanKeys,
 } from '../../api/kanban';
-import { queryClient } from '../../main';
+import { queryClient } from '../../query-client';
 import api from '../../api/axios';
 
 const COLUMN_COLOR_BY_TYPE_ID: Record<ColumnTypeId, string> = {

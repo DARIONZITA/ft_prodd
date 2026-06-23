@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
 import { io, Socket } from 'socket.io-client'
-import { queryClient } from '../main'
+import { queryClient } from '../query-client'
 import api from '../api/axios'
 import { useGetUserRequest } from '../api/user'
 import { kanbanKeys } from '../api/kanban'
