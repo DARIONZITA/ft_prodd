@@ -9,6 +9,7 @@ export interface    ServerToClientEvents
     'comment:new'           :   (data : { taskId : number; comment : unknown }) => void;
     'comment:updated'       :   (data : { taskId : number; comment : unknown }) => void;
     'comment:deleted'       :   (data : { taskId : number; commentId : number}) => void;
+    'comment:typing'        :   (data : { taskId : number; userId : number; username : string; isTyping : boolean }) => void;
     'notification'          :   (data : { payload : NotificationPayload }) => void;
     'notification:read'     :   (data: { notificationId: number }) => void;
     'notification:read_all' :   (data: Record<string, never>) => void;
@@ -27,11 +28,13 @@ export interface   NotificationPayload
 export interface    ClientToServerEvents
 {
     'ping'  :   (callback : (res : { timestamp : string }) => void) => void;
+    'comment:typing' :  (data : { workspaceId : number; taskId : number; isTyping : boolean }) => void;
 };
 
 export interface    SocketData
 {
     userId?          :   number;
+    username?        :   string;
     workspaceIds?    :   number[];
     friendIds?       :   number[];
 };

@@ -27,6 +27,7 @@ export interface Label {
 export interface TaskComment {
   id: string;
   author: string;
+  authorId?: string;
   avatar?: string;
   text: string;
   createdAt: string;

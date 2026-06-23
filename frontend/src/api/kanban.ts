@@ -98,7 +98,7 @@ export interface DashboardResponse {
 // Keys
 export const kanbanKeys = {
   dashboard: (workspaceId: number | string) => ['workspace-dashboard', workspaceId] as const,
-  task: (taskId: number | string) => ['task-details', taskId] as const,
+  task: (taskId: number | string) => ['task-details', String(taskId)] as const,
   workspaceLabels: (workspaceId: number | string) => ['workspace-labels', workspaceId] as const,
 }
 

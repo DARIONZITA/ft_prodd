@@ -83,9 +83,9 @@ async function  authWebSocket( socket : AppSocket, next : ( err? : Error ) => vo
 
         if (!user)
             return (next( new Error('User not found')));
-
         // Persiste dados no socket — acessíveis em todos os handlers via socket.data
         socket.data.userId = userId;
+        socket.data.username = user.username;
         socket.data.workspaceIds = memberships.map( m => m.workspaceId );
         socket.data.friendIds = friendIds.map(r => r.senderId === userId ? r.receiverId : r.senderId);
 
@@ -192,6 +192,22 @@ export function   setupSocketIO( server : HttpServer ) : IO
         {
             if (typeof callback === 'function')
                 callback( { timestamp: new Date().toISOString() } );
+        });
+
+        // ── Digitação de comentário (typing status) ────────────────────────
+        socket.on('comment:typing', ({ workspaceId, taskId, isTyping }) =>
+        {
+            const uId = socket.data.userId;
+            const uname = socket.data.username;
+            if (uId && uname)
+            {
+                socket.to(`workspace:${workspaceId}`).emit('comment:typing', {
+                    taskId,
+                    userId: uId,
+                    username: uname,
+                    isTyping
+                });
+            }
         });
 
         // ── Desconexão ─────────────────────────────────────────────────────

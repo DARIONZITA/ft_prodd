@@ -6,14 +6,23 @@ import { kanbanKeys } from '../api/kanban'
 import { notificationsKeys } from '../api/notifications'
 import type { ServerToClientEvents, ClientToServerEvents } from '../ws/types'
 
+interface TypingUser {
+  userId: number
+  username: string
+}
+
 interface WebSocketContextType {
   socket: Socket<ServerToClientEvents, ClientToServerEvents> | null
   isConnected: boolean
+  onlineUsers: Set<number>
+  typingUsers: Record<number, TypingUser[]>
 }
 
 const WebSocketContext = createContext<WebSocketContextType>({
   socket: null,
   isConnected: false,
+  onlineUsers: new Set(),
+  typingUsers: {},
 })
 
 export const useWebSocket = () => useContext(WebSocketContext)
@@ -25,6 +34,8 @@ interface WebSocketProviderProps {
 export function WebSocketProvider({ children }: WebSocketProviderProps) {
   const [socket, setSocket] = useState<Socket<ServerToClientEvents, ClientToServerEvents> | null>(null)
   const [isConnected, setIsConnected] = useState(false)
+  const [onlineUsers, setOnlineUsers] = useState<Set<number>>(new Set())
+  const [typingUsers, setTypingUsers] = useState<Record<number, TypingUser[]>>({})
 
   useEffect(() => {
     let active = true
@@ -46,14 +57,16 @@ export function WebSocketProvider({ children }: WebSocketProviderProps) {
         newSocket.on('connect', () => {
           if (active) {
             setIsConnected(true)
-
+            setOnlineUsers(new Set())
+            setTypingUsers({})
           }
         })
 
         newSocket.on('disconnect', () => {
           if (active) {
             setIsConnected(false)
-
+            setOnlineUsers(new Set())
+            setTypingUsers({})
           }
         })
 
@@ -124,6 +137,61 @@ export function WebSocketProvider({ children }: WebSocketProviderProps) {
             }
           })
           queryClient.invalidateQueries({ queryKey: kanbanKeys.task(taskId) })
+        })
+
+        // Real-time Presence Sync
+        newSocket.on('presence:sync', (data) => {
+          if (!active) return
+          if (data.type === 'workspace') {
+            setOnlineUsers((prev) => {
+              const next = new Set(prev)
+              data.onlineUserIds.forEach((id) => next.add(id))
+              return next
+            })
+          }
+        })
+
+        newSocket.on('presence:online', ({ userId }) => {
+          if (!active) return
+          setOnlineUsers((prev) => {
+            const next = new Set(prev)
+            next.add(userId)
+            return next
+          })
+        })
+
+        newSocket.on('presence:offline', ({ userId }) => {
+          if (!active) return
+          setOnlineUsers((prev) => {
+            const next = new Set(prev)
+            next.delete(userId)
+            return next
+          })
+        })
+
+        // Real-time Typing Status Sync
+        newSocket.on('comment:typing', ({ taskId, userId, username, isTyping }: { taskId: number; userId: number; username: string; isTyping: boolean }) => {
+          if (!active) return
+          setTypingUsers((prev) => {
+            const list = prev[taskId] || []
+            if (isTyping) {
+              if (list.some((u) => u.userId === userId)) return prev
+              return {
+                ...prev,
+                [taskId]: [...list, { userId, username }]
+              }
+            } else {
+              if (!list.some((u) => u.userId === userId)) return prev
+              const updatedList = list.filter((u) => u.userId !== userId)
+              const next = { ...prev }
+              if (updatedList.length === 0) {
+                delete next[taskId]
+              } else {
+                next[taskId] = updatedList
+              }
+              return next
+            }
+          })
         })
 
         // Real-time Notifications Sync
@@ -202,7 +270,7 @@ export function WebSocketProvider({ children }: WebSocketProviderProps) {
   }, [])
 
   return (
-    <WebSocketContext.Provider value={{ socket, isConnected }}>
+    <WebSocketContext.Provider value={{ socket, isConnected, onlineUsers, typingUsers }}>
       {children}
     </WebSocketContext.Provider>
   )

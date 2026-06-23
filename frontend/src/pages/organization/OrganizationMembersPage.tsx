@@ -14,6 +14,7 @@ import {
   type JoinRequest,
 } from '../../api/workspace'
 import { useUsersQuery } from '../../api/user'
+import { useWebSocket } from '../../ws-client/socket'
 
 interface WorkspaceMembersContext {
   id: number
@@ -45,6 +46,7 @@ const roleStyles: Record<MemberRole, string> = {
 }
 
 export default function OrganizationMembersPage({ workspace, onBackToSettings }: OrganizationMembersPageProps) {
+  const { onlineUsers } = useWebSocket()
   const [query, setQuery] = useState('')
   const [inviteOpen, setInviteOpen] = useState(false)
   const [inviteSearch, setInviteSearch] = useState('')
@@ -358,11 +360,29 @@ export default function OrganizationMembersPage({ workspace, onBackToSettings }:
                   filteredMembers.map(member => (
                   <div key={member.id} className="flex flex-col md:grid md:grid-cols-[2fr_1.2fr_1.2fr_0.8fr] md:items-center gap-3 md:gap-0 border-b border-slate-100 px-4 sm:px-8 py-4 sm:py-5 last:border-b-0">
                     <div className="flex items-center gap-4">
-                      <span className={`flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-full font-display text-base sm:text-lg font-bold text-white ${member.accent}`}>
-                        {member.initials}
-                      </span>
+                      <div className="relative">
+                        <span className={`flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-full font-display text-base sm:text-lg font-bold text-white ${member.accent}`}>
+                          {member.initials}
+                        </span>
+                        {onlineUsers.has(Number(member.id)) ? (
+                          <span className="absolute bottom-0 right-0 block h-3 w-3 rounded-full bg-green-500 ring-2 ring-white" title="Online" />
+                        ) : (
+                          <span className="absolute bottom-0 right-0 block h-3 w-3 rounded-full bg-slate-300 ring-2 ring-white" title="Offline" />
+                        )}
+                      </div>
                       <span>
-                        <span className="block font-display text-base sm:text-lg font-bold text-slate-900">{member.name}</span>
+                        <span className="block font-display text-base sm:text-lg font-bold text-slate-900 flex items-center gap-2">
+                          {member.name}
+                          {onlineUsers.has(Number(member.id)) ? (
+                            <span className="inline-flex items-center rounded bg-green-50 px-1.5 py-0.5 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20 font-body">
+                              online
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center rounded bg-slate-50 px-1.5 py-0.5 text-xs font-medium text-slate-600 ring-1 ring-inset ring-slate-500/10 font-body">
+                              offline
+                            </span>
+                          )}
+                        </span>
                         <span className="block font-body text-xs sm:text-sm text-slate-500">{member.username}</span>
                       </span>
                     </div>

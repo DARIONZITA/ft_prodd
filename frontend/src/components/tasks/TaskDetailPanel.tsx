@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, useRef } from 'react'
 import { X, MessageSquare, ChevronDown, Calendar, User2, Circle, Trash2 } from 'lucide-react'
 import type { ChecklistItem, Column, ColumnTypeId, Task, TaskComment, TaskPriority } from './Types'
 import {
@@ -16,6 +16,7 @@ import {
   useUpdateTaskMutation
 } from '../../api/kanban'
 import { useWorkspaceMembersQuery } from '../../api/workspace'
+import { useWebSocket } from '../../ws-client/socket'
 
 const COLUMN_TYPE_COLORS: Record<ColumnTypeId, { dot: string; bg: string; border: string; text: string }> = {
   backlog: { dot: 'bg-slate-400', bg: 'bg-slate-50', border: 'border-slate-100', text: 'text-slate-700' },
@@ -50,6 +51,7 @@ interface TaskDetailPanelProps {
 }
 
 export default function TaskDetailPanel({ workspaceId, task, columns, onClose }: TaskDetailPanelProps) {
+  const { socket, onlineUsers, typingUsers } = useWebSocket()
   // Queries
   const { data: taskData } = useTaskQuery(task.columnId, task.id)
   const { data: labelsQuery } = useWorkspaceLabelsQuery(workspaceId)
@@ -102,6 +104,7 @@ export default function TaskDetailPanel({ workspaceId, task, columns, onClose }:
     return taskDetails.comments.items.map(comment => ({
       id: String(comment.id),
       author: comment.user.username,
+      authorId: String(comment.user.id),
       avatar: comment.user.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(comment.user.username)}`,
       text: comment.content,
       createdAt: comment.createdAt
@@ -174,9 +177,40 @@ export default function TaskDetailPanel({ workspaceId, task, columns, onClose }:
     }).format(new Date(value))
   }
 
+  const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const isTypingRef = useRef<boolean>(false)
+
+  useEffect(() => {
+    return () => {
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current)
+      }
+      if (socket && isTypingRef.current) {
+        socket.emit('comment:typing', {
+          workspaceId: Number(workspaceId),
+          taskId: Number(task.id),
+          isTyping: false
+        })
+      }
+    }
+  }, [socket, workspaceId, task.id])
+
   const addComment = () => {
     const trimmed = commentText.trim()
     if (!trimmed) return
+
+    if (socket && isTypingRef.current) {
+      isTypingRef.current = false
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current)
+      }
+      socket.emit('comment:typing', {
+        workspaceId: Number(workspaceId),
+        taskId: Number(task.id),
+        isTyping: false
+      })
+    }
+
     createCommentMutation.mutate({ columnId: task.columnId, content: trimmed })
     setCommentText('')
   }
@@ -336,6 +370,9 @@ export default function TaskDetailPanel({ workspaceId, task, columns, onClose }:
                       {assignees.map((assignee) => (
                         <div key={assignee.id} className="relative group/avatar">
                           <img src={assignee.avatar} className="w-7 h-7 rounded-full ring-1 ring-slate-200" title={assignee.name} alt={assignee.name} />
+                          {onlineUsers.has(Number(assignee.id)) && (
+                            <span className="absolute bottom-0 right-0 block h-2.5 w-2.5 rounded-full bg-green-500 ring-2 ring-white" title="Online" />
+                          )}
                           <button
                             type="button"
                             onClick={() => handleUnassignUser(assignee.id)}
@@ -586,9 +623,48 @@ export default function TaskDetailPanel({ workspaceId, task, columns, onClose }:
                 </div>
 
                 <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3 mb-5 shadow-sm">
+                  {(() => {
+                    const taskTypingUsers = typingUsers[Number(task.id)] || []
+                    if (taskTypingUsers.length === 0) return null
+                    return (
+                      <div className="text-xs text-cyan-600 italic mb-2 animate-pulse flex items-center gap-1.5 font-medium">
+                        <div className="flex gap-1">
+                          <span className="w-1.5 h-1.5 rounded-full bg-cyan-600 animate-bounce" style={{ animationDelay: '0ms' }} />
+                          <span className="w-1.5 h-1.5 rounded-full bg-cyan-600 animate-bounce" style={{ animationDelay: '150ms' }} />
+                          <span className="w-1.5 h-1.5 rounded-full bg-cyan-600 animate-bounce" style={{ animationDelay: '300ms' }} />
+                        </div>
+                        <span>
+                          {taskTypingUsers.map(u => u.username).join(', ')} {taskTypingUsers.length === 1 ? 'is typing...' : 'are typing...'}
+                        </span>
+                      </div>
+                    )
+                  })()}
                   <textarea
                     value={commentText}
-                    onChange={(e) => setCommentText(e.target.value)}
+                    onChange={(e) => {
+                      setCommentText(e.target.value)
+                      if (socket) {
+                        if (!isTypingRef.current) {
+                          isTypingRef.current = true
+                          socket.emit('comment:typing', {
+                            workspaceId: Number(workspaceId),
+                            taskId: Number(task.id),
+                            isTyping: true
+                          })
+                        }
+                        if (typingTimeoutRef.current) {
+                          clearTimeout(typingTimeoutRef.current)
+                        }
+                        typingTimeoutRef.current = setTimeout(() => {
+                          isTypingRef.current = false
+                          socket.emit('comment:typing', {
+                            workspaceId: Number(workspaceId),
+                            taskId: Number(task.id),
+                            isTyping: false
+                          })
+                        }, 2000)
+                      }
+                    }}
                     placeholder="Write a comment..."
                     className="min-h-[74px] w-full resize-none rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 placeholder-slate-400 outline-none focus:border-cyan-500"
                   />
@@ -610,13 +686,18 @@ export default function TaskDetailPanel({ workspaceId, task, columns, onClose }:
                   ) : (
                     comments.map((comment) => (
                       <div key={comment.id} className="flex gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 shadow-sm">
-                        {comment.avatar ? (
-                          <img src={comment.avatar} alt={comment.author} className="h-10 w-10 rounded-full ring-1 ring-slate-200" />
-                        ) : (
-                          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-cyan-100 text-sm font-bold text-cyan-700">
-                            {comment.author.slice(0, 2).toUpperCase()}
-                          </div>
-                        )}
+                        <div className="relative flex-shrink-0">
+                          {comment.avatar ? (
+                            <img src={comment.avatar} alt={comment.author} className="h-10 w-10 rounded-full ring-1 ring-slate-200" />
+                          ) : (
+                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-cyan-100 text-sm font-bold text-cyan-700">
+                              {comment.author.slice(0, 2).toUpperCase()}
+                            </div>
+                          )}
+                          {comment.authorId && onlineUsers.has(Number(comment.authorId)) && (
+                            <span className="absolute bottom-0 right-0 block h-3 w-3 rounded-full bg-green-500 ring-2 ring-white" title="Online" />
+                          )}
+                        </div>
                         <div className="min-w-0 flex-1">
                           <div className="flex flex-wrap items-center gap-2">
                             <span className="font-medium text-slate-900">{comment.author}</span>
