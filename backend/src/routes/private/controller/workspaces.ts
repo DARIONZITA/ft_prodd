@@ -217,7 +217,8 @@ export async function   deleteWorkspace(req: Request, res: Response, next: NextF
                         type: NotificationType.workspace,
                         message: `Workspace "${req.workspace!.name}" has been deleted by ${req.user!.username}`
                     },
-                    tx
+                    tx,
+                    new Set([req.user!.id])
                 );
             }
 

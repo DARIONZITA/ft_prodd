@@ -195,6 +195,18 @@ export async function acceptInvitation(req: Request, res: Response, next: NextFu
                         type: NotificationType.workspace,
                         message: `${member.user.username} has been added to workspace "${req.workspace!.name}" by ${req.user!.username}`
                     },
+                    tx,
+                    invitation.invitedById ? new Set([invitation.invitedById]) : undefined  // Exclude the acting user from receiving this notification
+                );
+            }
+            if (invitation.invitedById !== null)
+            {
+                await notify(
+                    {
+                        userIds: [invitation.invitedById],
+                        type: NotificationType.workspace,
+                        message: `${req.user!.username} has accepted your invitation to join workspace "${req.workspace!.name}"`
+                    },
                     tx
                 );
             }
@@ -224,6 +236,17 @@ export async function declineInvitation(req: Request, res: Response, next: NextF
                 throw new ApiError(404, 'No pending invitation found for this workspace');
 
             await tx.workspaceMember.delete({ where: { id: invitation.id } });
+            if (invitation.invitedById !== null)
+            {
+                await notify(
+                    {
+                        userIds: [invitation.invitedById],
+                        type: NotificationType.workspace,
+                        message: `${req.user!.username} has declined your invitation to join workspace "${req.workspace!.name}"`
+                    },
+                    tx
+                );
+            }
         });
 
         res.json({ success: true, message: 'Invitation declined' });
@@ -277,16 +300,26 @@ export async function updateMemberRole(req: Request, res: Response, next: NextFu
                 select: { userId: true }
             });
 
-            if (otherMembers.length > 0) {
+            if (otherMembers.length > 0)
+            {
                 await notify(
                     {
                         userIds: otherMembers.map(m => m.userId),
                         type: NotificationType.workspace,
                         message: `${member.user.username}'s role has been changed to ${role} in workspace "${req.workspace!.name}" by ${req.user!.username}`
                     },
-                    tx
+                    tx,
+                    new Set([userId])  // Exclude the target user from receiving this notification
                 );
             }
+            await notify(
+                {
+                    userIds: [userId],
+                    type: NotificationType.workspace,
+                    message: `Your role has been changed to ${role} in workspace "${req.workspace!.name}" by ${req.user!.username}`
+                },
+                tx
+            );
 
             return member;
         });
@@ -371,6 +404,14 @@ export async function deleteMember(req: Request, res: Response, next: NextFuncti
                     tx
                 );
             }
+            await notify(
+                {
+                    userIds: [userId],
+                    type: NotificationType.workspace,
+                    message: `You have been removed from workspace "${req.workspace!.name}" by ${req.user!.username}`
+                },
+                tx
+            );
 
             return { message: 'Member successfully removed.' };
         });
