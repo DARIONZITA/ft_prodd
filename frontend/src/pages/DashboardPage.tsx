@@ -156,15 +156,6 @@ export default function DashboardPage() {
     navigate('/signin', { replace: true })
   }
 
-  // If user is not authenticated, force redirect to signin. Runs on location changes
-  /*useEffect(() => {
-    const token = localStorage.getItem('token')
-    if (!token) {
-      navigate('/signin', { replace: true })
-    }
-  }, [location, navigate])
-  */
-
   const handleViewProfile = (id: string | number) => {
     setFriendsOpen(false)
     handleNavigate(`user-${id}`)
