@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import Sidebar from '../components/SideBar.tsx'
 import ThisProfile from './profile/This.tsx'
@@ -96,6 +96,16 @@ export default function DashboardPage() {
     // Default: use selected workspace or first one
     return workspaceDataQuery.find((workspace: Workspace) => String(workspace.id) === String(selectedWorkspaceId)) ?? workspaceDataQuery[0]
   }, [activeView, selectedWorkspaceId, workspaceDataQuery, workspaceParam])
+
+  useEffect(() => {
+    if (workspaceQuery.isLoading || workspaceQuery.isFetching) return
+    if (workspaceParam) {
+      const hasAccess = workspaceDataQuery.some(
+        (w: Workspace) => String(w.id) === String(workspaceParam)
+      )
+      if (!hasAccess) navigate('/dashboard', { replace: true })
+    }
+  }, [workspaceParam, workspaceDataQuery, workspaceQuery.isLoading, workspaceQuery.isFetching, navigate])
 
   const handleNavigate = (view: string, payload?: string | number) => {
     setCreateOrganizationOpen(false)
