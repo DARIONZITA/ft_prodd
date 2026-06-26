@@ -40,6 +40,14 @@ export default function LoadingPage(props: LoadingPageProps) {
       window.history.replaceState(null, '', window.location.pathname)
       const base = (api.defaults.baseURL ?? '').replace(/\/$/, '')
       window.location.href = `${base}/api/auth/42/login`
+      return
+    }
+
+    // If we're on the /loading route with no relevant params, redirect to signin
+    // (e.g. user pressed back button after being redirected to 42 Intra)
+    if (!errorParam && !messageParam) {
+      const timer = setTimeout(() => navigate('/signin', { replace: true }), successDelay)
+      return () => clearTimeout(timer)
     }
   }, [])
 
