@@ -84,6 +84,7 @@ export default function SignInPage()
             <form onSubmit={handleSubmit} className="flex flex-col gap-3">
                 <input
                     type="text"
+                    name="identifier"
                     placeholder="Enter your username or email..."
                     value={form.identifier}
                     onChange={updateField('identifier')}
@@ -91,6 +92,7 @@ export default function SignInPage()
                     className="w-full px-3.5 py-3 border border-slate-200 rounded-lg font-body text-sm text-slate-900 bg-white outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/15 placeholder:text-slate-400"
                 />
                 <PasswordInput
+                    name="password"
                     placeholder="Enter your password..."
                     value={form.password}
                     onChange={updateField('password')}

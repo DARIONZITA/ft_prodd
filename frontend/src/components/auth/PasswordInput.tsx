@@ -2,19 +2,21 @@ import { forwardRef, useState } from 'react'
 import { Eye, EyeOff }          from 'lucide-react'
 
 interface PasswordInputProps {
+  name:         string
   placeholder:  string
   value:        string
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void
   onInput?: () => void
 }
 
-const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(({ placeholder, value, onChange, onInput }, ref) => {
+const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(({ name, placeholder, value, onChange, onInput }, ref) => {
   const [show, setShow] = useState(false)
 
   return (
     <div className="relative">
       <input
         ref={ref}
+        name={name}
         type={show ? 'text' : 'password'}
         placeholder={placeholder}
         value={value}
