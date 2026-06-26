@@ -7,9 +7,10 @@ interface PasswordInputProps {
   value:        string
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void
   onInput?: () => void
+  autoComplete?: string
 }
 
-const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(({ name, placeholder, value, onChange, onInput }, ref) => {
+const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(({ name, placeholder, value, onChange, onInput, autoComplete }, ref) => {
   const [show, setShow] = useState(false)
 
   return (
@@ -22,6 +23,7 @@ const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(({ name, 
         value={value}
         onChange={onChange}
         onInput={onInput}
+        autoComplete={autoComplete}
         required
         className="w-full px-3.5 py-3 pr-11 border border-slate-200 rounded-lg font-body text-sm text-slate-900 bg-white outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/15 placeholder:text-slate-400"
       />

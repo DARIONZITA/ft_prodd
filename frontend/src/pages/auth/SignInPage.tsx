@@ -85,6 +85,7 @@ export default function SignInPage()
                 <input
                     type="text"
                     name="identifier"
+                    autoComplete="username"
                     placeholder="Enter your username or email..."
                     value={form.identifier}
                     onChange={updateField('identifier')}
@@ -93,6 +94,7 @@ export default function SignInPage()
                 />
                 <PasswordInput
                     name="password"
+                    autoComplete="current-password"
                     placeholder="Enter your password..."
                     value={form.password}
                     onChange={updateField('password')}

@@ -61,6 +61,7 @@ export default function SignUpPage()
         <input
           type="email"
           name="email"
+          autoComplete="email"
           placeholder="Enter your email..."
           value={form.email}
           onChange={updateField('email')}
@@ -73,6 +74,7 @@ export default function SignUpPage()
             ref={el => { if (el) fieldRefs.current.username = el }}
             type="text"
             name="username"
+            autoComplete="username"
             placeholder="Enter your username..."
             value={form.username}
             onChange={updateField('username')}
@@ -86,6 +88,7 @@ export default function SignUpPage()
         <PasswordInput
           ref={el => { if (el) fieldRefs.current.password = el }}
           name="password"
+          autoComplete="new-password"
           placeholder="Enter your password..."
           value={form.password}
           onChange={updateField('password')}
@@ -95,6 +98,7 @@ export default function SignUpPage()
         <PasswordInput
           ref={el => { if (el) fieldRefs.current.repeat = el }}
           name="repeat"
+          autoComplete="new-password"
           placeholder="Repeat your password..."
           value={form.repeat}
           onChange={updateField('repeat')}
