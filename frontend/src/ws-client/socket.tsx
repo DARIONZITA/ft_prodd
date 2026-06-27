@@ -142,7 +142,7 @@ export function WebSocketProvider({ children }: WebSocketProviderProps) {
         // Real-time Presence Sync
         newSocket.on('presence:sync', (data) => {
           if (!active) return
-          if (data.type === 'workspace') {
+          if (data.type === 'workspace' || data.type === 'friends') {
             setOnlineUsers((prev) => {
               const next = new Set(prev)
               data.onlineUserIds.forEach((id) => next.add(id))

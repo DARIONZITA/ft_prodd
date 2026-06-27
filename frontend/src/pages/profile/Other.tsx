@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { UserPlus, UserCheck, Loader2, Lock, X, Users } from 'lucide-react'
 import ProfileAvatar from '../../components/profile/Avatar'
+import { useWebSocket } from '../../ws-client/socket'
 import {
   useUserProfileQuery,
   type PublicUserProfile,
@@ -25,6 +26,8 @@ interface OtherProfileProps {
 
 export default function OtherProfile({ userId, currentUserId, onNavigate }: OtherProfileProps) {
   const [asideSection, setAsideSection] = useState<Section | null>(null)
+
+  const { onlineUsers } = useWebSocket()
 
   const profileNumeric = typeof userId === 'string' ? Number(userId) : userId
   const meNumeric = typeof currentUserId === 'string' ? Number(currentUserId) : currentUserId
@@ -186,9 +189,12 @@ export default function OtherProfile({ userId, currentUserId, onNavigate }: Othe
       <div className="max-w-[680px] mx-auto px-4 py-6 sm:px-6 sm:py-8 flex flex-col gap-5">
         {/* Header card */}
         <div className="bg-white border border-slate-200 rounded-xl p-4 sm:p-6 flex flex-col sm:flex-row items-start gap-4 sm:gap-5">
-          <ProfileAvatar name={user.username} avatarUrl={user.avatarUrl} size="lg" />
+          <ProfileAvatar name={user.username} avatarUrl={user.avatarUrl} size="lg" online={onlineUsers.has(profileNumeric)} />
           <div className="flex-1 min-w-0 pt-0 sm:pt-1 w-full sm:w-auto">
             <h1 className="font-display font-bold text-xl sm:text-2xl text-slate-900">{user.username}</h1>
+            <p className="font-mono text-[11px] font-bold uppercase text-slate-400 mt-1">
+              {onlineUsers.has(profileNumeric) ? 'Online' : 'Offline'}
+            </p>
             {user.bio && (
               <p className="font-body text-sm text-slate-500 mt-2 leading-relaxed">{user.bio}</p>
             )}
@@ -322,8 +328,11 @@ export default function OtherProfile({ userId, currentUserId, onNavigate }: Othe
                         onClick={() => onNavigate?.('user', f.id)}
                         className="w-full flex items-center gap-3 px-3 py-2.5 bg-slate-50 hover:bg-slate-100 rounded-lg transition-colors text-left"
                       >
-                        <div className="w-9 h-9 rounded-full bg-cyan-500 text-white text-xs font-bold flex items-center justify-center flex-shrink-0 font-display">
-                          {f.username.trim()[0]?.toUpperCase() ?? '?'}
+                        <div className="relative flex-shrink-0">
+                          <div className="w-9 h-9 rounded-full bg-cyan-500 text-white text-xs font-bold flex items-center justify-center font-display">
+                            {f.username.trim()[0]?.toUpperCase() ?? '?'}
+                          </div>
+                          <span className={`absolute -bottom-0.5 -right-0.5 block h-3 w-3 rounded-full border-2 border-white ${onlineUsers.has(Number(f.id)) ? 'bg-green-500' : 'bg-slate-300'}`} />
                         </div>
                         <span className="font-display font-bold text-sm text-slate-900">{f.username}</span>
                       </button>

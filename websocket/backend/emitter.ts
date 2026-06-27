@@ -32,7 +32,7 @@ export const    wsEmitter = {
             _io.to(`workspace:${wId}`).except(`user:${userId}`).emit('presence:offline', { ...payload, workspaceId: wId});
 
         for (const fId of friendIds)
-            _io.to(`user:${userId}`).emit('presence:offline', payload);
+            _io.to(`user:${fId}`).emit('presence:offline', payload);
     },
 
     //-------------------------------------------------Comments--------------------------------------------------------------------------

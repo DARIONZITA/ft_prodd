@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { AlertTriangle, Pencil, Mail, Loader2, Check, X } from 'lucide-react'
 import ProfileAvatar from '../../components/profile/Avatar'
+import { useWebSocket } from '../../ws-client/socket'
 import Edit from './Edit'
 import {
   useDeleteUserRequest,
@@ -29,6 +30,8 @@ export default function ThisProfile({ user, onProfileUpdate, onNavigate }: ThisP
   const [saveError, setSaveError] = useState<string | null>(null)
   const [deleteError, setDeleteError] = useState<string | null>(null)
   const [activeSection, setActiveSection] = useState<Section | null>(null)
+
+  const { onlineUsers } = useWebSocket()
 
   const updateUserMutation = useUpdateUserRequest({
     onSuccess: response => {
@@ -139,8 +142,11 @@ export default function ThisProfile({ user, onProfileUpdate, onNavigate }: ThisP
                     onClick={() => onNavigate?.('user', f.id)}
                     className="w-full flex items-center gap-3 px-3 py-2.5 bg-slate-50 hover:bg-slate-100 rounded-lg transition-colors text-left"
                   >
-                    <div className="w-9 h-9 rounded-full bg-cyan-500 text-white text-xs font-bold flex items-center justify-center flex-shrink-0 font-display">
-                      {f.username.trim()[0]?.toUpperCase() ?? '?'}
+                    <div className="relative flex-shrink-0">
+                      <div className="w-9 h-9 rounded-full bg-cyan-500 text-white text-xs font-bold flex items-center justify-center font-display">
+                        {f.username.trim()[0]?.toUpperCase() ?? '?'}
+                      </div>
+                      <span className={`absolute -bottom-0.5 -right-0.5 block h-3 w-3 rounded-full border-2 border-white ${onlineUsers.has(Number(f.id)) ? 'bg-green-500' : 'bg-slate-300'}`} />
                     </div>
                     <span className="font-display font-bold text-sm text-slate-900">{f.username}</span>
                   </button>

@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { useWebSocket } from '../../ws-client/socket'
 import { Check, Search, UserPlus, X } from 'lucide-react'
 import Accepted from '../../components/friend/Accepted'
 import Pending from '../../components/friend/Pending'
@@ -29,6 +30,8 @@ export default function Friends({ userId, onClose, onViewProfile }: FriendsProps
   const [findSearch, setFindSearch] = useState('')
   const [performSearchQuery, setPerformSearchQuery] = useState('')
 
+  const { onlineUsers } = useWebSocket()
+
   const friendsQuery = useFriendsQuery(userId, { refetchOnMount: false })
   const incomingQuery = useIncomingFriendRequestsQuery(userId, { refetchOnMount: false })
   const outgoingQuery = useOutgoingFriendRequestsQuery(userId, { refetchOnMount: false })
@@ -49,10 +52,10 @@ export default function Friends({ userId, onClose, onViewProfile }: FriendsProps
         id: other.id,
         name: other.username,
         avatarUrl: resolveAvatarUrl(other.avatarUrl),
-        isOnline: false,
+        isOnline: onlineUsers.has(Number(other.id)),
       }
     })
-  }, [friendsQuery.data, userId])
+  }, [friendsQuery.data, userId, onlineUsers])
 
   const pendingRequests = useMemo<PendingRequest[]>(() => {
     const requests = incomingQuery.data?.data?.friendRequests ?? []
