@@ -14,6 +14,7 @@ import InvitationsPage from './InvitationsPage.tsx'
 import type { User, UserResponse } from '../types/user.ts'
 import { useGetUserRequest } from '../api/user.ts'
 import { useCreateWorkspaceMutation, useDeleteWorkspaceMutation, useUpdateWorkspaceMutation, useUserWorkspacesQuery, type Workspace } from '../api/workspace.ts'
+import { queryClient } from '../query-client'
 
 // ─── View type ────────────────────────────────────────────────────────────────
 
@@ -153,6 +154,7 @@ export default function DashboardPage() {
     } catch {
       // ignore
     }
+    queryClient.clear()
     navigate('/signin', { replace: true })
   }
 
