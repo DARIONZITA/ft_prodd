@@ -18,7 +18,6 @@ export default function SignInPage()
     const { form, srvError, setSrvError, navigate, updateField } = authInit<SignInForm>({ identifier: '', password: '' })
     const signInMutation = useSignInMutation({
         onSuccess: () => {
-
             navigate('/dashboard')
         },
         onError: (error) => {
@@ -48,17 +47,12 @@ export default function SignInPage()
             setSrvError('Invalid Credentials')
             return
         }
-
-
-
         setSrvError(null)
 
         try {
             await signInMutation.mutateAsync(form)
         }
-        catch ( error ) {
-            console.error(error)
-        }
+        catch ( error ) { }
     }
 
     return (

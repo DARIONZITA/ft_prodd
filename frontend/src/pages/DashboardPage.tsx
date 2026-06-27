@@ -24,22 +24,71 @@ type ActiveView =
   | 'notifications'
   | 'all-boards'
   | 'completed'
-  | 'leaderboard'
-  | 'badges'
   | 'organization-settings'
   | 'organization-members'
   | `workspace-${string | number}`
   | `user-${string | number}`
   | 'kanbanBoard'
-  | 'analytics'
   | 'invitations'
 
-// ─── Placeholder ─────────────────────────────────────────────────────────────
+// ─── Empty / Placeholder state ───────────────────────────────────────────────
 
 function PlaceholderView({ title }: { title: string }) {
+  const emptyMessages: Record<string, { heading: string; description: string }> = {
+    'Dashboard': {
+      heading: 'Welcome to your Dashboard',
+      description:
+        'Get started by creating a workspace or inviting a teammate. Use the sidebar to navigate.',
+    },
+    'All Boards': {
+      heading: 'No Boards Yet',
+      description:
+        'Boards help you organize projects and tasks. Create your first board to get started.',
+    },
+    'Completed Tasks': {
+      heading: 'No Completed Tasks',
+      description:
+        'Tasks you mark as complete will appear here. Start working to see your progress!',
+    },
+    'Organization Settings': {
+      heading: 'No Workspace Selected',
+      description:
+        'Select a workspace from the sidebar to manage its settings.',
+    },
+    'Organization Members': {
+      heading: 'No Workspace Selected',
+      description:
+        'Select a workspace from the sidebar to view and manage its members.',
+    },
+  }
+
+  if (title === 'Loading profile...') {
+    return (
+      <div className="flex-1 h-full flex items-center justify-center bg-slate-50">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-8 h-8 border-4 border-slate-200 border-t-indigo-500 rounded-full animate-spin" />
+          <p className="font-body text-sm text-slate-400">Loading your profile...</p>
+        </div>
+      </div>
+    )
+  }
+
+  const info = emptyMessages[title]
+
   return (
     <div className="flex-1 h-full flex items-center justify-center bg-slate-50">
-      <p className="font-body text-sm text-slate-400">{title} — coming soon</p>
+      <div className="text-center max-w-sm px-4">
+        {info ? (
+          <>
+            <h2 className="font-heading text-lg font-semibold text-slate-700 mb-2">
+              {info.heading}
+            </h2>
+            <p className="font-body text-sm text-slate-400">{info.description}</p>
+          </>
+        ) : (
+          <p className="font-body text-sm text-slate-400">{title}</p>
+        )}
+      </div>
     </div>
   )
 }

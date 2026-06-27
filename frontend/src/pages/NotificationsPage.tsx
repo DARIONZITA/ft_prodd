@@ -53,7 +53,6 @@ const filters: Array<{ id: 'all' | NotificationType; label: string }> = [
   { id: 'all', label: 'All' },
   { id: 'task', label: 'Tasks' },
   { id: 'mention', label: 'Mentions' },
-  { id: 'badge', label: 'Badges' },
   { id: 'friend', label: 'Friends' },
 ]
 

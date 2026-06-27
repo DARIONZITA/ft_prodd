@@ -761,7 +761,7 @@ This section lists all selected modules for the project, including their type, p
       * **ProfileAvatar** — user avatar with gradient fallback and initials, reused across profile pages
       * **StatsRow** — three-column stats grid (tasks completed, tasks assigned, friends), reused in own and other user profiles
       * **FriendAvatar** — friend avatar with online/offline status indicator, reused in friend list components
-      * **NotificationsDropdown** — dropdown panel with type badges and mark-read functionality
+      * **NotificationsDropdown** — dropdown panel with mark-read functionality
       * **SideBar** — main application sidebar with navigation, workspace list, and notifications bell
       * **WorkspaceCard** — clickable card displaying workspace name, description, member count, and role badge
       * **FeatureCard** — landing page card with icon, title, and description
