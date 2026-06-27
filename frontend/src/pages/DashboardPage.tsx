@@ -257,6 +257,15 @@ export default function DashboardPage() {
         return <PlaceholderView title="Loading profile..." />
       }
 
+      if (String(otherUserId) === String(userDataQuery.id)) {
+        return (
+          <ThisProfile
+            user={userDataQuery}
+            onNavigate={handleNavigate}
+          />
+        )
+      }
+
       return (
         <OtherProfile
           userId={otherUserId}
