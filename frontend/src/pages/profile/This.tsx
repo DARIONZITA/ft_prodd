@@ -142,12 +142,12 @@ export default function ThisProfile({ user, onProfileUpdate, onNavigate }: ThisP
                     onClick={() => onNavigate?.('user', f.id)}
                     className="w-full flex items-center gap-3 px-3 py-2.5 bg-slate-50 hover:bg-slate-100 rounded-lg transition-colors text-left"
                   >
-                    <div className="relative flex-shrink-0">
-                      <div className="w-9 h-9 rounded-full bg-cyan-500 text-white text-xs font-bold flex items-center justify-center font-display">
-                        {f.username.trim()[0]?.toUpperCase() ?? '?'}
-                      </div>
-                      <span className={`absolute -bottom-0.5 -right-0.5 block h-3 w-3 rounded-full border-2 border-white ${onlineUsers.has(Number(f.id)) ? 'bg-green-500' : 'bg-slate-300'}`} />
-                    </div>
+                    <ProfileAvatar
+                      name={f.username}
+                      avatarUrl={f.avatarUrl}
+                      size="sm"
+                      online={onlineUsers.has(Number(f.id))}
+                    />
                     <span className="font-display font-bold text-sm text-slate-900">{f.username}</span>
                   </button>
                 ))}
@@ -169,9 +169,11 @@ export default function ThisProfile({ user, onProfileUpdate, onNavigate }: ThisP
               <div className="space-y-2">
                 {incoming.map(req => (
                   <div key={req.requestId} className="flex items-start gap-3 px-3 py-2.5 bg-slate-50 rounded-lg flex-wrap">
-                    <div className="w-9 h-9 rounded-full bg-cyan-500 text-white text-xs font-bold flex items-center justify-center flex-shrink-0 font-display">
-                      {req.username.trim()[0]?.toUpperCase() ?? '?'}
-                    </div>
+                    <ProfileAvatar
+                      name={req.username}
+                      avatarUrl={req.avatarUrl}
+                      size="sm"
+                    />
                     <div className="flex-1 min-w-0">
                       <p className="font-display font-bold text-sm text-slate-900">{req.username}</p>
                       <p className="font-mono text-[10px] text-slate-400">{formatRelativeTime(req.createdAt)}</p>
