@@ -11,7 +11,7 @@ import { useGetUserRequest }          from '../../api/user'
 import { getApiErrorMessage }         from '../../api/axios'
 import type { SignUpForm }            from '../../types/auth'
 
-type Fields = 'username' | 'password' | 'repeat'
+type Fields = 'email' | 'username' | 'password' | 'repeat'
 
 export default function SignUpPage()
 {
@@ -59,12 +59,14 @@ export default function SignUpPage()
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-3">
         <input
+          ref={el => { if (el) fieldRefs.current.email = el }}
           type="email"
           name="email"
           autoComplete="email"
           placeholder="Enter your email..."
           value={form.email}
           onChange={updateField('email')}
+          onInput={() => fieldRefs.current.email?.setCustomValidity('')}
           required
           className="w-full px-3.5 py-3 border border-slate-200 rounded-lg font-body text-sm text-slate-900 bg-white outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/15 placeholder:text-slate-400"
         />
