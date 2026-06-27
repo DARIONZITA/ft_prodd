@@ -40,7 +40,7 @@ rebuild-%:
 	@$(DOCKER) up -d $*
 
 prisma-studio:
-	@$(DOCKER) up -d postgres backend
+	@$(DOCKER) up -d postgres backend nginx
 	@$(DOCKER) exec backend npm run prisma:studio
 
 reset-all: ## Reset completo do projeto (PERDE TUDO)
@@ -58,6 +58,7 @@ info: ## Mostrar informações do projeto
 	@echo "  Backend API: https://localhost/api"
 	@echo "  Health:      https://localhost/api/health"
 	@echo "  Swagger:     https://localhost/api/docs"
+	@echo "  Prisma Studio: https://localhost:5555"
 	@echo ""
 	@echo "  (acesso interno — apenas dentro da rede Docker)"
 	@echo "  PostgreSQL:  postgres:5432"
