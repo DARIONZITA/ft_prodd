@@ -1,32 +1,31 @@
 import ratelimit from 'express-rate-limit';
-import type { Request } from 'express';
+import type { Request, Response } from 'express';
 
 //Limite geral da API
 
-export const    readApiRateLimit = ratelimit(
+const   createRateLimit = ( max : number, windowMs : number, message : string ) =>
 {
-    windowMs:           60000,
-    max:                30,
-    standardHeaders:    true, // Devolve headers `RateLimit-*`
-    legacyHeaders:      false, // Desativa os headers `X-RateLimit-*`
-    message: {
-        success: false,
-        message: "API read limit exceeded. Max 30 reads per minute.",
-    },
-    keyGenerator : ( req : Request ) => { return ( req.headers['x-api-key'] as string ); },
-});
+    return (ratelimit(
+    {
+        windowMs,
+        max,
+        standardHeaders:    true, // Devolve headers `RateLimit-*`
+        legacyHeaders:      false, // Desativa os headers `X-RateLimit-*`
+        keyGenerator : ( req : Request ) => { return ( req.headers['x-api-key'] as string ); },
+        handler : ( req : Request, res : Response ) =>
+        {
+            res.status( 429 ).json(
+            {
+                success: false,
+                message: message || "API rate limit exceeded. Please try again later.",
+                limit: max,
+                windowMinutes: windowMs / 60000,
+            });
+        },
+        skipFailedRequests: false, // Conta requisições com falha (4xx e 5xx)
+        skipSuccessfulRequests: false, // Conta requisições bem-sucedidas (2xx)
+    }));
+}
 
-//Limite mais restrito para criações (POST)
-
-export const    writeApiRateLimit = ratelimit(
-{
-    windowMs:           60000, // 1 minuto = 60 mil milissegundos
-    max:                10, // Limite de 10 requisições por minuto para operações de escrita
-    standardHeaders:    true,
-    legacyHeaders:      false,
-    message: {
-        success: false,
-        message: "API write limit exceeded. Max 10 writes per minute.",
-    },
-    keyGenerator : ( req : Request ) => { return ( req.headers['x-api-key'] as string ); },
-});
+export const    readApiRateLimit = createRateLimit( 30, 60000, "API read limit exceeded. Max 30 reads per minute." );
+export const    writeApiRateLimit = createRateLimit( 10, 60000, "API write limit exceeded. Max 10 writes per minute." );
